@@ -111,14 +111,25 @@ $roles = ['admin','student','staff'];       // whatever you allow
     <?php if ($error):   ?><p style="color:red"><?=   htmlspecialchars($error) ?></p><?php endif; ?>
 
     <!-- 1.  ADD USER  -->
-    <h2>Add New User</h2>
-    <form method="post">
-        First Name: <input name="first_name" required>
-        Last Name: <input name="last_name" required>
-        <input type="hidden" name="add_user">
-        <button type="submit">Create</button>
-        <small>Email will be built automatically (first-letter(s) + last name @kld.edu.ph)</small>
-    </form>
+<h2>Add New User</h2>
+<form method="post">
+    <label>First Name:</label>
+    <input name="first_name" required>
+
+    <label>Last Name:</label>
+    <input name="last_name" required>
+
+    <label>Type:</label>
+    <select name="role" required>
+        <option value="">-- select --</option>
+        <option value="student">Student</option>
+        <option value="admin">Admin</option>
+    </select>
+
+    <input type="hidden" name="add_user">
+    <button type="submit">Create</button>
+    <br><small>Email will be built automatically (first-letter(s) + last name @kld.edu.ph)</small>
+</form>
 
     <!-- 2.  SEARCH / FILTER  -->
     <h2>Search / Filter</h2>

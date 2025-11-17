@@ -712,25 +712,53 @@ private function makeKldEmail(string $first, string $last): string
 
 public function addUser(array $data): bool
 {
+    // basic validation
+    if (empty($data['first_name']) || empty($data['last_name']) || empty($data['role'])) {
+        return false;
+    }
+
     $email = $this->makeKldEmail($data['first_name'], $data['last_name']);
-    $pwd   = password_hash($email, PASSWORD_DEFAULT);   // temp = email
-    $sql = "INSERT INTO users (full_name, email, password_hash, role, status, is_verified, created_at)
-            VALUES (:name, :email, :pwd, 'student', 'pending', 0, NOW())";
-    $ok = $this->db->prepare($sql)->execute([
-        ':name' => trim($data['first_name'].' '.$data['last_name']),
-        ':email'=> $email,
-        ':pwd'  => $pwd
+    $pwd   = password_hash($email, PASSWORD_DEFAULT);
+
+    // 1. insert into users table
+    $sql = "INSERT INTO users
+            (full_name, email, password_hash, role, status, is_verified, created_at)
+            VALUES (:name, :email, :pwd, :role, 'pending', 0, NOW())";
+    $stmt = $this->db->prepare($sql);
+    $ok = $stmt->execute([
+        ':name'  => trim($data['first_name'] . ' ' . $data['last_name']),
+        ':email' => $email,
+        ':pwd'   => $pwd,
+        ':role'  => $data['role']           // student OR admin
     ]);
 
-    if ($ok) {
-        $id = $this->db->lastInsertId();
-        $this->logAction('insert', $id, 'user', [], [
-            'full_name' => $data['first_name'].' '.$data['last_name'],
-            'email'     => $email,
-            'role'      => 'student'
+    if (!$ok) {
+        return false;
+    }
+
+    $userId = $this->db->lastInsertId();
+
+    // 2. if student, also insert into students table
+    if ($data['role'] === 'student') {
+        $stu = $this->db->prepare(
+            "INSERT INTO student (email, first_name, last_name)
+             VALUES (:email, :fname, :lname)"
+        );
+        $stu->execute([
+            ':email' => $email,
+            ':fname' => $data['first_name'],
+            ':lname' => $data['last_name']
         ]);
     }
-    return $ok;
+
+    // 3. audit log
+    $this->logAction('insert', $userId, 'user', [], [
+        'full_name' => $data['first_name'] . ' ' . $data['last_name'],
+        'email'     => $email,
+        'role'      => $data['role']
+    ]);
+
+    return true;
 }
 
 public function getUsers(array $filters): array

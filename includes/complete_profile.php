@@ -7,7 +7,6 @@
 
 require_once 'config.php';
 require_once 'User.php';
-session_start();
 
 /* ---------- 1. Guard-clauses ------------- */
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {

@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['student_id'] = $student['id'];
 
             // make sure the profile is complete
-            if (empty($student['first_name'])) {
+            if (empty($student['course'])) {
                 header('Location: complete_profile.php');
                 exit();
             }
