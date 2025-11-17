@@ -1,0 +1,190 @@
+/* Admin Dashboard Styles - Matching School Theme */
+:root {
+    --school-yellow: #b69b04;
+    --school-yellow-light: #FFF9C4;
+    --school-green: #357737;
+    --school-green-dark: #205022;
+    --school-white: #FFFFFF;
+    --school-gray: #e0dede;
+    --school-dark: #333333;
+}
+
+.admin-body {
+    background-color: var(--school-gray);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-bottom: 20px;
+}
+
+/* Navbar */
+.school-navbar {
+    background-color: var(--school-green);
+    border-bottom: 3px solid var(--school-yellow);
+    padding: 0.75rem 0;
+}
+
+.school-navbar .navbar-brand {
+    color: var(--school-white);
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.school-nav-link {
+    color: var(--school-white) !important;
+    transition: color 0.3s ease;
+    padding: 0.5rem 1rem !important;
+    border-radius: 4px;
+    margin: 0 0.125rem;
+}
+
+.school-nav-link:hover,
+.school-nav-link.active {
+    color: var(--school-white) !important;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Titles */
+.school-title {
+    color: var(--school-dark);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Cards */
+.school-card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: var(--school-white);
+}
+
+.school-card-header {
+    background-color: var(--school-green);
+    color: var(--school-white);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 1rem 1.25rem;
+}
+
+.school-card-header h4,
+.school-card-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Statistics Cards */
+.school-stat-card {
+    border: none;
+    border-radius: 8px;
+    background-color: var(--school-white);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.school-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.school-stat-number {
+    color: var(--school-green);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.school-stat-label {
+    color: var(--school-dark);
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Buttons */
+.school-btn {
+    background-color: var(--school-green);
+    border: none;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.school-btn:hover {
+    background-color: var(--school-green-dark);
+    color: white;
+}
+
+.school-btn-sm {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* Table */
+.school-table {
+    margin-bottom: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.school-table thead th {
+    background-color: var(--school-yellow-light);
+    border-bottom: 2px solid var(--school-yellow);
+    color: var(--school-dark);
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.school-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-color: #eee;
+}
+
+.school-table tbody tr:hover {
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+/* Badges */
+.school-badge {
+    background-color: var(--school-yellow-light);
+    color: var(--school-dark);
+    font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+    
+    .school-table {
+        font-size: 0.875rem;
+    }
+    
+    .school-table thead th,
+    .school-table tbody td {
+        padding: 0.5rem;
+    }
+    
+    .navbar-nav {
+        margin-top: 1rem;
+    }
+    
+    .school-nav-link {
+        margin: 0.125rem 0;
+    }
+}
+
+/* Alert styles to match login page */
+.alert-warning {
+    background-color: var(--school-yellow-light);
+    border: 1px solid var(--school-yellow);
+    color: #856404;
+    border-radius: 6px;
+}
