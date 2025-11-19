@@ -12,6 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['user_type'] = $user['role'];          // admin | student | teacher
 
         if ($user['role'] === 'student') {
+            /* ----------  NEW: make sure student row exists  ---------- */
+            $pdo = $userObj->getDb();          // or however you expose the PDO object
+            $stmt = $pdo->prepare(
+                'INSERT IGNORE INTO student (email) VALUES (:email)'
+            );
+            $stmt->execute([':email' => $user['email']]);
+            /* --------------------------------------------------------- */
+
             $student = $userObj->findStudentbyEmail($user['email']);
             $_SESSION['student_id'] = $student['id'];
 
