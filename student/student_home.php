@@ -240,6 +240,10 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             border-radius: 14px;
             border-left: 8px solid #1b5e20;
             box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+
             transition: all 0.3s ease;
         }
 
@@ -247,6 +251,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.18);
             transform: translateY(-3px);
         }
+
 
         .id-container h3 {
             margin: 0 0 28px 0;
@@ -270,9 +275,8 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             border-radius: 14px;
         }
 
-        .id-card:hover {
+        .id-card.flipped {
             transform: rotateY(180deg);
-            box-shadow: 0px 12px 36px rgba(0, 0, 0, 0.25);
         }
 
         .id-side {
@@ -749,7 +753,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             cursor: pointer;
         }
 
-        .portrait-id-card:hover {
+        .portrait-id-card.flipped {
             transform: rotateY(180deg);
         }
 
@@ -991,15 +995,9 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 </html>
 
 <script>
-    function downloadVisualID(e) {
-        e.stopPropagation();
-        alert('Visual ID download feature coming soon!');
-    }
-
-    function scanQRCode(e) {
-        e.stopPropagation();
-        alert('QR Code scanner feature coming soon!');
-    }
+    document.querySelector('.portrait-id-card').addEventListener('click', function() {
+        this.classList.toggle('flipped');
+    });
 
     function downloadVisualID(e) {
         e.stopPropagation();
