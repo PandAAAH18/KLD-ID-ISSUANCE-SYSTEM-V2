@@ -48,9 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login | School Portal</title>
     <!-- Local Bootstrap CSS -->
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="../assets/css/login.css" rel="stylesheet">
+    <link href="assets/css/login.css" rel="stylesheet">
 </head>
 <body class="login-body">
     <div class="container">
