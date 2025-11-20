@@ -1,12 +1,12 @@
 <?php
 // admin_students.php
 session_start();
-require_once 'admin.php';
+require_once 'classes/StudentManager.php';
 if (($_SESSION['user_type'] ?? '') !== 'admin') {
     redirect('../index.php');
 }
-$studentModel = new Admin();
-
+$studentModel = new StudentManager();
+ 
 if (isset($_GET['action']) && $_GET['action'] === 'get_student' && isset($_GET['id'])) {
     $student = $studentModel->getStudentById($_GET['id']);
     header('Content-Type: application/json');

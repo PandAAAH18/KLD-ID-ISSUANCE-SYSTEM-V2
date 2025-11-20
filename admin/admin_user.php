@@ -1,13 +1,13 @@
 <?php
 /* ----------  BOOTSTRAP (same order you already use)  ---------- */
 session_start();
-require_once 'admin.php';
+require_once 'classes/UserManager.php';
 
 if (($_SESSION['user_type'] ?? '') !== 'admin') {
     redirect('../index.php');
 }
 
-$adminModel = new Admin();               // or your global PDO variable
+$adminModel = new UserManager();               // or your global PDO variable
 $message = '';
 $error   = '';
 

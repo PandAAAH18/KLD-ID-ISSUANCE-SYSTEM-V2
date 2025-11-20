@@ -1,13 +1,12 @@
 <?php
 session_start();
-require_once __DIR__.'/../includes/config.php';
-require_once __DIR__.'/admin.php';
+require_once __DIR__.'/classes/IdManager.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type']!=='admin'){
     header('Location: ../index.php'); exit();
 }
 
-$adm = new Admin();
+$adm = new IdManager();
 
 /* ---------- 1.  actions ---------- */
 if (isset($_POST['approve']) && isset($_POST['request_id'])){
