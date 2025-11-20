@@ -4,7 +4,7 @@ require_once __DIR__.'/../includes/config.php';
 require_once __DIR__.'/admin.php';
 
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type']!=='admin'){
-    header('Location: ../login.php'); exit();
+    header('Location: ../index.php'); exit();
 }
 
 $adm = new Admin();

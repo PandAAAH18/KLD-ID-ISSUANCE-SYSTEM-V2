@@ -1,6 +1,6 @@
 <?php
-require_once 'config.php';
-require_once 'User.php';
+require_once 'includes/config.php';
+require_once 'includes/user.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userObj = new User();
@@ -25,15 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // make sure the profile is complete
             if (empty($student['course'])) {
-                header('Location: complete_profile.php');
+                header('Location: includes/complete_profile.php');
                 exit();
             }
         }
 
         // everyone else (or student with complete profile)
         $goto = $user['role'] === 'admin'
-              ? '../admin/admin_dashboard.php'
-              : '../student/student_home.php';
+              ? 'admin/admin_dashboard.php'
+              : 'student/student_home.php';
         header("Location: $goto");
         exit();
     }
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="text-center">
                             <p class="mb-0">Don't have an account?
-                                <a href="register.php" class="school-link">Register here</a>
+                                <a href="includes/register.php" class="school-link">Register here</a>
                             </p>
                         </div>
                     </div>
@@ -105,9 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <!-- Local Bootstrap JS -->
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JS -->
-    <script src="../assets/js/login.js"></script>
+    <script src="assets/js/login.js"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@ require_once 'User.php';
 
 /* ---------- 1. Guard-clauses ------------- */
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'student') {
-    header('Location: login.php');
+    header('Location: ../index.php');
     exit();
 }
 
@@ -18,7 +18,7 @@ $userObj = new User();
 $student = $userObj->findStudentbyEmail($_SESSION['email']);
 if (!$student) {
     session_destroy();
-    header('Location: login.php');
+    header('Location: ../index.php');
     exit();
 }
 

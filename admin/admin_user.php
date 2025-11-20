@@ -4,7 +4,7 @@ session_start();
 require_once 'admin.php';
 
 if (($_SESSION['user_type'] ?? '') !== 'admin') {
-    redirect('login.php');
+    redirect('../index.php');
 }
 
 $adminModel = new Admin();               // or your global PDO variable

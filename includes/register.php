@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($ok) {
         $_SESSION['flash'] = 'Account created, please log in.';
-        redirect('login.php');
+        redirect('../index.php');
     } else {
         $error = 'Registration failed (email already used?)';
     }
@@ -33,6 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <label>Password: <input type="password" name="password" required minlength="6"></label><br>
     <button type="submit">Create account</button>
 </form>
-<p>Already have an account? <a href="login.php">Login here</a></p>
+<p>Already have an account? <a href="../index.php">Login here</a></p>
 </body>
 </html>

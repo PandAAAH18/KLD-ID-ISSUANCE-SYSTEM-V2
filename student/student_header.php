@@ -2,7 +2,7 @@
 // admin_header.php
 // Check if user is admin
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
-    redirect('../includes/login.php');
+    redirect('../index.php');
 }
 ?>
 <!DOCTYPE html>

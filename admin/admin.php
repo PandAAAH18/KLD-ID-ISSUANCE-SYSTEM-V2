@@ -683,18 +683,6 @@ function checkStudentHasAccount($email) {
     }
 }
 
-    /* ====================  ID FUNCTIONS  ==================== */
-
-// public function updateIdStatus($studentId, $status);
-// public function markReadyForPrinting($studentId);
-// public function markPrinted($studentId);
-// public function markReleased($studentId);
-// public function requestIdReplacement($studentId);
-// public function generateIdTemplate($studentId);   // returns HTML or PDF
-// public function printId($studentId);              // triggers print generation
-// public function batchPrintIds($studentIds = []);  // for bulk printing
-
-
 //     /* ====================  USER FUNCTIONS  ==================== */
 private function makeKldEmail(string $first, string $last): string
 {

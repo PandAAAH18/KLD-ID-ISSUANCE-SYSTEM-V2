@@ -4,11 +4,11 @@ require_once __DIR__.'/student.php';
 
 if (!isset($_SESSION['user_id'], $_SESSION['user_type'], $_SESSION['student_id']) ||
     $_SESSION['user_type'] !== 'student') {
-    header('Location: ../login.php'); exit();
+    header('Location: ../index.php'); exit();
 }
 
 $stu = (new Student())->findById((int)$_SESSION['student_id']);
-if (!$stu) { header('Location: ../login.php'); exit(); }
+if (!$stu) { header('Location: ../index.php'); exit(); }
 
 /* ---- 1. Display block ---- */
 $avatarPath = '../uploads/student_photos/'.htmlspecialchars($stu['photo']);

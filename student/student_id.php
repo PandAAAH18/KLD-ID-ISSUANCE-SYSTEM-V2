@@ -4,12 +4,12 @@ require_once __DIR__.'/student.php';
 
 /* ----- 1. auth ----- */
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type']!=='student') {
-    header('Location: ../login.php'); exit();
+    header('Location: ../index.php'); exit();
 }
 
 $stuObj = new Student();
 $student= $stuObj->findById($_SESSION['student_id']);   // returns full row
-if (!$student) { header('Location: ../login.php'); exit(); }
+if (!$student) { header('Location: ../index.php'); exit(); }
 
 /* ----- 2. profile completeness check ---- */
 $required = [
