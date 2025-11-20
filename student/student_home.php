@@ -44,6 +44,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             background: #f3f3f3;
             margin: 0;
             padding: 0;
+            padding-top: 80px;
         }
 
         /* ▬▬▬▬ WELCOME BOX ▬▬▬▬ */
@@ -96,6 +97,45 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             font-weight: 700;
             letter-spacing: 0.5px;
             line-height: 1.3;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.enrolled {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            border: 1px solid #2e7d32;
+        }
+
+        .status-badge.not-enrolled {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            border: 1px solid #e65100;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.7;
         }
 
         .welcome-info p {
@@ -196,6 +236,14 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
             .welcome-info h2 {
                 font-size: 24px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .status-badge {
+                padding: 7px 14px;
+                font-size: 12px;
             }
 
             .welcome-info p {
@@ -222,6 +270,14 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
             .welcome-info h2 {
                 font-size: 22px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .status-badge {
+                padding: 6px 12px;
+                font-size: 11px;
             }
 
             .welcome-info p {
@@ -733,7 +789,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
     </style>
 </head>
 
-<body>
+<body class="admin-body">
 
     <!-- ▬▬▬▬ DIGITAL ID (PORTRAIT VERSION) ▬▬▬▬ -->
     <style>
@@ -930,11 +986,11 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
                 <div class="id-actions">
                     <button onclick="downloadVisualID(event)" class="id-btn download-btn">
-                        ⬇️ Download Visual ID
+                        Download Visual ID
                     </button>
 
                     <button onclick="scanQRCode(event)" class="id-btn scan-btn">
-                        📷 Scan QR Code
+                        Scan QR Code
                     </button>
                 </div>
             </div>
@@ -947,7 +1003,10 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         <img src="<?php echo $avatar; ?>" alt="Avatar">
         <div class="welcome-content-wrapper">
             <div class="welcome-info">
-                <h2>Welcome, <?php echo $studentName; ?> !</h2>
+                <h2>
+                    Welcome, <?php echo $studentName; ?> !
+                    <span class="status-badge enrolled">Enrolled</span>
+                </h2>
                 <p><strong>ID:</strong> <?php echo $studentID; ?></p>
                 <p><strong>Course:</strong> <?php echo $course; ?></p>
                 <p><strong>Year & Section:</strong> <?php echo $yearSection; ?></p>

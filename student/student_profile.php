@@ -28,6 +28,7 @@ $fullName   = htmlspecialchars($stu['first_name'].' '.$stu['last_name']);
             background: #f3f3f3;
             margin: 0;
             padding: 0;
+            padding-top: 80px;
         }
 
         /* ▬▬▬▬ HEADER ▬▬▬▬ */
@@ -157,11 +158,6 @@ $fullName   = htmlspecialchars($stu['first_name'].' '.$stu['last_name']);
     </style>
 </head>
 <body>
-
-    <!-- HEADER -->
-    <div class="profile-header">
-        <h2>My Profile</h2>
-    </div>
 
     <!-- PROFILE CARD -->
     <div class="profile-container">

@@ -64,24 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: #f3f3f3;
             margin: 0;
             padding: 0;
-        }
-
-        /* ▬▬▬▬ HEADER ▬▬▬▬ */
-        .page-header {
-            width: 95%;
-            margin: 10px auto 30px;
-            background: #ffffff;
-            border-left: 8px solid #1b5e20;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
-        }
-
-        .page-header h2 {
-            margin: 0;
-            color: #1b5e20;
-            font-size: 22px;
+            padding-top: 80px;
         }
 
         /* ▬▬▬▬ ALERT MESSAGE ▬▬▬▬ */
@@ -278,11 +261,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-    <!-- HEADER -->
-    <div class="page-header">
-        <h2>Edit Profile</h2>
-    </div>
-
     <!-- ALERT MESSAGE -->
     <?php if ($msg): ?>
     <div class="alert-message show">
@@ -429,8 +407,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- ACTION BUTTONS -->
                 <div class="form-actions">
-                    <button type="submit" class="btn-primary">💾 Save Changes</button>
-                    <a href="student_profile.php" class="btn-secondary">← Back to Profile</a>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                    <a href="student_profile.php" class="btn-secondary">Back to Profile</a>
                 </div>
 
             </form>
