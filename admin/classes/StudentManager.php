@@ -553,7 +553,7 @@ private function outputCSV(array $students): void
     $headers = [
         'ID', 'Student ID', 'Email', 'First Name', 'Last Name', 
         'Year Level', 'Course', 'Contact Number', 'Address',
-        'Emergency Contact', 'Blood Type', 'Profile Completed',
+        'Emergency Contact Name', 'Emergency Contact Number', 'Blood Type', 'Profile Completed',
         'Created At', 'Digital ID Generated At'
     ];
     
@@ -570,6 +570,7 @@ private function outputCSV(array $students): void
             $student['course'],
             $student['contact_number'],
             $student['address'],
+            $student['emergency_contact_name'] ?? '',
             $student['emergency_contact'],
             $student['blood_type'],
             $student['profile_completed'] ? 'Yes' : 'No',

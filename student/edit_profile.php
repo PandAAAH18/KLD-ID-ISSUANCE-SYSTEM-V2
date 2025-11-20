@@ -14,40 +14,82 @@ if (!$stu) { header('Location: ../index.php'); exit(); }
 
 /* ---------- handle post ---------- */
 $msg = '';
+$error_msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* text fields */
     $data = [
-        'first_name'         => trim($_POST['first_name']   ?? ''),
-        'last_name'          => trim($_POST['last_name']    ?? ''),
-        'contact_number'     => trim($_POST['contact_number'] ?? ''),
-        'dob'                => trim($_POST['dob']          ?? ''),
-        'gender'             => trim($_POST['gender']       ?? ''),
-        'course'             => trim($_POST['course']       ?? ''),
-        'year_level'         => trim($_POST['year_level']   ?? ''),
-        'blood_type'         => trim($_POST['blood_type']   ?? ''),
-        'emergency_contact'  => trim($_POST['emergency_contact'] ?? ''),
-        'address'            => trim($_POST['address']      ?? ''),
+        'first_name'              => trim($_POST['first_name']   ?? ''),
+        'last_name'               => trim($_POST['last_name']    ?? ''),
+        'contact_number'          => trim($_POST['contact_number'] ?? ''),
+        'dob'                     => trim($_POST['dob']          ?? ''),
+        'gender'                  => trim($_POST['gender']       ?? ''),
+        'course'                  => trim($_POST['course']       ?? ''),
+        'year_level'              => trim($_POST['year_level']   ?? ''),
+        'blood_type'              => trim($_POST['blood_type']   ?? ''),
+        'emergency_contact_name'  => trim($_POST['emergency_contact_name'] ?? ''),
+        'emergency_contact'       => trim($_POST['emergency_contact'] ?? ''),
+        'address'                 => trim($_POST['address']      ?? ''),
     ];
 
-    /* optional password */
-    $pwd = trim($_POST['password'] ?? '');
-    if ($pwd !== '') $data['password_hash'] = password_hash($pwd, PASSWORD_DEFAULT);
+    /* password change handling */
+    $old_pwd = trim($_POST['old_password'] ?? '');
+    $new_pwd = trim($_POST['new_password'] ?? '');
+    $confirm_pwd = trim($_POST['confirm_password'] ?? '');
+    
+    if ($old_pwd !== '' || $new_pwd !== '' || $confirm_pwd !== '') {
+        // If any password field is filled, all are required
+        if (empty($old_pwd)) {
+            $error_msg = 'Please enter your current password.';
+        } elseif (empty($new_pwd)) {
+            $error_msg = 'Please enter a new password.';
+        } elseif (empty($confirm_pwd)) {
+            $error_msg = 'Please confirm your new password.';
+        } elseif ($new_pwd !== $confirm_pwd) {
+            $error_msg = 'New password and confirmation do not match.';
+        } elseif (strlen($new_pwd) < 8) {
+            $error_msg = 'New password must be at least 8 characters long.';
+        } else {
+            // Verify old password
+            $user = $stuObj->findByEmail($_SESSION['email']);
+            if (!$user || !password_verify($old_pwd, $user['password_hash'])) {
+                $error_msg = 'Current password is incorrect.';
+            } else {
+                // Old password is correct, set new password
+                $data['password_hash'] = password_hash($new_pwd, PASSWORD_DEFAULT);
+                $msg = 'Password changed successfully! ';
+            }
+        }
+    }
 
-    /* files */
-    if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK)
-        $data['photo'] = $stuObj->saveUploadedFile($_FILES['profile_photo'], 'student_photos');
+    /* Only proceed if no password errors */
+    if (empty($error_msg)) {
+        /* files */
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK)
+            $data['photo'] = $stuObj->saveUploadedFile($_FILES['profile_photo'], 'student_photos');
 
-    if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] === UPLOAD_ERR_OK)
-        $data['cor'] = $stuObj->saveUploadedFile($_FILES['cor_photo'], 'student_cor');
+        if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] === UPLOAD_ERR_OK)
+            $data['cor'] = $stuObj->saveUploadedFile($_FILES['cor_photo'], 'student_cor');
 
-    if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK)
-        $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
+        if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK)
+            $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
 
-    $stuObj->updateStudent($stu['id'], $data);
-    $msg = 'Profile updated successfully!';
-    /* re-read row */
-    $stu = $stuObj->findById($stu['id']);
+        $stuObj->updateStudent($stu['id'], $data);
+        
+        /* Update password in users table if changed */
+        if (isset($data['password_hash'])) {
+            $db = $stuObj->getDb();
+            $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE email = :email");
+            $stmt->execute([
+                ':hash' => $data['password_hash'],
+                ':email' => $_SESSION['email']
+            ]);
+        }
+        
+        if (!$msg) $msg = 'Profile updated successfully!';
+        /* re-read row */
+        $stu = $stuObj->findById($stu['id']);
+    }
 }
 ?>
 
@@ -58,76 +100,185 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
     <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/css/admin.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #f3f3f3;
             margin: 0;
             padding: 0;
             padding-top: 80px;
         }
 
-        /* ▬▬▬▬ ALERT MESSAGE ▬▬▬▬ */
-        .alert-message {
+        /* ▬▬▬▬ MAIN WRAPPER ▬▬▬▬ */
+        .profile-wrapper {
             width: 95%;
-            margin: 20px auto;
-            padding: 15px;
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            border-radius: 5px;
+            max-width: 1000px;
+            margin: 30px auto;
+        }
+
+        /* ▬▬▬▬ PAGE HEADER ▬▬▬▬ */
+        .edit-header {
+            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+            color: white;
+            padding: 50px 30px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .edit-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .edit-header h1 {
+            margin: 0;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .edit-header p {
+            margin: 10px 0 0 0;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        /* ▬▬▬▬ ALERT MESSAGE ▬▬▬▬ */
+        .alert-banner {
+            padding: 18px 24px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            animation: slideDown 0.3s ease-out;
+            border-left: 5px solid;
             display: none;
         }
 
-        .alert-message.show {
-            display: block;
+        .alert-banner.show {
+            display: flex;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
         }
 
         /* ▬▬▬▬ FORM CONTAINER ▬▬▬▬ */
         .form-container {
-            width: 95%;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             overflow: hidden;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .form-container:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
         .form-section-header {
-            background: #1b5e20;
+            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 30px;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .form-body {
-            padding: 30px;
+            padding: 40px 30px;
+        }
+
+        /* ▬▬▬▬ SECTION TITLE ▬▬▬▬ */
+        .form-section-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1b5e20;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #b69b04;
+            letter-spacing: -0.2px;
+        }
+
+        .form-section-title:first-child {
+            margin-top: 0;
         }
 
         /* ▬▬▬▬ FORM GROUPS ▬▬▬▬ */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 0;
         }
 
         .form-group label {
             display: block;
-            font-weight: bold;
-            color: #1b5e20;
-            margin-bottom: 8px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
             font-size: 14px;
+            letter-spacing: -0.2px;
+        }
+
+        .form-group.required label::after {
+            content: ' *';
+            color: #dc3545;
+            font-weight: 900;
         }
 
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 13px 16px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 14px;
-            font-family: Arial, sans-serif;
+            font-family: inherit;
             box-sizing: border-box;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: #999;
         }
 
         .form-group input:focus,
@@ -135,7 +286,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group textarea:focus {
             outline: none;
             border-color: #1b5e20;
-            box-shadow: 0 0 5px rgba(27, 94, 32, 0.3);
+            box-shadow: 0 0 12px rgba(27, 94, 32, 0.15);
+            background: white;
         }
 
         /* ▬▬▬▬ FORM GRID ▬▬▬▬ */
@@ -143,109 +295,146 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+            margin-bottom: 20px;
         }
 
-        .form-full {
-            grid-column: 1 / -1;
+        .form-grid.full {
+            grid-template-columns: 1fr;
         }
 
         /* ▬▬▬▬ FILE INPUT ▬▬▬▬ */
         .file-input-wrapper {
             border: 2px dashed #1b5e20;
-            padding: 15px;
-            border-radius: 5px;
+            padding: 20px;
+            border-radius: 8px;
             background: #f8f9fa;
             text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-input-wrapper:hover {
+            background: #f0f8f5;
+            border-color: #0d3817;
         }
 
         .file-input-wrapper input[type="file"] {
             padding: 0;
             border: none;
             background: none;
+            cursor: pointer;
         }
 
         .file-input-wrapper input[type="file"]::file-selector-button {
-            padding: 8px 15px;
+            padding: 10px 20px;
             background: #1b5e20;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
+            font-weight: 700;
+            transition: all 0.3s;
+            font-size: 14px;
         }
 
         .file-input-wrapper input[type="file"]::file-selector-button:hover {
             background: #0d3817;
+            transform: translateY(-2px);
+        }
+
+        .file-hint {
+            font-size: 13px;
+            color: #999;
+            margin-top: 8px;
         }
 
         /* ▬▬▬▬ BUTTONS ▬▬▬▬ */
         .form-actions {
-            margin-top: 30px;
+            margin-top: 40px;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
         }
 
         .btn-primary,
         .btn-secondary {
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: bold;
+            padding: 13px 40px;
+            font-size: 15px;
+            font-weight: 700;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            letter-spacing: -0.2px;
         }
 
         .btn-primary {
-            background: #1b5e20;
+            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
             color: white;
+            box-shadow: 0 4px 12px rgba(27, 94, 32, 0.2);
         }
 
         .btn-primary:hover {
-            background: #0d3817;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(27, 94, 32, 0.3);
         }
 
         .btn-secondary {
-            background: #6c757d;
-            color: white;
+            background: #f0f0f0;
+            color: #333;
+            border: 1.5px solid #ddd;
         }
 
         .btn-secondary:hover {
-            background: #5a6268;
+            background: #e8e8e8;
+            border-color: #1b5e20;
+            color: #1b5e20;
+            transform: translateY(-2px);
         }
 
         .btn-info {
-            background: #17a2b8;
+            background: #1b5e20;
             color: white;
-            padding: 8px 15px;
+            padding: 10px 18px;
             font-size: 14px;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
         .btn-info:hover {
-            background: #138496;
+            background: #0d3817;
+            transform: translateY(-2px);
         }
 
         /* ▬▬▬▬ PASSWORD SECTION ▬▬▬▬ */
         #pwdBox {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 10px;
+            background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+            border: 1.5px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #ffc107;
         }
 
+        /* ▬▬▬▬ RESPONSIVE ▬▬▬▬ */
         @media (max-width: 768px) {
+            .profile-wrapper {
+                width: 100%;
+            }
+
             .form-grid {
                 grid-template-columns: 1fr;
             }
 
-            .form-container,
-            .page-header {
-                width: 100%;
+            .form-body {
+                padding: 25px;
             }
 
             .form-actions {
@@ -256,162 +445,252 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .btn-secondary {
                 width: 100%;
             }
+
+            .edit-header {
+                padding: 35px 20px;
+            }
+
+            .edit-header h1 {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .form-body {
+                padding: 20px;
+            }
+
+            .edit-header h1 {
+                font-size: 24px;
+            }
+
+            .form-section-header {
+                font-size: 16px;
+                padding: 20px;
+            }
         }
     </style>
 </head>
-<body>
+<body class="admin-body">
 
-    <!-- ALERT MESSAGE -->
-    <?php if ($msg): ?>
-    <div class="alert-message show">
-        ✓ <?php echo htmlspecialchars($msg); ?>
-    </div>
-    <?php endif; ?>
-
-    <!-- FORM CONTAINER -->
-    <div class="form-container">
-        <div class="form-section-header">
-            Personal Information
+    <!-- PAGE HEADER -->
+    <div class="profile-wrapper">
+        <div class="edit-header">
+            <h1>Edit Your Profile</h1>
+            <p>Keep your information up-to-date and accurate</p>
         </div>
 
-        <div class="form-body">
-            <form method="post" enctype="multipart/form-data">
-                
-                <!-- BASIC INFO -->
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>First Name *</label>
-                        <input type="text" name="first_name" value="<?=htmlspecialchars($stu['first_name'])?>" required>
-                    </div>
+        <!-- ALERT MESSAGE -->
+        <?php if ($msg): ?>
+        <div class="alert-banner show alert-success">
+            <span>✓</span>
+            <span><?php echo htmlspecialchars($msg); ?></span>
+        </div>
+        <?php endif; ?>
 
-                    <div class="form-group">
-                        <label>Last Name *</label>
-                        <input type="text" name="last_name" value="<?=htmlspecialchars($stu['last_name'])?>" required>
-                    </div>
+        <?php if ($error_msg): ?>
+        <div class="alert-banner show alert-error">
+            <span>✕</span>
+            <span><?php echo htmlspecialchars($error_msg); ?></span>
+        </div>
+        <?php endif; ?>
 
-                    <div class="form-group">
-                        <label>Contact Number *</label>
-                        <input type="text" name="contact_number" value="<?=htmlspecialchars($stu['contact_number'])?>" required>
-                    </div>
+        <!-- FORM CONTAINER -->
+        <div class="form-container">
+            <div class="form-section-header">
+                Personal Information
+            </div>
 
-                    <div class="form-group">
-                        <label>Date of Birth</label>
-                        <input type="date" name="dob" value="<?=htmlspecialchars($stu['dob'] ?? '')?>">
-                    </div>
+            <div class="form-body">
+                <form method="post" enctype="multipart/form-data">
+                    
+                    <!-- BASIC INFO SECTION -->
+                    <div class="form-section-title">Basic Information</div>
+                    <div class="form-grid">
+                        <div class="form-group required">
+                            <label>First Name</label>
+                            <input type="text" name="first_name" value="<?=htmlspecialchars($stu['first_name'])?>" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select name="gender">
-                            <option value="">-- Select --</option>
-                            <option value="Male" <?=isset($stu['gender']) && $stu['gender']==='Male' ? 'selected' : ''?>>Male</option>
-                            <option value="Female" <?=isset($stu['gender']) && $stu['gender']==='Female' ? 'selected' : ''?>>Female</option>
-                        </select>
-                    </div>
+                        <div class="form-group required">
+                            <label>Last Name</label>
+                            <input type="text" name="last_name" value="<?=htmlspecialchars($stu['last_name'])?>" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Blood Type</label>
-                        <select name="blood_type">
-                            <option value="">-- Select --</option>
-                            <?php
-                            $bloodOpts = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
-                            foreach ($bloodOpts as $bt)
-                                echo '<option value="'.htmlspecialchars($bt).'"'
-                                   . (isset($stu['blood_type']) && $stu['blood_type']===$bt ? ' selected' : '')
-                                   . '>'.htmlspecialchars($bt).'</option>';
-                            ?>
-                        </select>
-                    </div>
+                        <div class="form-group required">
+                            <label>Contact Number</label>
+                            <input type="text" name="contact_number" value="<?=htmlspecialchars($stu['contact_number'])?>" required>
+                        </div>
 
-                    <div class="form-group">
-                        <label>Course *</label>
-                        <select name="course" required>
-                            <option value="">-- Select --</option>
-                            <?php
-                            $courses = [
-                                'BS Information System',
-                                'BS Computer Science',
-                                'BS Engineering',
-                                'BS Psychology',
-                                'BS Nursing',
-                                'BS Midwifery'
-                            ];
-                            foreach ($courses as $c):
-                                $sel = (isset($stu['course']) && $stu['course'] === $c) ? 'selected' : '';
-                                echo '<option value="'.htmlspecialchars($c).'" '.$sel.'>'.htmlspecialchars($c).'</option>';
-                            endforeach;
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Year Level *</label>
-                        <select name="year_level" required>
-                            <option value="">-- Select --</option>
-                            <option value="1st Year" <?=isset($stu['year_level']) && $stu['year_level']==='1st Year' ? 'selected' : ''?>>1st Year</option>
-                            <option value="2nd Year" <?=isset($stu['year_level']) && $stu['year_level']==='2nd Year' ? 'selected' : ''?>>2nd Year</option>
-                            <option value="3rd Year" <?=isset($stu['year_level']) && $stu['year_level']==='3rd Year' ? 'selected' : ''?>>3rd Year</option>
-                            <option value="4th Year" <?=isset($stu['year_level']) && $stu['year_level']==='4th Year' ? 'selected' : ''?>>4th Year</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Emergency Contact</label>
-                        <input type="text" name="emergency_contact" value="<?=htmlspecialchars($stu['emergency_contact'] ?? '')?>">
-                    </div>
-
-                    <div class="form-group form-full">
-                        <label>Address</label>
-                        <textarea name="address" rows="3"><?=htmlspecialchars($stu['address'] ?? '')?></textarea>
-                    </div>
-                </div>
-
-                <!-- PASSWORD SECTION -->
-                <div style="margin-top: 25px; margin-bottom: 25px; border-top: 1px solid #ddd; padding-top: 25px;">
-                    <button type="button" class="btn-info" onclick="document.getElementById('pwdBox').style.display='block'; this.disabled=true;">🔐 Change Password</button>
-                    <div id="pwdBox" style="display:none; margin-top: 15px;">
                         <div class="form-group">
-                            <label>New Password</label>
-                            <input type="password" name="password" placeholder="Leave blank to keep current password">
+                            <label>Date of Birth</label>
+                            <input type="date" name="dob" value="<?=htmlspecialchars($stu['dob'] ?? '')?>">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select name="gender">
+                                <option value="">-- Select --</option>
+                                <option value="Male" <?=isset($stu['gender']) && $stu['gender']==='Male' ? 'selected' : ''?>>Male</option>
+                                <option value="Female" <?=isset($stu['gender']) && $stu['gender']==='Female' ? 'selected' : ''?>>Female</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Blood Type</label>
+                            <select name="blood_type">
+                                <option value="">-- Select --</option>
+                                <?php
+                                $bloodOpts = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+                                foreach ($bloodOpts as $bt)
+                                    echo '<option value="'.htmlspecialchars($bt).'"'
+                                       . (isset($stu['blood_type']) && $stu['blood_type']===$bt ? ' selected' : '')
+                                       . '>'.htmlspecialchars($bt).'</option>';
+                                ?>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <!-- FILE UPLOADS -->
-                <div style="border-top: 1px solid #ddd; padding-top: 25px; margin-top: 25px;">
+                    <!-- ACADEMIC INFO SECTION -->
+                    <div class="form-section-title">Academic Information</div>
+                    <div class="form-grid">
+                        <div class="form-group required">
+                            <label>Course</label>
+                            <select name="course" required>
+                                <option value="">-- Select --</option>
+                                <?php
+                                $courses = [
+                                    'BS Information System',
+                                    'BS Computer Science',
+                                    'BS Engineering',
+                                    'BS Psychology',
+                                    'BS Nursing',
+                                    'BS Midwifery'
+                                ];
+                                foreach ($courses as $c):
+                                    $sel = (isset($stu['course']) && $stu['course'] === $c) ? 'selected' : '';
+                                    echo '<option value="'.htmlspecialchars($c).'" '.$sel.'>'.htmlspecialchars($c).'</option>';
+                                endforeach;
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group required">
+                            <label>Year Level</label>
+                            <select name="year_level" required>
+                                <option value="">-- Select --</option>
+                                <option value="1st Year" <?=isset($stu['year_level']) && $stu['year_level']==='1st Year' ? 'selected' : ''?>>1st Year</option>
+                                <option value="2nd Year" <?=isset($stu['year_level']) && $stu['year_level']==='2nd Year' ? 'selected' : ''?>>2nd Year</option>
+                                <option value="3rd Year" <?=isset($stu['year_level']) && $stu['year_level']==='3rd Year' ? 'selected' : ''?>>3rd Year</option>
+                                <option value="4th Year" <?=isset($stu['year_level']) && $stu['year_level']==='4th Year' ? 'selected' : ''?>>4th Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CONTACT INFO SECTION -->
+                    <div class="form-section-title">Contact & Emergency</div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Profile Photo</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
-                                <p style="margin: 5px 0; color: #666; font-size: 13px;">JPG, PNG (Max 5MB)</p>
-                            </div>
+                            <label>Emergency Contact Name</label>
+                            <input type="text" name="emergency_contact_name" value="<?=htmlspecialchars($stu['emergency_contact_name'] ?? '')?>" placeholder="Full name">
                         </div>
-
                         <div class="form-group">
-                            <label>Certificate of Registration (COR)</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
-                                <p style="margin: 5px 0; color: #666; font-size: 13px;">JPG, PNG, PDF (Max 10MB)</p>
-                            </div>
+                            <label>Emergency Contact Number</label>
+                            <input type="text" name="emergency_contact" value="<?=htmlspecialchars($stu['emergency_contact'] ?? '')?>" placeholder="Phone number">
                         </div>
+                    </div>
 
+                    <div class="form-grid full">
                         <div class="form-group">
-                            <label>Signature</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" name="signature" accept=".jpg,.jpeg,.png">
-                                <p style="margin: 5px 0; color: #666; font-size: 13px;">JPG, PNG (Max 5MB)</p>
+                            <label>Address</label>
+                            <textarea name="address" rows="4" placeholder="Your complete address"><?=htmlspecialchars($stu['address'] ?? '')?></textarea>
+                        </div>
+                    </div>
+
+                    <!-- PASSWORD SECTION -->
+                    <div style="margin-top: 30px; margin-bottom: 30px; border-top: 1px solid #eee; padding-top: 30px;">
+                        <button type="button" class="btn-info" onclick="togglePasswordSection()" id="togglePwdBtn">🔐 Change Password</button>
+                        <div id="pwdBox" style="display:none; margin-top: 20px;">
+                            <div class="form-grid">
+                                <div class="form-group required">
+                                    <label>Current Password</label>
+                                    <input type="password" name="old_password" id="old_password" placeholder="Enter your current password">
+                                </div>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group required">
+                                    <label>New Password</label>
+                                    <input type="password" name="new_password" id="new_password" placeholder="Minimum 8 characters">
+                                </div>
+                                <div class="form-group required">
+                                    <label>Confirm New Password</label>
+                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter new password">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button type="button" class="btn-info" onclick="togglePasswordSection()" style="background: #999;">Cancel</button>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- ACTION BUTTONS -->
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Save Changes</button>
-                    <a href="student_profile.php" class="btn-secondary">Back to Profile</a>
-                </div>
+                    <script>
+                    function togglePasswordSection() {
+                        const pwdBox = document.getElementById('pwdBox');
+                        const toggleBtn = document.getElementById('togglePwdBtn');
+                        if (pwdBox.style.display === 'none') {
+                            pwdBox.style.display = 'block';
+                            toggleBtn.textContent = '✕ Cancel Password Change';
+                        } else {
+                            pwdBox.style.display = 'none';
+                            toggleBtn.textContent = '🔐 Change Password';
+                            // Clear password fields
+                            document.getElementById('old_password').value = '';
+                            document.getElementById('new_password').value = '';
+                            document.getElementById('confirm_password').value = '';
+                        }
+                    }
+                    </script>
 
-            </form>
+                    <!-- FILE UPLOADS SECTION -->
+                    <div style="border-top: 1px solid #eee; padding-top: 30px; margin-top: 30px;">
+                        <div class="form-section-title">Upload Documents</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Profile Photo</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
+                                    <div class="file-hint">JPG, PNG (Max 5MB)</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Certificate of Registration</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
+                                    <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Signature</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="signature" accept=".jpg,.jpeg,.png">
+                                    <div class="file-hint">JPG, PNG (Max 5MB)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <a href="student_profile.php" class="btn-secondary">Back to Profile</a>
+                    </div>
+
+                </form>
+            </div>
         </div>
     </div>
 
