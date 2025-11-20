@@ -163,7 +163,7 @@ public function uploadStudentPhoto(int $studentId, array $file): array
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
+        ($finfo);
         
         if (!in_array($mimeType, $allowedTypes)) {
             throw new Exception("Invalid file type. Allowed: JPEG, PNG, GIF, WebP");
@@ -222,7 +222,7 @@ public function updateStudentPhoto(int $studentId, array $file): array
         
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
+        ($finfo);
         
         $fileExtension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         
