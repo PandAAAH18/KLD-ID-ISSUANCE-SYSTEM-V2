@@ -19,7 +19,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
 <body class="admin-body">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg school-navbar">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="student_home.php">
                 <i class="fas fa-school me-2"></i>School Portal - Student
             </a>
