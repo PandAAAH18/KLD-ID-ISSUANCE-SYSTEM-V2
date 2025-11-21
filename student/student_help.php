@@ -670,10 +670,54 @@ $faqs = [
                 margin-bottom: 8px;
             }
         }
+
+        /* Back-to-Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
+            z-index: 999;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(27, 94, 32, 0.4);
+            background: linear-gradient(135deg, #0d3817 0%, #051a0f 100%);
+        }
+
+        .back-to-top:active {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 576px) {
+            .back-to-top {
+                width: 45px;
+                height: 45px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 
 <body class="admin-body">
+
+    <!-- BACK-TO-TOP BUTTON -->
+    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
 
     <div class="help-wrapper">
         <!-- PAGE HEADER -->
@@ -947,6 +991,23 @@ $faqs = [
                 }
             });
         });
+
+        // Back-to-Top Button Functionality
+        window.addEventListener('scroll', function() {
+            const backToTopBtn = document.getElementById('backToTopBtn');
+            if (window.scrollY > 300) {
+                backToTopBtn.style.display = 'flex';
+            } else {
+                backToTopBtn.style.display = 'none';
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
     </script>
 
 </body>
