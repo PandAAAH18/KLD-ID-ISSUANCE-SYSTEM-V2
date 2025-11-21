@@ -790,6 +790,8 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 </head>
 
 <body class="admin-body">
+    <!-- BACK TO TOP BUTTON -->
+    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
 
     <!-- ▬▬▬▬ DIGITAL ID (PORTRAIT VERSION) ▬▬▬▬ -->
     <style>
@@ -949,6 +951,47 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         .id-btn:active {
             transform: translateY(0);
         }
+
+        /* ▬▬▬▬ BACK TO TOP BUTTON ▬▬▬▬ */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+            color: white;
+            border: none;
+            font-size: 24px;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(27, 94, 32, 0.3);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(27, 94, 32, 0.4);
+        }
+
+        .back-to-top:active {
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+        }
     </style>
 
     <div class="portrait-id-container">
@@ -1054,6 +1097,25 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 </html>
 
 <script>
+    // ▬▬▬▬ BACK TO TOP BUTTON FUNCTIONALITY ▬▬▬▬
+    const backToTopBtn = document.getElementById('backToTopBtn');
+
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            backToTopBtn.style.display = 'flex';
+        } else {
+            backToTopBtn.style.display = 'none';
+        }
+    });
+
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    // ▬▬▬▬ PORTRAIT ID CARD FLIP ▬▬▬▬
     document.querySelector('.portrait-id-card').addEventListener('click', function() {
         this.classList.toggle('flipped');
     });
