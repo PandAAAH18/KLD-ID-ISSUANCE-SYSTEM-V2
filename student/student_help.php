@@ -108,9 +108,10 @@ $faqs = [
         .help-header {
             background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
             color: white;
-            padding: 60px 30px;
+            padding: 25px 30px;
             border-radius: 12px;
-            margin-bottom: 50px;
+            margin-top: 95px;
+            margin-bottom: 30px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
             text-align: center;
             position: relative;

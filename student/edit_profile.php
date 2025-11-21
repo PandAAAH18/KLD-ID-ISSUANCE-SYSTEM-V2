@@ -1,16 +1,22 @@
 <?php
-require_once __DIR__.'/../includes/config.php';
-require_once __DIR__.'/student_header.php';
-require_once __DIR__.'/student.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/student_header.php';
+require_once __DIR__ . '/student.php';
 
-if (!isset($_SESSION['user_id'], $_SESSION['user_type'], $_SESSION['student_id']) ||
-    $_SESSION['user_type'] !== 'student') {
-    header('Location: ../index.php'); exit();
+if (
+    !isset($_SESSION['user_id'], $_SESSION['user_type'], $_SESSION['student_id']) ||
+    $_SESSION['user_type'] !== 'student'
+) {
+    header('Location: ../index.php');
+    exit();
 }
 
 $stuObj = new Student();
 $stu    = $stuObj->findById((int)$_SESSION['student_id']);
-if (!$stu) { header('Location: ../index.php'); exit(); }
+if (!$stu) {
+    header('Location: ../index.php');
+    exit();
+}
 
 /* ---------- handle post ---------- */
 $msg = '';
@@ -36,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old_pwd = trim($_POST['old_password'] ?? '');
     $new_pwd = trim($_POST['new_password'] ?? '');
     $confirm_pwd = trim($_POST['confirm_password'] ?? '');
-    
+
     if ($old_pwd !== '' || $new_pwd !== '' || $confirm_pwd !== '') {
         // If any password field is filled, all are required
         if (empty($old_pwd)) {
@@ -75,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
 
         $stuObj->updateStudent($stu['id'], $data);
-        
+
         /* Update password in users table if changed */
         if (isset($data['password_hash'])) {
             $db = $stuObj->getDb();
@@ -85,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':email' => $_SESSION['email']
             ]);
         }
-        
+
         if (!$msg) $msg = 'Profile updated successfully!';
         /* re-read row */
         $stu = $stuObj->findById($stu['id']);
@@ -95,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -121,8 +128,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .edit-header {
             background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
             color: white;
-            padding: 50px 30px;
+            padding: 30px 30px;
             border-radius: 12px;
+            margin-top: 95px;
             margin-bottom: 40px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
             text-align: center;
@@ -178,6 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -213,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-section-header {
             background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
             color: white;
-            padding: 25px 30px;
+            padding: 20px 30px;
             font-size: 18px;
             font-weight: 800;
             letter-spacing: -0.3px;
@@ -223,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .form-body {
-            padding: 40px 30px;
+            padding: 25px 30px;
         }
 
         /* ▬▬▬▬ SECTION TITLE ▬▬▬▬ */
@@ -471,6 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body class="admin-body">
 
     <!-- PAGE HEADER -->
@@ -482,17 +492,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- ALERT MESSAGE -->
         <?php if ($msg): ?>
-        <div class="alert-banner show alert-success">
-            <span>✓</span>
-            <span><?php echo htmlspecialchars($msg); ?></span>
-        </div>
+            <div class="alert-banner show alert-success">
+                <span>✓</span>
+                <span><?php echo htmlspecialchars($msg); ?></span>
+            </div>
         <?php endif; ?>
 
         <?php if ($error_msg): ?>
-        <div class="alert-banner show alert-error">
-            <span>✕</span>
-            <span><?php echo htmlspecialchars($error_msg); ?></span>
-        </div>
+            <div class="alert-banner show alert-error">
+                <span>✕</span>
+                <span><?php echo htmlspecialchars($error_msg); ?></span>
+            </div>
         <?php endif; ?>
 
         <!-- FORM CONTAINER -->
@@ -503,36 +513,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-body">
                 <form method="post" enctype="multipart/form-data">
-                    
+
                     <!-- BASIC INFO SECTION -->
                     <div class="form-section-title">Basic Information</div>
                     <div class="form-grid">
                         <div class="form-group required">
                             <label>First Name</label>
-                            <input type="text" name="first_name" value="<?=htmlspecialchars($stu['first_name'])?>" required>
+                            <input type="text" name="first_name" value="<?= htmlspecialchars($stu['first_name']) ?>" required>
                         </div>
 
                         <div class="form-group required">
                             <label>Last Name</label>
-                            <input type="text" name="last_name" value="<?=htmlspecialchars($stu['last_name'])?>" required>
+                            <input type="text" name="last_name" value="<?= htmlspecialchars($stu['last_name']) ?>" required>
                         </div>
 
                         <div class="form-group required">
                             <label>Contact Number</label>
-                            <input type="text" name="contact_number" value="<?=htmlspecialchars($stu['contact_number'])?>" required>
+                            <input type="text" name="contact_number" value="<?= htmlspecialchars($stu['contact_number']) ?>" required>
                         </div>
 
                         <div class="form-group">
                             <label>Date of Birth</label>
-                            <input type="date" name="dob" value="<?=htmlspecialchars($stu['dob'] ?? '')?>">
+                            <input type="date" name="dob" value="<?= htmlspecialchars($stu['dob'] ?? '') ?>">
                         </div>
 
                         <div class="form-group">
                             <label>Gender</label>
                             <select name="gender">
                                 <option value="">-- Select --</option>
-                                <option value="Male" <?=isset($stu['gender']) && $stu['gender']==='Male' ? 'selected' : ''?>>Male</option>
-                                <option value="Female" <?=isset($stu['gender']) && $stu['gender']==='Female' ? 'selected' : ''?>>Female</option>
+                                <option value="Male" <?= isset($stu['gender']) && $stu['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
+                                <option value="Female" <?= isset($stu['gender']) && $stu['gender'] === 'Female' ? 'selected' : '' ?>>Female</option>
                             </select>
                         </div>
 
@@ -541,11 +551,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <select name="blood_type">
                                 <option value="">-- Select --</option>
                                 <?php
-                                $bloodOpts = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+                                $bloodOpts = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
                                 foreach ($bloodOpts as $bt)
-                                    echo '<option value="'.htmlspecialchars($bt).'"'
-                                       . (isset($stu['blood_type']) && $stu['blood_type']===$bt ? ' selected' : '')
-                                       . '>'.htmlspecialchars($bt).'</option>';
+                                    echo '<option value="' . htmlspecialchars($bt) . '"'
+                                        . (isset($stu['blood_type']) && $stu['blood_type'] === $bt ? ' selected' : '')
+                                        . '>' . htmlspecialchars($bt) . '</option>';
                                 ?>
                             </select>
                         </div>
@@ -569,7 +579,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 ];
                                 foreach ($courses as $c):
                                     $sel = (isset($stu['course']) && $stu['course'] === $c) ? 'selected' : '';
-                                    echo '<option value="'.htmlspecialchars($c).'" '.$sel.'>'.htmlspecialchars($c).'</option>';
+                                    echo '<option value="' . htmlspecialchars($c) . '" ' . $sel . '>' . htmlspecialchars($c) . '</option>';
                                 endforeach;
                                 ?>
                             </select>
@@ -579,10 +589,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label>Year Level</label>
                             <select name="year_level" required>
                                 <option value="">-- Select --</option>
-                                <option value="1st Year" <?=isset($stu['year_level']) && $stu['year_level']==='1st Year' ? 'selected' : ''?>>1st Year</option>
-                                <option value="2nd Year" <?=isset($stu['year_level']) && $stu['year_level']==='2nd Year' ? 'selected' : ''?>>2nd Year</option>
-                                <option value="3rd Year" <?=isset($stu['year_level']) && $stu['year_level']==='3rd Year' ? 'selected' : ''?>>3rd Year</option>
-                                <option value="4th Year" <?=isset($stu['year_level']) && $stu['year_level']==='4th Year' ? 'selected' : ''?>>4th Year</option>
+                                <option value="1st Year" <?= isset($stu['year_level']) && $stu['year_level'] === '1st Year' ? 'selected' : '' ?>>1st Year</option>
+                                <option value="2nd Year" <?= isset($stu['year_level']) && $stu['year_level'] === '2nd Year' ? 'selected' : '' ?>>2nd Year</option>
+                                <option value="3rd Year" <?= isset($stu['year_level']) && $stu['year_level'] === '3rd Year' ? 'selected' : '' ?>>3rd Year</option>
+                                <option value="4th Year" <?= isset($stu['year_level']) && $stu['year_level'] === '4th Year' ? 'selected' : '' ?>>4th Year</option>
                             </select>
                         </div>
                     </div>
@@ -592,18 +602,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Emergency Contact Name</label>
-                            <input type="text" name="emergency_contact_name" value="<?=htmlspecialchars($stu['emergency_contact_name'] ?? '')?>" placeholder="Full name">
+                            <input type="text" name="emergency_contact_name" value="<?= htmlspecialchars($stu['emergency_contact_name'] ?? '') ?>" placeholder="Full name">
                         </div>
                         <div class="form-group">
                             <label>Emergency Contact Number</label>
-                            <input type="text" name="emergency_contact" value="<?=htmlspecialchars($stu['emergency_contact'] ?? '')?>" placeholder="Phone number">
+                            <input type="text" name="emergency_contact" value="<?= htmlspecialchars($stu['emergency_contact'] ?? '') ?>" placeholder="Phone number">
                         </div>
                     </div>
 
                     <div class="form-grid full">
                         <div class="form-group">
                             <label>Address</label>
-                            <textarea name="address" rows="4" placeholder="Your complete address"><?=htmlspecialchars($stu['address'] ?? '')?></textarea>
+                            <textarea name="address" rows="4" placeholder="Your complete address"><?= htmlspecialchars($stu['address'] ?? '') ?></textarea>
                         </div>
                     </div>
 
@@ -636,21 +646,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <script>
-                    function togglePasswordSection() {
-                        const pwdBox = document.getElementById('pwdBox');
-                        const toggleBtn = document.getElementById('togglePwdBtn');
-                        if (pwdBox.style.display === 'none') {
-                            pwdBox.style.display = 'block';
-                            toggleBtn.textContent = '✕ Cancel Password Change';
-                        } else {
-                            pwdBox.style.display = 'none';
-                            toggleBtn.textContent = '🔐 Change Password';
-                            // Clear password fields
-                            document.getElementById('old_password').value = '';
-                            document.getElementById('new_password').value = '';
-                            document.getElementById('confirm_password').value = '';
+                        function togglePasswordSection() {
+                            const pwdBox = document.getElementById('pwdBox');
+                            const toggleBtn = document.getElementById('togglePwdBtn');
+                            if (pwdBox.style.display === 'none') {
+                                pwdBox.style.display = 'block';
+                                toggleBtn.textContent = '✕ Cancel Password Change';
+                            } else {
+                                pwdBox.style.display = 'none';
+                                toggleBtn.textContent = '🔐 Change Password';
+                                // Clear password fields
+                                document.getElementById('old_password').value = '';
+                                document.getElementById('new_password').value = '';
+                                document.getElementById('confirm_password').value = '';
+                            }
                         }
-                    }
                     </script>
 
                     <!-- FILE UPLOADS SECTION -->
@@ -695,4 +705,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
 </body>
+
 </html>

@@ -795,7 +795,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
     <style>
         .portrait-id-container {
             width: 95%;
-            margin: 30px auto;
+            margin: 95px auto;
             perspective: 1000px;
         }
 

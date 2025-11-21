@@ -1,22 +1,29 @@
 <?php
-require_once __DIR__.'/../includes/config.php';
-require_once __DIR__.'/student_header.php';
-require_once __DIR__.'/student.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/student_header.php';
+require_once __DIR__ . '/student.php';
 
-if (!isset($_SESSION['user_id'], $_SESSION['user_type'], $_SESSION['student_id']) ||
-    $_SESSION['user_type'] !== 'student') {
-    header('Location: ../index.php'); exit();
+if (
+    !isset($_SESSION['user_id'], $_SESSION['user_type'], $_SESSION['student_id']) ||
+    $_SESSION['user_type'] !== 'student'
+) {
+    header('Location: ../index.php');
+    exit();
 }
 
 $stu = (new Student())->findById((int)$_SESSION['student_id']);
-if (!$stu) { header('Location: ../index.php'); exit(); }
+if (!$stu) {
+    header('Location: ../index.php');
+    exit();
+}
 
 /* ---- Prepare data ---- */
-$avatarPath = $stu['photo'] ? '../uploads/student_photos/'.htmlspecialchars($stu['photo']) : '../uploads/default_avatar.png';
-$fullName   = htmlspecialchars($stu['first_name'].' '.$stu['last_name']);
+$avatarPath = $stu['photo'] ? '../uploads/student_photos/' . htmlspecialchars($stu['photo']) : '../uploads/default_avatar.png';
+$fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,47 +48,8 @@ $fullName   = htmlspecialchars($stu['first_name'].' '.$stu['last_name']);
         /* ▬▬▬▬ MAIN WRAPPER ▬▬▬▬ */
         .profile-wrapper {
             max-width: 950px;
-            margin: 40px auto;
+            margin: 30px auto;
             padding: 0 20px;
-        }
-
-        /* ▬▬▬▬ PAGE HEADER ▬▬▬▬ */
-        .profile-header {
-            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
-            color: white;
-            padding: 50px 40px;
-            border-radius: 16px;
-            margin-bottom: 40px;
-            box-shadow: 0 12px 40px rgba(27, 94, 32, 0.25);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .profile-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -10%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(20px); }
-        }
-
-        .profile-header h2 {
-            margin: 0;
-            font-size: 36px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            position: relative;
-            z-index: 1;
         }
 
         /* ▬▬▬▬ PROFILE CARD ▬▬▬▬ */
@@ -340,86 +308,86 @@ $fullName   = htmlspecialchars($stu['first_name'].' '.$stu['last_name']);
         }
     </style>
 </head>
+
 <body>
 
     <!-- PROFILE CARD -->
-    <div class="profile-container">
-        <div class="profile-card-header">
-            Student Information
-        </div>
-
-        <div class="profile-card-body">
-            <!-- Photo Section -->
-            <div class="profile-photo-section">
-                <img src="<?=$avatarPath?>" alt="Profile Photo" class="profile-photo">
-                <div class="profile-name"><?=$fullName?></div>
+    <div class="profile-wrapper">
+        <div class="profile-container">
+            <div class="profile-card-header">
+                Student Information
             </div>
 
-            <!-- Info Grid -->
-            <div class="profile-info-grid">
-                <div class="info-item">
-                    <div class="info-label">Student ID</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['student_id'])?></div>
+            <div class="profile-card-body">
+                <!-- Photo Section -->
+                <div class="profile-photo-section">
+                    <img src="<?= $avatarPath ?>" alt="Profile Photo" class="profile-photo">
+                    <div class="profile-name"><?= $fullName ?></div>
+                    <div class="profile-student-id">ID: <?= htmlspecialchars($stu['student_id']) ?></div>
                 </div>
 
-                <div class="info-item">
-                    <div class="info-label">Email</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['email'])?></div>
+                <!-- Info Grid -->
+                <div class="profile-info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['email']) ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Contact Number</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['contact_number']) ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Course</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['course']) ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Year Level</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['year_level']) ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Date of Birth</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['dob'] ?? 'N/A') ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Gender</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['gender'] ?? 'N/A') ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Blood Type</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['blood_type'] ?? 'N/A') ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Address</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['address'] ?? 'N/A') ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Emergency Contact Name</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['emergency_contact_name'] ?? 'N/A') ?></div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-label">Emergency Contact Number</div>
+                        <div class="info-value"><?= htmlspecialchars($stu['emergency_contact'] ?? 'N/A') ?></div>
+                    </div>
                 </div>
 
-                <div class="info-item">
-                    <div class="info-label">Contact Number</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['contact_number'])?></div>
+                <!-- Action Buttons -->
+                <div class="profile-actions">
+                    <a href="edit_profile.php" class="btn btn-primary">Edit Profile</a>
+                    <a href="student_home.php" class="btn btn-secondary">Back to Home</a>
                 </div>
-
-                <div class="info-item">
-                    <div class="info-label">Date of Birth</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['dob'] ?? 'N/A')?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Gender</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['gender'] ?? 'N/A')?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Blood Type</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['blood_type'] ?? 'N/A')?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Course</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['course'])?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Year Level</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['year_level'])?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Emergency Contact Name</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['emergency_contact_name'] ?? 'N/A')?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Emergency Contact Number</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['emergency_contact'] ?? 'N/A')?></div>
-                </div>
-
-                <div class="info-item">
-                    <div class="info-label">Address</div>
-                    <div class="info-value"><?=htmlspecialchars($stu['address'] ?? 'N/A')?></div>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="profile-actions">
-                <a href="edit_profile.php" class="btn btn-primary">Edit Profile</a>
-                <a href="student_home.php" class="btn btn-secondary">Back to Home</a>
             </div>
         </div>
     </div>
 
 </body>
+
 </html>
