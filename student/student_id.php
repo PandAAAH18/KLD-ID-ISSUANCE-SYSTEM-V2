@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             color: white;
             padding: 40px 30px;
             border-radius: 12px;
-            margin-top: 80px;
+            margin-top: 90px;
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         }

@@ -1077,15 +1077,15 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             </thead>
             <tbody>
                 <tr onclick="window.location.href='attendance_history.php'">
-                    <td>📊 View Attendance History</td>
+                    <td>View Attendance History</td>
                     <td>Check your log-in and log-out records.</td>
                 </tr>
                 <tr onclick="window.location.href='id_status.php'">
-                    <td>🎫 Check ID Issuance Status</td>
+                    <td>Check ID Issuance Status</td>
                     <td>Monitor the approval and release of your school ID.</td>
                 </tr>
                 <tr onclick="window.location.href='notifications.php'">
-                    <td>📩 Receive Email Notifications</td>
+                    <td>Receive Email Notifications</td>
                     <td>Get updates like account approval and ID ready status.</td>
                 </tr>
             </tbody>

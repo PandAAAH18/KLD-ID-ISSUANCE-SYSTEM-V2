@@ -61,7 +61,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                     <li class="nav-item">
                         <a class="nav-link school-nav-link" href="student_help.php">
                             <i class="fas fa-headset"></i>
-                            <span>Support</span>
+                            <span>Help</span>
                         </a>
                     </li>
                 </ul>
