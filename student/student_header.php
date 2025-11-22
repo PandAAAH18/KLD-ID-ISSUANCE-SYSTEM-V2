@@ -28,7 +28,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             <!-- Brand -->
             <a class="navbar-brand school-navbar-brand" href="student_home.php">
                 <div class="brand-content">
-                    <span class="brand-icon">🎓</span>
+                    <img src="../assets/images/kldlogo.png" alt="KLD Logo" class="brand-logo">
                     <div class="brand-text">
                         <div class="brand-title">KLD Portal</div>
                         <div class="brand-subtitle">Student Hub</div>

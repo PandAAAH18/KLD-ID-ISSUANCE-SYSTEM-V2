@@ -74,6 +74,13 @@
     justify-content: center;
 }
 
+.brand-logo {
+    height: 45px;
+    width: auto;
+    max-width: 55px;
+    object-fit: contain;
+}
+
 .brand-text {
     display: flex;
     flex-direction: column;

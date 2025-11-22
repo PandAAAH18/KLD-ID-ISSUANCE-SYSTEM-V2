@@ -106,7 +106,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         <div class="welcome-content-wrapper">
             <div class="welcome-info">
                 <h2>
-                    Welcome, <?php echo $studentName; ?> !
+                    Welcome, <?php echo $studentName; ?>
                     <span class="status-badge enrolled">Enrolled</span>
                 </h2>
                 <p><strong>ID:</strong> <?php echo $studentID; ?></p>
