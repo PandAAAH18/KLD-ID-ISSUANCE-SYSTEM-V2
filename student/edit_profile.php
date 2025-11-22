@@ -569,6 +569,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 opacity: 0;
                 transform: translateX(400px);
             }
+
             100% {
                 opacity: 1;
                 transform: translateX(0);
@@ -580,6 +581,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 opacity: 1;
                 transform: translateX(0);
             }
+
             100% {
                 opacity: 0;
                 transform: translateX(400px);
@@ -914,7 +916,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // If validation passes, show success message and submit form
             showNotification('Form data is complete. Saving...', 'success');
-            
+
             // Submit form after showing the notification
             setTimeout(() => {
                 event.target.closest('form').submit();
@@ -955,5 +957,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         }
     </script>
-
 </html>

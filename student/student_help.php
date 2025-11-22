@@ -754,7 +754,7 @@ $faqs = [
         }
 
         .guideline-card:hover .guideline-icon {
-            transform: scale(1.25) translateY(-10px);
+            transform: scale(1.05) translateY(1px);
             filter: drop-shadow(0 8px 16px rgba(27, 94, 32, 0.15));
         }
 
