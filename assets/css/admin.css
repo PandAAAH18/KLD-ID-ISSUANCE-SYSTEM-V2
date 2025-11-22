@@ -449,3 +449,227 @@
     color: #856404;
     border-radius: 6px;
 }
+
+/* ID Status Tracker */
+.id-status-tracker {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    padding: 30px;
+    border-left: 4px solid #1b5e20;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.id-status-tracker h3 {
+    color: #1b5e20;
+    margin-bottom: 25px;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.status-item {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.status-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(27, 94, 32, 0.15);
+}
+
+.status-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.status-value {
+    font-size: 1.1rem;
+    color: #1b5e20;
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.status-badge.status-not-applied {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+}
+
+.status-badge.status-pending {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+}
+
+.status-badge.status-for-printing {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white;
+}
+
+.status-badge.status-ready {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+}
+
+.status-badge.status-completed {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+}
+
+/* Past ID History */
+.id-history-section {
+    background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+    padding: 30px;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+.id-history-section h3 {
+    color: #1b5e20;
+    margin-bottom: 25px;
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.history-table-wrapper {
+    overflow-x: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.history-table thead {
+    background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+    color: white;
+}
+
+.history-table thead th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    border: none;
+}
+
+.history-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.3s ease;
+}
+
+.history-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.history-table tbody td {
+    padding: 15px;
+    color: #333;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.type-badge.type-new-student {
+    background-color: #E3F2FD;
+    color: #1565C0;
+}
+
+.type-badge.type-renewal {
+    background-color: #FCE4EC;
+    color: #C2185B;
+}
+
+.type-badge.type-lost-id {
+    background-color: #FFEBEE;
+    color: #D32F2F;
+}
+
+.status-badge-small {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.status-badge-small.status-not-applied {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+}
+
+.status-badge-small.status-pending {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+}
+
+.status-badge-small.status-for-printing {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white;
+}
+
+.status-badge-small.status-ready {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+}
+
+.status-badge-small.status-completed {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+}
+
+.empty-history {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    color: #999;
+}
+
+.empty-history p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .history-table {
+        font-size: 0.85rem;
+    }
+
+    .history-table thead th,
+    .history-table tbody td {
+        padding: 10px;
+    }
+
+    .type-badge,
+    .status-badge-small {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+}

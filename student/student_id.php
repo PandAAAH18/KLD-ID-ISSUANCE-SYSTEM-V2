@@ -358,16 +358,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         }
 
         /* ▬▬▬▬ ALERT MESSAGES ▬▬▬▬ */
-        .alert-banner {
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
-        }
-
         .alert-success {
             background: #d4edda;
             border: 1px solid #c3e6cb;
@@ -410,7 +400,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.1s ease;
             text-decoration: none;
             display: inline-block;
         }
@@ -427,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         }
 
         .btn-submit:disabled {
-            opacity: 0.5;
+            opacity: 0.1;
             cursor: not-allowed;
         }
 
@@ -765,35 +755,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
     <!-- BACK-TO-TOP BUTTON -->
     <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
 
-    <!-- INCOMPLETE PROFILE WARNING -->
-    <?php if ($incomplete): ?>
-        <div class="id-application-wrapper">
-            <div class="alert-banner alert-warning">
-                <span style="font-size: 20px;">⚠️</span>
-                <div>
-                    <strong>Incomplete Profile</strong><br>
-                    Please complete your profile first before requesting an ID. <a href="edit_profile.php" style="color: #856404; font-weight: bold;">Complete Profile →</a>
+            <!-- INCOMPLETE PROFILE WARNING -->
+            <?php if ($incomplete): ?>
+                <div class="id-application-wrapper">
+                    <div class="alert-warning" style="padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; font-size: 14px;">
+                        <span style="font-size: 20px;">⚠️</span>
+                        <div>
+                            <strong>Incomplete Profile</strong><br>
+                            Please complete your profile first before requesting an ID. <a href="edit_profile.php" style="color: #856404; font-weight: bold;">Complete Profile →</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    <?php else: ?>
-
-        <!-- PAGE TITLE -->
+            <?php else: ?>        <!-- PAGE TITLE -->
         <div class="id-application-wrapper">
             <div class="page-title-section">
                 <h1>🎓 Apply / Renew School ID</h1>
                 <p>Complete the form below to apply for a new student ID or renew your existing one</p>
             </div>
-
-            <!-- APPLICATION FORM -->
-            <div class="app-card">
-                <?php if ($msg): ?>
-                    <div class="alert-banner alert-<?php echo $msgType ?: 'error'; ?>">
-                        <span style="font-size: 18px;"><?php echo $msgType === 'success' ? '✓' : '✕'; ?></span>
-                        <span><?php echo htmlspecialchars($msg); ?></span>
-                    </div>
-                <?php endif; ?>
-
                 <!-- DIGITAL ID SECTION -->
                 <?php if (!empty($student['digital_id_front']) || !empty($student['digital_id_back'])): ?>
                     <div class="app-card">
@@ -890,9 +868,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                                         <label>Request Type</label>
                                         <select name="request_type" required onchange="toggleReasonField()">
                                             <option value="">-- Select Request Type --</option>
-                                            <option value="new">📋 New ID Application</option>
-                                            <option value="replacement">🔄 Replacement (Lost/Damaged)</option>
-                                            <option value="update_information">✏️ Update Information</option>
+                                            <option value="new">New ID Application</option>
+                                            <option value="replacement">Replacement (Lost/Damaged)</option>
+                                            <option value="update_information">Update Information</option>
                                         </select>
                                     </div>
                                 </div>
@@ -943,15 +921,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         <script>
             // Show notification on submit
             function handleSubmit(event) {
+                event.preventDefault();
+                
                 const confirmCheckbox = document.getElementById('confirmCheckbox');
                 if (!confirmCheckbox.checked) {
-                    event.preventDefault();
                     showNotification('Please confirm all details before submitting', 'warning');
                     return false;
                 }
 
-                // Show success notification before form submission
-                showNotification('✓ Application submitted successfully! You will be notified once processed.', 'success');
+                // Show floating success notification before form submission
+                showNotification('Application submitted successfully! You will be notified once processed.', 'success');
 
                 // Allow form to submit after 1.5 seconds
                 setTimeout(() => {
@@ -959,7 +938,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                 }, 1500);
             }
 
-            // Show notification alert
+            // Show floating notification alert
             function showNotification(message, type) {
                 // Remove existing notification if any
                 const existingNotif = document.getElementById('notificationAlert');
@@ -970,32 +949,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                 // Create notification element
                 const notification = document.createElement('div');
                 notification.id = 'notificationAlert';
-                notification.className = `alert-banner alert-${type}`;
+                notification.className = `alert-${type}`;
                 notification.style.cssText = `
-                position: fixed;
-                top: 100px;
-                right: 20px;
-                left: auto;
-                width: 400px;
-                z-index: 9999;
-                animation: slideIn 0.3s ease-out;
-            `;
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    width: 400px;
+                    z-index: 9999;
+                    padding: 16px 20px;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 14px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    animation: slideIn 0.5s ease-out;
+                `;
 
                 const icon = type === 'success' ? '✓' : type === 'warning' ? '⚠️' : 'ℹ️';
                 notification.innerHTML = `
-                <span style="font-size: 18px; margin-right: 10px;">${icon}</span>
-                <span>${message}</span>
-            `;
+                    <span style="font-size: 18px; margin-right: 10px;">${icon}</span>
+                    <span>${message}</span>
+                `;
 
                 document.body.appendChild(notification);
 
-                // Auto-remove after 4 seconds
+                // Auto-remove after 5 seconds
                 setTimeout(() => {
-                    notification.style.animation = 'slideOut 0.3s ease-out';
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 300);
-                }, 4000);
+                    if (notification) {
+                        notification.style.animation = 'slideOut 0.4s ease-out forwards';
+                        setTimeout(() => {
+                            if (notification && notification.parentNode) {
+                                notification.remove();
+                            }
+                        }, 400);
+                    }
+                }, 5000);
             }
 
             // Add animations
@@ -1092,7 +1081,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             // Back-to-Top Button Functionality
             window.addEventListener('scroll', function() {
                 const backToTopBtn = document.getElementById('backToTopBtn');
-                if (window.scrollY > 300) {
+                if (window.scrollY > 200) {
                     backToTopBtn.style.display = 'flex';
                 } else {
                     backToTopBtn.style.display = 'none';

@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             gap: 14px;
             font-size: 15px;
             font-weight: 700;
-            animation: slideDown 0.3s ease-out;
+            animation: slideDown 0.5s ease-out;
             border-left: 5px solid;
             display: none;
         }
@@ -479,6 +479,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        /* ▬▬▬▬ FLOATING NOTIFICATION ▬▬▬▬ */
+        .floating-notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            max-width: 400px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            animation: slideInRight 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid;
+        }
+
+        .floating-notification.warning {
+            background: linear-gradient(135deg, #fff8e1 0%, #fff3cd 100%);
+            color: #856404;
+            border-color: #ffe69c;
+        }
+
+        .floating-notification.error {
+            background: linear-gradient(135deg, #ffe5e5 0%, #ffcccb 100%);
+            color: #721c24;
+            border-color: #ff7b7b;
+        }
+
+        .floating-notification.success {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #155724;
+            border-color: #81c784;
+        }
+
+        .floating-notification.info {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #0c5460;
+            border-color: #81c784;
+        }
+
+        .floating-notification::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+
+        .floating-notification.warning::before {
+            content: '⚠️';
+            width: auto;
+            height: auto;
+        }
+
+        .floating-notification.error::before {
+            content: '✕';
+            width: auto;
+            height: auto;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .floating-notification.success::before {
+            content: '✓';
+            width: auto;
+            height: auto;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        .floating-notification.info::before {
+            content: 'ℹ';
+            width: auto;
+            height: auto;
+            font-weight: 800;
+            font-size: 16px;
+        }
+
+        @keyframes slideInRight {
+            0% {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOutRight {
+            0% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+        }
+
+        .floating-notification.hide {
+            animation: slideOutRight 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @media (max-width: 768px) {
+            .floating-notification {
+                top: 90px;
+                right: 12px;
+                left: 12px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .floating-notification {
+                top: 80px;
+                right: 8px;
+                left: 8px;
+                max-width: none;
+                padding: 14px 16px;
+                font-size: 13px;
+            }
+        }
+
         /* Back-to-Top Button */
         .back-to-top {
             position: fixed;
@@ -533,21 +664,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h1>Edit Your Profile</h1>
             <p>Keep your information up-to-date and accurate</p>
         </div>
-
-        <!-- ALERT MESSAGE -->
-        <?php if ($msg): ?>
-            <div class="alert-banner show alert-success">
-                <span>✓</span>
-                <span><?php echo htmlspecialchars($msg); ?></span>
-            </div>
-        <?php endif; ?>
-
-        <?php if ($error_msg): ?>
-            <div class="alert-banner show alert-error">
-                <span>✕</span>
-                <span><?php echo htmlspecialchars($error_msg); ?></span>
-            </div>
-        <?php endif; ?>
 
         <!-- FORM CONTAINER -->
         <div class="form-container">
@@ -689,41 +805,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <script>
-                        function togglePasswordSection() {
-                            const pwdBox = document.getElementById('pwdBox');
-                            const toggleBtn = document.getElementById('togglePwdBtn');
-                            if (pwdBox.style.display === 'none') {
-                                pwdBox.style.display = 'block';
-                                toggleBtn.textContent = '✕ Cancel Password Change';
-                            } else {
-                                pwdBox.style.display = 'none';
-                                toggleBtn.textContent = '🔐 Change Password';
-                                // Clear password fields
-                                document.getElementById('old_password').value = '';
-                                document.getElementById('new_password').value = '';
-                                document.getElementById('confirm_password').value = '';
-                            }
-                        }
-
-                        // Back-to-Top Button Functionality
-                        window.addEventListener('scroll', function() {
-                            const backToTopBtn = document.getElementById('backToTopBtn');
-                            if (window.scrollY > 300) {
-                                backToTopBtn.style.display = 'flex';
-                            } else {
-                                backToTopBtn.style.display = 'none';
-                            }
-                        });
-
-                        function scrollToTop() {
-                            window.scrollTo({
-                                top: 0,
-                                behavior: 'smooth'
-                            });
-                        }
-                    </script>
-
                     <!-- FILE UPLOADS SECTION -->
                     <div style="border-top: 1px solid #eee; padding-top: 30px; margin-top: 30px;">
                         <div class="form-section-title">Upload Documents</div>
@@ -756,7 +837,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- ACTION BUTTONS -->
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="submit" class="btn-primary" onclick="handleSubmit(event)">Save Changes</button>
                         <a href="student_profile.php" class="btn-secondary">Back to Profile</a>
                     </div>
 
@@ -765,6 +846,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-</body>
+    <script>
+        // ▬▬▬▬ FLOATING NOTIFICATION SYSTEM ▬▬▬▬
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `floating-notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Display for 5 seconds total: 2.5s slide-in + 2.5s slide-out
+            setTimeout(() => {
+                notification.classList.add('hide');
+                setTimeout(() => notification.remove(), 5000);
+            }, 5000);
+        }
+
+        // ▬▬▬▬ FORM VALIDATION ▬▬▬▬
+        function validateForm() {
+            const firstName = document.querySelector('input[name="first_name"]').value.trim();
+            const lastName = document.querySelector('input[name="last_name"]').value.trim();
+            const contactNumber = document.querySelector('input[name="contact_number"]').value.trim();
+            const course = document.querySelector('select[name="course"]').value.trim();
+            const yearLevel = document.querySelector('select[name="year_level"]').value.trim();
+
+            const errors = [];
+
+            if (!firstName) {
+                errors.push('First name is required');
+            }
+
+            if (!lastName) {
+                errors.push('Last name is required');
+            }
+
+            if (!contactNumber) {
+                errors.push('Contact number is required');
+            } else if (!/^[0-9\s\-\+\(\)]{10,}$/.test(contactNumber)) {
+                errors.push('Contact number must be valid (at least 10 digits)');
+            }
+
+            if (!course) {
+                errors.push('Course selection is required');
+            }
+
+            if (!yearLevel) {
+                errors.push('Year level selection is required');
+            }
+
+            return errors;
+        }
+
+        // ▬▬▬▬ FORM SUBMIT HANDLER ▬▬▬▬
+        function handleSubmit(event) {
+            event.preventDefault();
+            const errors = validateForm();
+
+            if (errors.length > 0) {
+                // Show error notifications for each missing field
+                errors.forEach((error, index) => {
+                    setTimeout(() => {
+                        showNotification(error, 'warning');
+                    }, index * 500);
+                });
+
+                return false;
+            }
+
+            // If validation passes, show success message and submit form
+            showNotification('Form data is complete. Saving...', 'success');
+            
+            // Submit form after showing the notification
+            setTimeout(() => {
+                event.target.closest('form').submit();
+            }, 500);
+        }
+
+        // ▬▬▬▬ PASSWORD TOGGLE ▬▬▬▬
+        function togglePasswordSection() {
+            const pwdBox = document.getElementById('pwdBox');
+            const toggleBtn = document.getElementById('togglePwdBtn');
+            if (pwdBox.style.display === 'none') {
+                pwdBox.style.display = 'block';
+                toggleBtn.textContent = '✕ Cancel Password Change';
+            } else {
+                pwdBox.style.display = 'none';
+                toggleBtn.textContent = '🔐 Change Password';
+                // Clear password fields
+                document.getElementById('old_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+            }
+        }
+
+        // ▬▬▬▬ BACK-TO-TOP FUNCTIONALITY ▬▬▬▬
+        window.addEventListener('scroll', function() {
+            const backToTopBtn = document.getElementById('backToTopBtn');
+            if (window.scrollY > 300) {
+                backToTopBtn.style.display = 'flex';
+            } else {
+                backToTopBtn.style.display = 'none';
+            }
+        });
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+    </script>
 
 </html>

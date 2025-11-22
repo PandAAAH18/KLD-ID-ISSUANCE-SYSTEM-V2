@@ -3,16 +3,19 @@ require_once '../includes/User.php';
 
 class Student extends User
 {
+    /**
+     * Get database connection
+     */
     public function getDb(): PDO {
-    return $this->db;
-}
+        return $this->db;
+    }
 
-/**
- * Update a student’s profile row.
- * Returns true on success, false on failure.
- */
+    /**
+     * Update a student's profile row.
+     * Returns true on success, false on failure.
+     */
 
-// ---------------------------------------- COMPLETE PROFILE UPDATE WITH OPTIONAL PHOTO UPLOAD ----------------------------------------
+    // ---------------------------------------- COMPLETE PROFILE UPDATE WITH OPTIONAL PHOTO UPLOAD ----------------------------------------
 public function updateStudentProfile(
     int    $studentId,
     string $firstName,
@@ -107,6 +110,30 @@ public function insertIdRequest(int $student_id, string $type, string $reason): 
     ]);
 }
 
+/* -------- 2a. get latest id request status ------------- */
+public function getLatestIdRequest(int $student_id): ?array {
+    $db = $this->getDb();
+    $sql = "SELECT * FROM id_requests 
+            WHERE student_id = :sid 
+            ORDER BY created_at DESC 
+            LIMIT 1";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':sid' => $student_id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
+/* -------- 2b. get all id request history ------------- */
+public function getIdRequestHistory(int $student_id): array {
+    $db = $this->getDb();
+    $sql = "SELECT * FROM id_requests 
+            WHERE student_id = :sid 
+            ORDER BY created_at DESC";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':sid' => $student_id]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+}
+
 /* single-call file saver */
 public function saveUploadedFile(array $file, string $subFolder): string
 {
@@ -126,23 +153,51 @@ public function saveUploadedFile(array $file, string $subFolder): string
     return $name;   // store only the filename
 }
 
-/* generic update – accepts associative array of columns */
-public function updateStudent(int $studentId, array $data): void
-{
-    if (!$data) return;
+    /* generic update – accepts associative array of columns */
+    public function updateStudent(int $studentId, array $data): void
+    {
+        if (!$data) return;
 
-    $db   = $this->getDb();
-    $set  = [];
-    foreach ($data as $col => $val) $set[] = "$col = :$col";
+        $db = $this->getDb();
 
-    $sql  = "UPDATE student SET ".implode(', ', $set)." WHERE id = :id";
-    $stmt = $db->prepare($sql);
-    foreach ($data as $col => $val) $stmt->bindValue(":$col", $val);
-    $stmt->bindValue(':id', $studentId, PDO::PARAM_INT);
-    $stmt->execute();
-}
+        // List of real, allowed columns in your `student` table
+        $allowed = [
+            'first_name',
+            'last_name',
+            'middle_name',
+            'year_level',
+            'course',
+            'contact_number',
+            'address',
+            'photo',
+            'updated_at'
+        ];
 
+        // Filter invalid columns
+        $clean = [];
+        foreach ($data as $col => $val) {
+            if (in_array($col, $allowed, true)) {
+                $clean[$col] = $val;
+            }
+        }
 
+        if (!$clean) return; // nothing valid to update
 
+        // Build SET clause
+        $set = [];
+        foreach ($clean as $col => $val) {
+            $set[] = "$col = :$col";
+        }
 
+        $sql = "UPDATE student SET " . implode(', ', $set) . " WHERE id = :id";
+
+        $stmt = $db->prepare($sql);
+
+        foreach ($clean as $col => $val) {
+            $stmt->bindValue(":$col", $val);
+        }
+
+        $stmt->bindValue(":id", $studentId, PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }

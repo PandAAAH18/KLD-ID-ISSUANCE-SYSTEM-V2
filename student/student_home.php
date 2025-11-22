@@ -19,6 +19,15 @@ if (!$student) {
     exit();
 }
 
+// Fetch ID request status
+$idRequest = (new Student())->getLatestIdRequest((int)$_SESSION['student_id']);
+$idStatus = $idRequest ? $idRequest['status'] : 'Not Applied';
+$idSubmitDate = $idRequest ? date('M d, Y', strtotime($idRequest['created_at'])) : 'N/A';
+$idUpdateDate = $idRequest ? date('M d, Y h:i A', strtotime($idRequest['updated_at'] ?? $idRequest['created_at'])) : 'N/A';
+
+// Fetch ID request history
+$idHistory = (new Student())->getIdRequestHistory((int)$_SESSION['student_id']);
+
 // Prepare data
 $studentName = htmlspecialchars($student['first_name'] . ' ' . $student['last_name']);
 $studentID = htmlspecialchars($student['student_id'] ?? 'N/A');
@@ -46,7 +55,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             padding: 0;
             padding-top: 80px;
         }
-        
+
         /* ▬▬▬▬ WELCOME BOX ▬▬▬▬ */
         .welcome-box {
             width: 95%;
@@ -674,37 +683,64 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         .func-table-container {
             width: 95%;
             margin: 40px auto;
-            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-            padding: 30px 35px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.12);
+            background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+            padding: 45px 45px;
+            border-radius: 18px;
+            box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.08), 0px 0px 32px rgba(27, 94, 32, 0.04);
             border-left: 8px solid #1b5e20;
-            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .func-table-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse 600px 400px at 100% 0%, rgba(27, 94, 32, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .func-table-container > * {
+            position: relative;
+            z-index: 1;
         }
 
         .func-table-container:hover {
-            box-shadow: 0px 8px 28px rgba(0, 0, 0, 0.18);
-            transform: translateY(-3px);
+            box-shadow: 0px 12px 40px rgba(0, 0, 0, 0.12), 0px 0px 48px rgba(27, 94, 32, 0.08);
+            transform: translateY(-6px);
         }
 
         .func-table-container h3 {
-            margin: 0 0 20px 0;
+            margin: 0 0 40px 0;
             color: #1b5e20;
-            font-size: 26px;
-            font-weight: 700;
+            font-size: 28px;
+            font-weight: 800;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            line-height: 1.3;
         }
 
         .func-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06);
         }
 
         .func-table th,
         .func-table td {
-            padding: 16px 18px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f0f0f0;
             font-size: 15px;
         }
 
@@ -712,31 +748,63 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
             color: #fff;
             text-align: left;
-            font-weight: 700;
-            letter-spacing: 0.3px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            font-size: 12px;
+            position: relative;
+        }
+
+        .func-table th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
         }
 
         .func-table tbody tr {
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
+            position: relative;
+        }
+
+        .func-table tbody tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #1b5e20 0%, #0d3817 100%);
+            transform: scaleY(0);
+            transform-origin: center;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .func-table tbody tr:hover {
-            background: linear-gradient(90deg, rgba(27, 94, 32, 0.08) 0%, rgba(27, 94, 32, 0.03) 100%);
-            border-left: 4px solid #1b5e20;
-            padding-left: 14px;
-            box-shadow: inset 0px 0px 10px rgba(27, 94, 32, 0.08);
+            background: linear-gradient(90deg, rgba(27, 94, 32, 0.06) 0%, rgba(27, 94, 32, 0.02) 100%);
+            box-shadow: 0px 4px 12px rgba(27, 94, 32, 0.1);
+            transform: translateX(4px);
+        }
+
+        .func-table tbody tr:hover::before {
+            transform: scaleY(1);
         }
 
         .func-table td {
-            color: #444;
+            color: #555;
             font-weight: 500;
+            position: relative;
         }
 
         .func-table td:first-child {
             font-weight: 700;
             color: #1b5e20;
             font-size: 16px;
+            letter-spacing: 0.3px;
         }
 
         .func-table tbody tr:last-child td {
@@ -745,18 +813,19 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
         @media (max-width: 768px) {
             .func-table-container {
-                padding: 20px 20px;
+                padding: 30px 30px;
                 margin: 30px auto;
+                border-radius: 16px;
             }
 
             .func-table-container h3 {
-                font-size: 22px;
-                margin-bottom: 15px;
+                font-size: 24px;
+                margin-bottom: 30px;
             }
 
             .func-table th,
             .func-table td {
-                padding: 12px 14px;
+                padding: 16px 16px;
                 font-size: 14px;
             }
 
@@ -767,22 +836,600 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
         @media (max-width: 480px) {
             .func-table-container {
-                padding: 15px 15px;
+                padding: 22px 18px;
                 margin: 20px auto;
+                border-radius: 14px;
             }
 
             .func-table-container h3 {
                 font-size: 20px;
-                margin-bottom: 12px;
+                margin-bottom: 22px;
             }
 
             .func-table th,
             .func-table td {
-                padding: 10px 12px;
+                padding: 14px 12px;
                 font-size: 13px;
             }
 
             .func-table td:first-child {
+                font-size: 14px;
+            }
+        }
+
+        /* ID Status Tracker Styles */
+        .id-status-tracker {
+            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+            border-left: 8px solid #1b5e20;
+            border-radius: 16px;
+            padding: 40px 40px;
+            margin-bottom: 40px;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .id-status-tracker:hover {
+            box-shadow: 0px 12px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .id-status-tracker h3 {
+            margin: 0 0 35px 0;
+            color: #1b5e20;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .status-item {
+            background: white;
+            padding: 24px 26px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid #e8e8e8;
+            border-left: 4px solid #1b5e20;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1b5e20 0%, #0d3817 100%);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .status-item:hover {
+            box-shadow: 0 6px 20px rgba(27, 94, 32, 0.15);
+            transform: translateY(-4px);
+            border-color: #1b5e20;
+        }
+
+        .status-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .status-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0d3817;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #1b5e20;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1b5e20;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .status-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-badge.status-not-applied {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .status-badge.status-pending {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .status-badge.status-pending-approval {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .status-badge.status-for-printing {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #6a1b9a;
+            border: 1px solid #ce93d8;
+        }
+
+        .status-badge.status-ready-for-pickup {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #1b5e20;
+            border: 1px solid #81c784;
+        }
+
+        .status-badge.status-completed {
+            background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+            color: #0d3817;
+            border: 1px solid #66bb6a;
+            font-weight: 800;
+        }
+
+        /* ID History Section */
+        .id-history-section {
+            margin-top: 40px;
+            padding-top: 0;
+            border-top: none;
+            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+            border-left: 8px solid #1b5e20;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .id-history-section:hover {
+            box-shadow: 0px 12px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .id-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 40px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+            transition: all 0.3s ease;
+        }
+
+        .id-history-header:hover {
+            background: linear-gradient(135deg, #f5faf5 0%, #f0f5f0 100%);
+        }
+
+        .id-history-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .id-history-header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .clean-history-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.25);
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
+        }
+
+        .clean-history-btn:hover {
+            background: linear-gradient(135deg, #ee5a52 0%, #d63031 100%);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .clean-history-btn:active {
+            transform: translateY(0);
+        }
+
+        .clean-history-btn::before {
+            content: '🗑️';
+            font-size: 14px;
+        }
+
+        .history-empty-state {
+            display: none;
+            background: #f0f5f0;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px dashed #81c784;
+        }
+
+        .history-empty-state.active {
+            display: block;
+        }
+
+        .history-empty-state-content {
+            color: #1b5e20;
+            margin-bottom: 20px;
+        }
+
+        .history-empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .history-empty-state h4 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1b5e20;
+        }
+
+        .history-empty-state p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .restore-history-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.25);
+            letter-spacing: 0.2px;
+            text-transform: uppercase;
+            margin-top: 15px;
+        }
+
+        .restore-history-btn:hover {
+            background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .restore-history-btn:active {
+            transform: translateY(0);
+        }
+
+        .restore-history-btn::before {
+            content: '↶';
+            font-size: 16px;
+        }
+
+        .id-history-section h3 {
+            margin: 0;
+            color: #1b5e20;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .history-toggle {
+            font-size: 20px;
+            color: #1b5e20;
+            font-weight: 800;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0;
+        }
+
+        .id-history-section.collapsed .history-toggle {
+            transform: rotate(-90deg);
+        }
+
+        .history-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 0 40px 40px 40px;
+            animation: expandHistory 0.4s ease-out;
+        }
+
+        .id-history-section.collapsed .history-content {
+            max-height: 0;
+            padding: 0 40px;
+            animation: none;
+        }
+
+        @keyframes expandHistory {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .history-table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .history-table thead {
+            background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+            color: white;
+        }
+
+        .history-table th {
+            padding: 18px 20px;
+            font-weight: 700;
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 2px solid rgba(27, 94, 32, 0.2);
+        }
+
+        .history-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .history-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .history-table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(27, 94, 32, 0.08) 0%, rgba(27, 94, 32, 0.03) 100%);
+            border-left: 4px solid #1b5e20;
+            padding-left: 16px;
+            box-shadow: inset 0px 0px 10px rgba(27, 94, 32, 0.05);
+        }
+
+        .history-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+
+        .type-badge.type-new {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .type-badge.type-replacement {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .type-badge.type-update-information {
+            background: #f3e5f5;
+            color: #6a1b9a;
+            border: 1px solid #ce93d8;
+        }
+
+        .status-badge-small {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: capitalize;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .status-badge-small:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .status-badge-small.status-not-applied {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .status-badge-small.status-pending {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .status-badge-small.status-pending-approval {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .status-badge-small.status-for-printing {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #6a1b9a;
+            border: 1px solid #ce93d8;
+        }
+
+        .status-badge-small.status-ready-for-pickup {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            color: #1b5e20;
+            border: 1px solid #81c784;
+        }
+
+        .status-badge-small.status-completed {
+            background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+            color: #0d3817;
+            border: 1px solid #66bb6a;
+            font-weight: 800;
+        }
+
+        .empty-history {
+            background: #f8f9fa;
+            padding: 50px 40px;
+            border-radius: 12px;
+            text-align: center;
+            color: #999;
+            font-weight: 500;
+            border: 2px dashed #ddd;
+        }
+
+        .empty-history p {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .id-history-section {
+                margin-top: 30px;
+                padding: 0;
+            }
+
+            .id-history-header {
+                padding: 28px 25px;
+            }
+
+            .id-history-section h3 {
+                font-size: 24px;
+                margin-bottom: 0;
+            }
+
+            .history-content {
+                padding: 0 25px 28px 25px;
+            }
+
+            .id-history-section.collapsed .history-content {
+                padding: 0 25px;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 14px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .id-history-section {
+                margin-top: 20px;
+                padding: 0;
+                border-left-width: 6px;
+            }
+
+            .id-history-header {
+                padding: 20px 16px;
+            }
+
+            .id-history-section h3 {
+                font-size: 20px;
+                margin-bottom: 0;
+            }
+
+            .history-toggle {
+                font-size: 18px;
+            }
+
+            .history-content {
+                padding: 0 16px 20px 16px;
+            }
+
+            .id-history-section.collapsed .history-content {
+                padding: 0 16px;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 12px 10px;
+                font-size: 12px;
+            }
+
+            .type-badge {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .status-badge-small {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+
+            .empty-history {
+                padding: 35px 20px;
+            }
+
+            .empty-history p {
                 font-size: 14px;
             }
         }
@@ -1067,28 +1714,87 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
     <!-- ▬▬▬▬ STUDENT FUNCTIONS ▬▬▬▬ -->
     <div class="func-table-container">
         <h3>Quick Access</h3>
-        <table class="func-table">
-            <thead>
-                <tr>
-                    <th>Action</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr onclick="window.location.href='attendance_history.php'">
-                    <td>View Attendance History</td>
-                    <td>Check your log-in and log-out records.</td>
-                </tr>
-                <tr onclick="window.location.href='id_status.php'">
-                    <td>Check ID Issuance Status</td>
-                    <td>Monitor the approval and release of your school ID.</td>
-                </tr>
-                <tr onclick="window.location.href='notifications.php'">
-                    <td>Receive Email Notifications</td>
-                    <td>Get updates like account approval and ID ready status.</td>
-                </tr>
-            </tbody>
-        </table>
+        <!-- ID Status Tracker -->
+        <div class="id-status-tracker">
+            <h3>📋 ID Application Status Tracker</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Application Status</div>
+                    <div class="status-value status-badge status-<?php echo strtolower(str_replace(' ', '-', $idStatus)); ?>">
+                        <?php echo htmlspecialchars($idStatus); ?>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Date Submitted</div>
+                    <div class="status-value"><?php echo $idSubmitDate; ?></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Latest Update</div>
+                    <div class="status-value"><?php echo $idUpdateDate; ?></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Request Type</div>
+                    <div class="status-value"><?php echo $idRequest ? htmlspecialchars($idRequest['request_type']) : 'N/A'; ?></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Past ID History -->
+        <div class="id-history-section">
+            <div class="id-history-header">
+                <div class="id-history-header-left" onclick="toggleHistorySection(this)">
+                    <h3>📜 Past ID History</h3>
+                    <span class="history-toggle">▼</span>
+                </div>
+                <div class="id-history-header-right">
+                    <button class="clean-history-btn" onclick="cleanHistoryDisplay(event)" title="Hide history records temporarily">
+                        Hide
+                    </button>
+                </div>
+            </div>
+            <div class="history-content">
+                <div class="history-table-content">
+                    <?php if (count($idHistory) > 0): ?>
+                        <div class="history-table-wrapper">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Date</th>
+                                        <th>Request Type</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($idHistory as $record): ?>
+                                        <tr>
+                                            <td><?php echo date('M d, Y h:i A', strtotime($record['created_at'])); ?></td>
+                                            <td><span class="type-badge type-<?php echo strtolower(str_replace(' ', '-', $record['request_type'])); ?>"><?php echo htmlspecialchars($record['request_type']); ?></span></td>
+                                            <td><?php echo htmlspecialchars($record['reason']); ?></td>
+                                            <td><span class="status-badge-small status-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>"><?php echo htmlspecialchars($record['status']); ?></span></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-history">
+                            <p>No past ID requests found.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="history-empty-state">
+                    <div class="history-empty-state-content">
+                        <span class="history-empty-state-icon">👋</span>
+                        <h4>History Hidden</h4>
+                        <p>Your history records are hidden but still saved in the database.</p>
+                    </div>
+                    <button class="restore-history-btn" onclick="restoreHistoryDisplay(event)">
+                        Restore
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </body>
@@ -1096,6 +1802,69 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 </html>
 
 <script>
+    // ▬▬▬▬ ID HISTORY TOGGLE FUNCTIONALITY ▬▬▬▬
+    function toggleHistorySection(headerElement) {
+        const section = headerElement.closest('.id-history-header') ? headerElement.closest('.id-history-header').closest('.id-history-section') : headerElement.closest('.id-history-section');
+        section.classList.toggle('collapsed');
+    }
+
+    // ▬▬▬▬ CLEAN HISTORY DISPLAY ▬▬▬▬
+    function cleanHistoryDisplay(event) {
+        event.stopPropagation();
+        const historySection = event.target.closest('.id-history-section');
+        const tableContent = historySection.querySelector('.history-table-content');
+        const emptyState = historySection.querySelector('.history-empty-state');
+
+        // Fade out table
+        tableContent.style.animation = 'fadeOut 0.3s ease-out forwards';
+
+        setTimeout(() => {
+            tableContent.style.display = 'none';
+            emptyState.classList.add('active');
+            emptyState.style.animation = 'fadeIn 0.3s ease-out';
+        }, 300);
+    }
+
+    // ▬▬▬▬ RESTORE HISTORY DISPLAY ▬▬▬▬
+    function restoreHistoryDisplay(event) {
+        event.stopPropagation();
+        const historySection = event.target.closest('.id-history-section');
+        const tableContent = historySection.querySelector('.history-table-content');
+        const emptyState = historySection.querySelector('.history-empty-state');
+
+        // Fade out empty state
+        emptyState.style.animation = 'fadeOut 0.3s ease-out forwards';
+
+        setTimeout(() => {
+            emptyState.classList.remove('active');
+            tableContent.style.display = 'block';
+            tableContent.style.animation = 'fadeIn 0.3s ease-out';
+        }, 300);
+    }
+
+    // Add fade animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
     // ▬▬▬▬ BACK TO TOP BUTTON FUNCTIONALITY ▬▬▬▬
     const backToTopBtn = document.getElementById('backToTopBtn');
 
