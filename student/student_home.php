@@ -46,7 +46,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             padding: 0;
             padding-top: 80px;
         }
-
+        
         /* ▬▬▬▬ WELCOME BOX ▬▬▬▬ */
         .welcome-box {
             width: 95%;
@@ -1063,7 +1063,6 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             </div>
         </div>
     </div>
-
 
     <!-- ▬▬▬▬ STUDENT FUNCTIONS ▬▬▬▬ -->
     <div class="func-table-container">
