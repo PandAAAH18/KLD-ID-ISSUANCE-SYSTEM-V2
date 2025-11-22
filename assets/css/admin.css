@@ -35,6 +35,7 @@
 }
 
 .school-navbar .container-fluid {
+
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -60,6 +61,7 @@
 }
 
 .brand-content {
+    color:white;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -155,6 +157,7 @@
 .navbar-collapse {
     align-items: center;
     justify-content: space-between;
+    padding: 1px 1px;
 }
 
 .navbar-nav {

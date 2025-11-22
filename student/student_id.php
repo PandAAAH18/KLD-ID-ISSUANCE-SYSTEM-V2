@@ -65,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -94,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
     <?php else: ?> <!-- PAGE TITLE -->
         <div class="id-application-wrapper">
             <div class="page-title-section">
-                <h1>🎓 Apply / Renew School ID</h1>
+                <h1>Apply / Renew School ID</h1>
                 <p>Complete the form below to apply for a new student ID or renew your existing one</p>
             </div>
             <!-- DIGITAL ID SECTION -->
