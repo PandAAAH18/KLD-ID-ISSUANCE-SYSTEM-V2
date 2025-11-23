@@ -170,6 +170,14 @@ public function saveUploadedFile(array $file, string $subFolder): string
             'contact_number',
             'address',
             'photo',
+            'dob',
+            'gender',
+            'blood_type',
+            'emergency_contact_name',
+            'emergency_contact',
+            'cor',
+            'signature',
+            'password_hash',
             'updated_at'
         ];
 
