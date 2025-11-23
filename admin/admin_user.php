@@ -45,11 +45,23 @@ if (isset($_POST['delete_user'])) {
 
 // 4. RESET PASSWORD
 if (isset($_POST['reset_password'])) {
-    $ok = $adminModel->resetPassword((int)$_POST['user_id'], $_POST);
-    if ($ok) {
-        $message = 'Password reset successfully!';
+    $user_id = (int)$_POST['user_id'];
+    $reset_mode = $_POST['reset_mode'] ?? 'auto';
+    $custom_password = $_POST['custom_password'] ?? '';
+    
+    // If custom mode is selected but no password provided
+    if ($reset_mode === 'custom' && empty($custom_password)) {
+        $error = 'Please enter a custom password.';
     } else {
-        $error = 'Password reset failed.';
+        // Only pass custom password if custom mode is selected and password is provided
+        $password_to_use = ($reset_mode === 'custom' && !empty($custom_password)) ? $custom_password : '';
+        
+        $ok = $adminModel->resetUserPassword($user_id, $password_to_use);
+        if ($ok) {
+            $message = 'Password reset successfully!';
+        } else {
+            $error = 'Password reset failed.';
+        }
     }
 }
 
@@ -466,34 +478,34 @@ $verifiedUsers = count(array_filter($users, fn($u) => $u['is_verified']));
 
     <!-- RESET PASSWORD POPUP -->
     <div id="resetPopup<?= $u['user_id'] ?>" class="popup-overlay">
-        <div class="popup-content">
-            <button class="popup-close">&times;</button>
-            <h2><i class="fas fa-key"></i> Reset Password</h2>
-            <p>Reset password for <?= htmlspecialchars($u['full_name']) ?></p>
-            <form method="post">
-                <div class="form-group">
-                    <label class="form-radio">
-                        <input type="radio" name="reset_mode" value="auto" checked> 
-                        Auto-generate secure password
-                    </label>
-                    <label class="form-radio">
-                        <input type="radio" name="reset_mode" value="custom">
-                        Set custom password:
-                    </label>
-                    <input name="custom_password" class="form-input" placeholder="Enter new password" 
-                           style="margin-top: 5px;" disabled>
-                </div>
-                <div class="form-actions">
-                    <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
-                    <input type="hidden" name="reset_password">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-sync"></i> Reset Password
-                    </button>
-                    <a href="#" class="btn btn-outline">Cancel</a>
-                </div>
-            </form>
-        </div>
+    <div class="popup-content">
+        <button class="popup-close">&times;</button>
+        <h2><i class="fas fa-key"></i> Reset Password</h2>
+        <p>Reset password for <?= htmlspecialchars($u['full_name']) ?></p>
+        <form method="post">
+            <div class="form-group">
+                <label class="form-radio">
+                    <input type="radio" name="reset_mode" value="auto" checked> 
+                    Auto-generate secure password
+                </label>
+                <label class="form-radio">
+                    <input type="radio" name="reset_mode" value="custom">
+                    Set custom password:
+                </label>
+                <input name="custom_password" class="form-input" placeholder="Enter new password" 
+                       style="margin-top: 5px;" id="customPassword<?= $u['user_id'] ?>" disabled>
+            </div>
+            <div class="form-actions">
+                <input type="hidden" name="user_id" value="<?= $u['user_id'] ?>">
+                <input type="hidden" name="reset_password">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sync"></i> Reset Password
+                </button>
+                <a href="#" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
     </div>
+</div>
     <?php endforeach; ?>
 
     <script>
