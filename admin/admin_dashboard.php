@@ -414,6 +414,32 @@ require_once 'admin_header.php';
             // Optional: Add auto-refresh functionality here
             console.log('Dashboard stats are up to date');
         }, 60000);
+
+        // Mobile sidebar toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            document.getElementById('adminSidebar').classList.toggle('mobile-open');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        });
+
+        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+            document.getElementById('adminSidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+        });
+
+        // Update page title based on current page
+        const pageTitles = {
+            'admin_dashboard.php': 'Dashboard Overview',
+            'admin_students.php': 'Student Management',
+            'admin_id.php': 'ID Card Management',
+            'admin_user.php': 'User Management',
+            'admin_reports.php': 'Reports & Analytics',
+            'admin_logs.php': 'System Logs'
+        };
+
+        const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
+        if (pageTitles[currentPage]) {
+            document.getElementById('pageTitle').textContent = pageTitles[currentPage];
+        }
     </script>
 </body>
 </html>

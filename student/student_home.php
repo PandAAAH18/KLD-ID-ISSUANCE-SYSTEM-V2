@@ -39,21 +39,7 @@ $avatar = $student['photo'] ? '../uploads/student_photos/' . htmlspecialchars($s
 $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Home</title>
-    <link href="../assets/css/student.css" rel="stylesheet">
-</head>
-
-<body class="admin-body">
-    <!-- BACK TO TOP BUTTON -->
-    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
-
-    <div class="portrait-id-container">
+<!-- PAGE CONTENT STARTS HERE -->
         <div class="portrait-id-card">
 
             <!-- FRONT -->
@@ -334,3 +320,8 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         alert('QR Code scanner feature coming soon!');
     }
 </script>
+            </div><!-- End admin-content -->
+        </main><!-- End admin-main -->
+    </div><!-- End admin-wrapper -->
+</body>
+</html>

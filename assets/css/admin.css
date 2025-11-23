@@ -22,7 +22,7 @@ body {
     background-color: #f5f5f5;
     color: var(--school-dark);
     line-height: 1.6;
-    padding: 20px;
+    padding: 0;
 }
 
 /* ===== ADMIN CONTAINER & LAYOUT ===== */
@@ -30,6 +30,8 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* ===== HEADER STYLES ===== */
@@ -362,6 +364,7 @@ select:focus {
 .table-responsive {
     overflow-x: auto;
     border-radius: 8px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
@@ -750,54 +753,86 @@ button, .btn {
 }
 
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
     .admin-container {
+        max-width: 95%;
         padding: 15px;
     }
     
-    .header-actions {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
     .stats-dashboard {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
     
-    .filter-nav {
-        flex-direction: column;
+    .page-header {
+        padding: 20px 25px;
     }
     
-    .filter-btn {
-        justify-content: center;
+    .page-header h2 {
+        font-size: 1.6rem;
     }
     
     .filter-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .form-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
     
-    .search-form {
-        flex-direction: column;
+    .admin-table {
+        font-size: 0.9rem;
     }
     
-    .bulk-actions {
-        flex-direction: column;
-        align-items: flex-start;
+    .admin-table thead th,
+    .admin-table tbody td {
+        padding: 12px 10px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .admin-container {
+        max-width: 98%;
+        padding: 12px;
     }
     
-    .action-buttons {
-        flex-direction: column;
-        gap: 5px;
+    .stats-dashboard {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
     }
     
-    .btn-admin {
-        width: 100%;
-        justify-content: center;
+    .stat-card {
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .page-header {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .page-header p {
+        font-size: 0.95rem;
+    }
+    
+    .filter-form {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .form-row {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
     }
     
     .admin-table {
@@ -808,44 +843,761 @@ button, .btn {
     .admin-table tbody td {
         padding: 10px 8px;
     }
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 10px;
+    }
     
-    .modal-content,
-    .popup-content {
-        width: 95%;
-        padding: 20px;
+    .header-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .action-buttons-container {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .stats-dashboard {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+        margin-bottom: 0;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+        margin-bottom: 3px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+    }
+    
+    .page-header {
+        padding: 18px;
+        margin-bottom: 18px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.3rem;
+    }
+    
+    .page-header p {
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+    
+    .filter-nav {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filter-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 15px;
+    }
+    
+    .filter-form {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .search-form {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-input {
+        padding: 10px 12px;
+    }
+    
+    .form-input,
+    .form-select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select {
+        padding: 10px 12px;
+        font-size: 16px;
     }
     
     .form-actions {
         flex-direction: column;
+        gap: 8px;
     }
     
-    .btn {
+    .btn,
+    .btn-admin,
+    .trigger-btn {
         width: 100%;
-        margin-bottom: 5px;
+        justify-content: center;
+        padding: 10px 12px;
+    }
+    
+    .admin-card {
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .admin-card-header {
+        padding: 15px;
+        font-size: 1.1rem;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .admin-card-body {
+        padding: 15px;
+    }
+    
+    .bulk-section,
+    .action-section,
+    .filter-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .bulk-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .btn-admin {
+        width: 100%;
+    }
+    
+    .admin-table {
+        font-size: 0.8rem;
+    }
+    
+    .admin-table thead th,
+    .admin-table tbody td {
+        padding: 8px 6px;
+    }
+    
+    .admin-table thead th {
+        font-size: 0.75rem;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .modal-content,
+    .popup-content {
+        width: 95%;
+        padding: 18px;
+        max-height: 85vh;
+    }
+    
+    .modal-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    .alert-banner,
+    .message {
+        padding: 12px 15px;
+        font-size: 0.95rem;
+        gap: 10px;
+    }
+    
+    .alert-banner i {
+        font-size: 1.2rem;
+    }
+    
+    .empty-state {
+        padding: 30px 15px;
+    }
+    
+    .empty-state i {
+        font-size: 2.5rem;
+    }
+    
+    .back-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 20px;
+        right: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-container {
+        padding: 8px;
+    }
+    
+    .header-actions {
+        gap: 8px;
+    }
+    
+    .page-title {
+        font-size: 1.3rem;
+    }
+    
+    .stats-dashboard {
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    
+    .stat-card {
+        padding: 10px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+    }
+    
+    .page-header {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .page-header p {
+        font-size: 0.85rem;
+    }
+    
+    .filter-nav {
+        gap: 6px;
+    }
+    
+    .filter-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        gap: 6px;
+    }
+    
+    .filter-btn i {
+        font-size: 1rem;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    .form-input,
+    .form-select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select {
+        padding: 9px 10px;
+        font-size: 16px;
+    }
+    
+    .btn,
+    .btn-admin,
+    .trigger-btn {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-admin {
+        gap: 4px;
+    }
+    
+    .admin-card-header {
+        padding: 12px;
+        font-size: 1rem;
+    }
+    
+    .admin-card-body {
+        padding: 12px;
+    }
+    
+    .bulk-section,
+    .action-section,
+    .filter-section {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .bulk-section h3,
+    .action-section h3,
+    .filter-section h3 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    
+    .bulk-section p,
+    .action-section p,
+    .filter-section p {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+    
+    .admin-table {
+        font-size: 0.75rem;
+    }
+    
+    .admin-table thead th,
+    .admin-table tbody td {
+        padding: 6px 4px;
+    }
+    
+    .admin-table thead th {
+        font-size: 0.7rem;
+    }
+    
+    .select-all-cell {
+        width: 30px;
+    }
+    
+    .form-check-input {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .status-badge {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .modal-content,
+    .popup-content {
+        width: 98%;
+        padding: 15px;
+        max-height: 80vh;
+    }
+    
+    .close-modal,
+    .popup-close {
+        font-size: 1.3rem;
+    }
+    
+    .alert-banner,
+    .message {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .empty-state {
+        padding: 20px 10px;
+    }
+    
+    .empty-state i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .empty-state h4 {
+        font-size: 1rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.9rem;
+    }
+    
+    .back-to-top {
+        width: 40px;
+        height: 40px;
+        bottom: 15px;
+        right: 15px;
+        font-size: 1.2rem;
     }
 }
 
 @media (max-width: 480px) {
-    .page-header {
-        padding: 20px;
-    }
-    
-    .page-header h2 {
-        font-size: 1.5rem;
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-    }
-    
-    .admin-card-header {
-        padding: 15px 20px;
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
+    .admin-container {
+        padding: 5px;
     }
     
     .page-title {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .stats-dashboard {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    
+    .stat-card {
+        padding: 8px;
+    }
+    
+    .stat-number {
+        font-size: 1.3rem;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+    }
+    
+    .page-header {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .page-header p {
+        font-size: 0.8rem;
+    }
+    
+    .filter-nav {
+        gap: 5px;
+    }
+    
+    .filter-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .form-group label {
+        font-size: 0.85rem;
+    }
+    
+    .form-input,
+    .form-select,
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    select {
+        padding: 8px;
+        font-size: 16px;
+        border-radius: 4px;
+    }
+    
+    .btn,
+    .btn-admin,
+    .trigger-btn {
+        padding: 7px 10px;
+        font-size: 0.8rem;
+    }
+    
+    .admin-card-header {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .admin-card-body {
+        padding: 10px;
+    }
+    
+    .bulk-section,
+    .action-section,
+    .filter-section {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .bulk-section h3,
+    .action-section h3,
+    .filter-section h3 {
+        font-size: 0.95rem;
+    }
+    
+    .admin-table {
+        font-size: 0.7rem;
+    }
+    
+    .admin-table thead th,
+    .admin-table tbody td {
+        padding: 5px 3px;
+    }
+    
+    .table-responsive {
+        margin: 0 -5px;
+    }
+    
+    .modal-content,
+    .popup-content {
+        width: 99%;
+        padding: 12px;
+    }
+    
+    .alert-banner,
+    .message {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .back-to-top {
+        width: 36px;
+        height: 36px;
+        bottom: 12px;
+        right: 12px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .admin-container {
+        padding: 3px;
+    }
+    
+    .page-header {
+        padding: 10px;
+    }
+    
+    .page-header h2 {
+        font-size: 1rem;
+    }
+    
+    .stat-card {
+        padding: 6px;
+    }
+    
+    .stat-number {
+        font-size: 1.2rem;
+    }
+    
+    .filter-nav {
+        gap: 4px;
+    }
+    
+    .filter-btn {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .btn,
+    .btn-admin {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+    
+    .admin-table {
+        font-size: 0.65rem;
+    }
+}
+
+/* ===== ADDITIONAL RESPONSIVE FIXES FOR INLINE STYLES ===== */
+/* Fix for inline style="display: flex; flex-wrap: wrap; gap: 10px;" */
+[style*="display: flex"][style*="flex-wrap: wrap"] {
+    flex-direction: column !important;
+}
+
+/* Table responsive improvements */
+@media (max-width: 768px) {
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        margin: -15px;
+        padding: 0 15px;
+    }
+    
+    .admin-table tbody tr {
+        display: table;
+    }
+    
+    .admin-table tbody td {
+        padding: 8px 6px;
+    }
+}
+
+/* Audit details popup responsive fix */
+@media (max-width: 768px) {
+    .audit-details {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 95% !important;
+        max-width: 90vw !important;
+        max-height: 80vh !important;
+        z-index: 1100 !important;
+        right: auto !important;
+    }
+}
+
+/* Inline div flex layout responsive fix */
+@media (max-width: 768px) {
+    div[style*="display: flex"] > div[style*="max-width"] {
+        max-width: 100% !important;
+    }
+    
+    div[style*="font-size: 0.9rem"] > div {
+        font-size: 0.85rem !important;
+    }
+}
+
+/* Filter form responsive stacking */
+@media (max-width: 768px) {
+    form[class*="filter"] > div {
+        flex-direction: column !important;
+    }
+    
+    form[class*="filter"] div > div {
+        width: 100% !important;
+    }
+}
+
+/* Stats card grid responsive */
+@media (max-width: 768px) {
+    .stats-dashboard {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Button group responsive */
+@media (max-width: 768px) {
+    div[style*="display: flex; gap: 10px"] {
+        flex-direction: column !important;
+    }
+    
+    div[style*="display: flex; gap: 10px"] > button,
+    div[style*="display: flex; gap: 10px"] > a {
+        width: 100% !important;
+    }
+}
+
+/* Form rows with inline styles fix */
+@media (max-width: 768px) {
+    div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Inline styled small elements */
+@media (max-width: 480px) {
+    span[style*="font-size: 0.9rem"],
+    div[style*="font-size: 0.9rem"] {
+        font-size: 0.85rem !important;
+    }
+    
+    span[style*="font-size: 0.8rem"],
+    div[style*="font-size: 0.8rem"] {
+        font-size: 0.75rem !important;
+    }
+}
+
+/* Prevent overflow on small screens */
+@media (max-width: 768px) {
+    .admin-card-header {
+        flex-wrap: wrap;
+        padding: 12px;
+    }
+    
+    .admin-card-header span {
+        flex: 0 0 100%;
+    }
+    
+    .admin-card-body {
+        padding: 12px;
+    }
+}
+
+/* Fix for code blocks and data display */
+@media (max-width: 480px) {
+    code {
+        word-break: break-all;
+    }
+    
+    pre {
+        word-break: break-word;
+        white-space: pre-wrap;
+    }
+}
+
+/* Fix long text overflow in tables */
+@media (max-width: 768px) {
+    .admin-table {
+        font-size: 0.75rem;
+    }
+    
+    .admin-table thead th,
+    .admin-table tbody td {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .admin-table tbody td code {
+        display: block;
+        word-break: break-all;
+        padding: 2px 4px;
+    }
+}
+
+/* Fix display grid inline styles */
+@media (max-width: 768px) {
+    [style*="display: grid; grid-template-columns"] {
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: unset !important;
+        gap: 10px;
+    }
+    
+    [style*="grid-template-columns: repeat"] {
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: unset !important;
+    }
+}
+
+/* Fix bulk actions section */
+@media (max-width: 768px) {
+    .bulk-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .bulk-actions > * {
+        width: 100% !important;
+    }
+}
+
+/* Inline form styling fixes */
+@media (max-width: 768px) {
+    form > [style*="display: flex"] {
+        flex-direction: column !important;
+    }
+    
+    form > [style*="display: flex"] > * {
+        width: 100% !important;
+    }
+}
+
+/* Styling for badge and counters */
+@media (max-width: 480px) {
+    .badge {
+        padding: 2px 4px;
+        font-size: 0.65rem;
     }
 }

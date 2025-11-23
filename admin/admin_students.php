@@ -5,7 +5,6 @@ require_once 'classes/StudentManager.php';
 if (($_SESSION['user_type'] ?? '') !== 'admin') {
     redirect('../index.php');
 }
-require_once 'admin_header.php';
 $studentModel = new StudentManager();
 
 if (isset($_GET['action']) && $_GET['action'] === 'get_student' && isset($_GET['id'])) {
@@ -149,6 +148,8 @@ foreach ($students as &$student) {
 }
 unset($student);
 
+require_once 'admin_header.php';
+
 // Get student counts for dashboard
 $totalStudents = $studentModel->countStudentsByFilters(['deleted_at' => 'active']);
 $completedProfiles = $studentModel->countStudentsByFilters(['profile_completed' => 1, 'deleted_at' => 'active']);
@@ -160,8 +161,8 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Student Management</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -581,6 +582,7 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
 
     // Initialize selected count
     updateSelectedCount();
+    
     </script>
 </body>
 
