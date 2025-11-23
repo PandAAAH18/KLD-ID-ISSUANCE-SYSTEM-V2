@@ -91,7 +91,20 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
+                <!-- Signature Section -->
+                <div class="signature-display-section">
+                    <div class="signature-section-title">Your Signature</div>
+                    <?php if (!empty($stu['signature'])): ?>
+                        <div class="signature-container">
+                            <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Student Signature" class="signature-image">
+                        </div>
+                    <?php else: ?>
+                        <div class="signature-placeholder">
+                            <p>No signature uploaded yet.</p>
+                            <p><a href="edit_profile.php">Upload your signature</a></p>
+                        </div>
+                    <?php endif; ?>
+                </div>
                 <div class="profile-actions">
                     <a href="edit_profile.php" class="btn btn-primary">Edit Profile</a>
                     <a href="student_home.php" class="btn btn-secondary">Back to Home</a>

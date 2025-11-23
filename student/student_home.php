@@ -35,7 +35,10 @@ $course = htmlspecialchars($student['course']);
 $yearSection = htmlspecialchars($student['year_level']);
 $contact_number = htmlspecialchars($student['contact_number']);
 $address = htmlspecialchars($student['address']);
+$emergency_contact_name = htmlspecialchars($student['emergency_contact_name'] ?? 'Not Provided');
+$emergency_contact = htmlspecialchars($student['emergency_contact'] ?? 'Not Provided');
 $avatar = $student['photo'] ? '../uploads/student_photos/' . htmlspecialchars($student['photo']) : '../uploads/default_avatar.png';
+$signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspecialchars($student['signature']) : null;
 $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 ?>
 
@@ -46,7 +49,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             <div class="portrait-side portrait-front">
                 <!-- Decorative circular emblem background -->
                 <div class="emblem-background"></div>
-                
+
                 <!-- Green Header -->
                 <div class="id-header">
                     <h2>KOLEHIYO NG LUNGSOD NG DASMARIÑAS</h2>
@@ -66,7 +69,11 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
                 <!-- Signature Section -->
                 <div class="signature-section">
-                    <div class="signature-placeholder"></div>
+                    <?php if ($signature): ?>
+                        <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
+                    <?php else: ?>
+                        <div class="signature-placeholder"></div>
+                    <?php endif; ?>
                     <p class="signature-label">SIGNATURE OF CARDHOLDER</p>
                 </div>
             </div>
@@ -81,8 +88,8 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                 <!-- Emergency Contact Section -->
                 <div class="emergency-section">
                     <p class="emergency-title">In case of emergency, please contact:</p>
-                    <p class="emergency-name">Marlyn Concepcion</p>
-                    <p class="emergency-contact">09462274362</p>
+                    <p class="emergency-name"><?php echo $emergency_contact_name; ?></p>
+                    <p class="emergency-contact"><?php echo $emergency_contact; ?></p>
                 </div>
 
                 <!-- QR Code and Registrar Signature Section -->
@@ -222,6 +229,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         </div>
     </div>
 </body>
+
 </html>
 <script>
     // ▬▬▬▬ ID HISTORY TOGGLE FUNCTIONALITY ▬▬▬▬

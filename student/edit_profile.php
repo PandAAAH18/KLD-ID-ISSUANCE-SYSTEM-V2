@@ -268,26 +268,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>Profile Photo</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
-                                    <div class="file-hint">JPG, PNG (Max 5MB)</div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Certificate of Registration</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
-                                    <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
-                                </div>
+                                <?php if (!empty($stu['photo'])): ?>
+                                    <div class="file-status-box">
+                                        <div class="file-status-indicator">✓ File Uploaded</div>
+                                        <img src="../uploads/student_photos/<?= htmlspecialchars($stu['photo']) ?>" alt="Current Photo" class="file-preview-image">
+                                        <p class="file-name">Current: <?= htmlspecialchars($stu['photo']) ?></p>
+                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
+                                            <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
+                                            <div class="file-hint">JPG, PNG (Max 5MB)</div>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="file-input-wrapper">
+                                        <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
+                                        <div class="file-hint">JPG, PNG (Max 5MB)</div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
                             <div class="form-group">
                                 <label>Signature</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" name="signature" accept=".jpg,.jpeg,.png">
-                                    <div class="file-hint">JPG, PNG (Max 5MB)</div>
-                                </div>
+                                <?php if (!empty($stu['signature'])): ?>
+                                    <div class="file-status-box">
+                                        <div class="file-status-indicator">✓ File Uploaded</div>
+                                        <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Current Signature" class="file-preview-image signature-preview">
+                                        <p class="file-name">Current: <?= htmlspecialchars($stu['signature']) ?></p>
+                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
+                                            <input type="file" name="signature" accept=".jpg,.jpeg,.png">
+                                            <div class="file-hint">JPG, PNG (Max 5MB)</div>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="file-input-wrapper">
+                                        <input type="file" name="signature" accept=".jpg,.jpeg,.png">
+                                        <div class="file-hint">JPG, PNG (Max 5MB)</div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Certificate of Registration</label>
+                                <?php if (!empty($stu['cor'])): ?>
+                                    <div class="file-status-box">
+                                        <div class="file-status-indicator">✓ File Uploaded</div>
+                                        <?php 
+                                        $corPath = '../uploads/student_cor/' . htmlspecialchars($stu['cor']);
+                                        $corExt = strtolower(pathinfo($stu['cor'], PATHINFO_EXTENSION));
+                                        if (in_array($corExt, ['jpg', 'jpeg', 'png', 'gif'])): ?>
+                                            <img src="<?= $corPath ?>" alt="Current COR" class="file-preview-image cor-preview">
+                                        <?php else: ?>
+                                            <div class="file-preview-placeholder">
+                                                <div class="file-icon">📄</div>
+                                                <div class="file-type"><?= strtoupper($corExt) ?></div>
+                                            </div>
+                                        <?php endif; ?>
+                                        <p class="file-name">Current: <?= htmlspecialchars($stu['cor']) ?></p>
+                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
+                                            <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
+                                            <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="file-input-wrapper">
+                                        <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
+                                        <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -418,7 +467,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 toggleBtn.textContent = '✕ Cancel Password Change';
             } else {
                 pwdBox.style.display = 'none';
-                toggleBtn.textContent = '🔐 Change Password';
+                toggleBtn.textContent = 'Change Password';
                 // Clear password fields
                 document.getElementById('old_password').value = '';
                 document.getElementById('new_password').value = '';
@@ -442,6 +491,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 behavior: 'smooth'
             });
         }
+
+        // ▬▬▬▬ TOGGLE FILE INPUT FOR REPLACEMENT ▬▬▬▬
+        function toggleFileInput(button) {
+            event.preventDefault();
+            const fileInputWrapper = button.nextElementSibling;
+            if (fileInputWrapper.style.display === 'none') {
+                fileInputWrapper.style.display = 'block';
+                button.textContent = '✕ Cancel';
+                button.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+            } else {
+                fileInputWrapper.style.display = 'none';
+                button.textContent = 'Replace File';
+                button.style.background = '';
+                // Clear the file input
+                fileInputWrapper.querySelector('input[type="file"]').value = '';
+            }
+        }
     </script>
+
+</html>
 
 </html>
