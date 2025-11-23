@@ -21,7 +21,7 @@ class IdManager extends User
 
     public function getAllIdRequests(): array
     {
-        $sql = "SELECT r.*, s.first_name, s.last_name, s.student_id
+        $sql = "SELECT r.*, s.first_name, s.last_name, s.email, s.student_id
                 FROM id_requests r
                 JOIN student s ON s.id = r.student_id
                 ORDER BY r.created_at DESC";
@@ -34,7 +34,7 @@ class IdManager extends User
 
     public function getAllIssuedIds(): array
     {
-        $sql = "SELECT i.*, s.first_name, s.last_name
+        $sql = "SELECT i.*, s.first_name, s.last_name, s.email
                 FROM issued_ids i
                 JOIN student s ON s.id = i.user_id
                 ORDER BY i.issue_date DESC";
@@ -162,7 +162,7 @@ class IdManager extends User
 
     public function getRequestsByStatus(string $status): array
     {
-        $sql = "SELECT r.*, s.first_name, s.last_name
+        $sql = "SELECT r.*, s.first_name, s.last_name, s.email
                 FROM id_requests r
                 JOIN student s ON s.id = r.student_id
                 WHERE r.status = ?
@@ -179,7 +179,7 @@ class IdManager extends User
         $map = ['generated' => 'generated', 'completed' => 'delivered'];
         $targetStatus = $map[$filter] ?? $filter;
         
-        $sql = "SELECT i.*, s.first_name, s.last_name
+        $sql = "SELECT i.*, s.first_name, s.last_name, s.email
                 FROM issued_ids i
                 JOIN student s ON s.id = i.user_id
                 WHERE i.status = ?

@@ -466,7 +466,7 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
                                         <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
                                         <td>
                                             <div style="font-weight: 600;"><?= $name ?></div>
-                                            <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($row['email'] ?? '') ?></div>
+                                            <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars(isset($row['email']) ? $row['email'] : '') ?></div>
                                         </td>
                                         <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
                                         <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
