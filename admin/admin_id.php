@@ -6,6 +6,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type']!=='admin'){
     header('Location: ../index.php'); exit();
 }
 
+require_once 'admin_header.php';
+
 $adm = new IdManager();
 
 /* ---------- 1.  actions ---------- */
@@ -84,241 +86,444 @@ if (isset($_SESSION['bulk_operation_result'])) {
     $bulkResult = $_SESSION['bulk_operation_result'];
     unset($_SESSION['bulk_operation_result']);
 }
+
+// Get counts for statistics
+$pendingCount = count($adm->getRequestsByStatus('pending'));
+$approvedCount = count($adm->getRequestsByStatus('approved'));
+$rejectedCount = count($adm->getRequestsByStatus('rejected'));
+$generatedCount = count($adm->getIssuedByStatus('generated'));
 ?>
 <!doctype html>
 <html>
 
 <head>
     <meta charset="utf-8">
-    <title>ID Management</title>
-    <style>
-        .bulk-section {
-            background: #f8f9fa;
-            padding: 15px;
-            margin: 20px 0;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-        }
-        .bulk-actions {
-            margin: 10px 0;
-        }
-        .result-success {
-            color: #155724;
-            background: #d4edda;
-            padding: 10px;
-            border: 1px solid #c3e6cb;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        .result-error {
-            color: #721c24;
-            background: #f8d7da;
-            padding: 10px;
-            border: 1px solid #f5c6cb;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        .select-all-cell {
-            width: 30px;
-        }
-    </style>
+    <title>ID Management - Admin Panel</title>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body>
+<body class="admin-body">
+    <!-- Back to Top Button -->
+    <button class="back-to-top" onclick="scrollToTop()">
+        <i class="fas fa-chevron-up"></i>
+    </button>
 
-    <h2>ID Requests / Issued Cards</h2>
+    <div class="admin-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2><i class="fas fa-id-card-alt"></i> ID Card Management</h2>
+            <p>Manage student ID requests, approvals, and generated cards</p>
+        </div>
 
-    <!-- Display bulk operation results -->
-    <?php if ($bulkResult): ?>
-        <?php if ($bulkResult['success_count'] > 0): ?>
-            <div class="result-success">
-                ✅ Successfully generated <?= $bulkResult['success_count'] ?> ID(s) out of <?= $bulkResult['total_processed'] ?> processed.
+        <!-- Display bulk operation results -->
+        <?php if ($bulkResult): ?>
+            <div class="alert-banner <?php echo !empty($bulkResult['errors']) ? 'alert-error' : 'alert-success'; ?>">
+                <i class="fas <?php echo !empty($bulkResult['errors']) ? 'fa-exclamation-triangle' : 'fa-check-circle'; ?>"></i>
+                <div>
+                    <?php if ($bulkResult['success_count'] > 0): ?>
+                        <strong>Successfully generated <?= $bulkResult['success_count'] ?> ID(s)</strong> out of <?= $bulkResult['total_processed'] ?> processed.
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($bulkResult['errors'])): ?>
+                        <div style="margin-top: 10px;">
+                            <strong>Errors encountered:</strong>
+                            <ul style="margin: 8px 0 0 20px;">
+                                <?php foreach ($bulkResult['errors'] as $error): ?>
+                                    <li><?= htmlspecialchars($error) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         <?php endif; ?>
-        
-        <?php if (!empty($bulkResult['errors'])): ?>
-            <div class="result-error">
-                ❌ Errors encountered:
-                <ul>
-                    <?php foreach ($bulkResult['errors'] as $error): ?>
-                        <li><?= htmlspecialchars($error) ?></li>
-                    <?php endforeach; ?>
-                </ul>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-dashboard">
+            <div class="stat-card">
+                <div class="stat-number"><?= $pendingCount ?></div>
+                <div class="stat-label">Pending Requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $approvedCount ?></div>
+                <div class="stat-label">Approved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $rejectedCount ?></div>
+                <div class="stat-label">Rejected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $generatedCount ?></div>
+                <div class="stat-label">Generated IDs</div>
+            </div>
+        </div>
+
+        <!-- Filter Navigation -->
+        <div class="filter-nav">
+            <a href="?filter=pending" class="filter-btn <?= $filter === 'pending' ? 'active' : '' ?>">
+                <i class="fas fa-clock"></i> Pending Requests
+                <?php if ($pendingCount > 0): ?>
+                    <span class="badge"><?= $pendingCount ?></span>
+                <?php endif; ?>
+            </a>
+            <a href="?filter=approved" class="filter-btn <?= $filter === 'approved' ? 'active' : '' ?>">
+                <i class="fas fa-check-circle"></i> Approved
+                <?php if ($approvedCount > 0): ?>
+                    <span class="badge"><?= $approvedCount ?></span>
+                <?php endif; ?>
+            </a>
+            <a href="?filter=rejected" class="filter-btn <?= $filter === 'rejected' ? 'active' : '' ?>">
+                <i class="fas fa-times-circle"></i> Rejected
+                <?php if ($rejectedCount > 0): ?>
+                    <span class="badge"><?= $rejectedCount ?></span>
+                <?php endif; ?>
+            </a>
+            <a href="?filter=generated" class="filter-btn <?= $filter === 'generated' ? 'active' : '' ?>">
+                <i class="fas fa-id-card"></i> Generated IDs
+                <?php if ($generatedCount > 0): ?>
+                    <span class="badge"><?= $generatedCount ?></span>
+                <?php endif; ?>
+            </a>
+        </div>
+
+        <!-- BULK ACTIONS SECTION FOR APPROVED REQUESTS -->
+        <?php if ($filter === 'approved' && !empty($approvedRequests)): ?>
+        <div class="bulk-section">
+            <h3><i class="fas fa-bolt"></i> Bulk ID Generation</h3>
+            <p>Select multiple approved requests and generate IDs in batch</p>
+            <form method="post" id="bulkForm">
+                <div class="bulk-actions">
+                    <button type="submit" name="bulk_generate_ids" class="btn-admin btn-bulk">
+                        <i class="fas fa-rocket"></i> Generate Selected IDs
+                    </button>
+                    <span id="selectedCount" class="text-muted">0 selected</span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th class="select-all-cell">
+                                    <input type="checkbox" id="selectAllApproved" class="form-check-input">
+                                </th>
+                                <th>Request ID</th>
+                                <th>Student Information</th>
+                                <th>Academic Details</th>
+                                <th>Request Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($approvedRequests as $r): 
+                                $name = htmlspecialchars($r['first_name'].' '.$r['last_name']);
+                            ?>
+                            <tr>
+                                <td class="select-all-cell">
+                                    <input type="checkbox" name="request_ids[]" value="<?= $r['id'] ?>" class="form-check-input request-checkbox">
+                                </td>
+                                <td><strong>#<?= $r['id'] ?></strong></td>
+                                <td>
+                                    <div style="font-weight: 600;"><?= $name ?></div>
+                                    <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($r['email']) ?></div>
+                                </td>
+                                <td>
+                                    <div><?= htmlspecialchars($r['course'] ?? 'Not specified') ?></div>
+                                    <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($r['year_level'] ?? 'Not specified') ?></div>
+                                </td>
+                                <td><?= date('M d, Y', strtotime($r['created_at'])) ?></td>
+                                <td>
+                                    <form method="post" style="display: inline;">
+                                        <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+                                        <button type="submit" name="generate_id" class="btn-admin btn-generate">
+                                            <i class="fas fa-id-card"></i> Generate
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <?php endif; ?>
+
+        <!-- BULK APPROVE FOR PENDING REQUESTS -->
+        <?php if ($filter === 'pending' && !empty($requests)): ?>
+        <div class="bulk-section">
+            <h3><i class="fas fa-check-double"></i> Bulk Approval</h3>
+            <p>Select multiple pending requests and approve them all at once</p>
+            <form method="post" id="pendingBulkForm">
+                <div class="bulk-actions">
+                    <button type="submit" name="bulk_approve" class="btn-admin btn-bulk">
+                        <i class="fas fa-check"></i> Approve Selected
+                    </button>
+                    <span id="pendingSelectedCount" class="text-muted">0 selected</span>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th class="select-all-cell">
+                                    <input type="checkbox" id="selectAllPending" class="form-check-input">
+                                </th>
+                                <th>Request ID</th>
+                                <th>Student Information</th>
+                                <th>Request Details</th>
+                                <th>Requested</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($requests as $r):
+                                $name = htmlspecialchars($r['first_name'].' '.$r['last_name']);
+                            ?>
+                            <tr>
+                                <td class="select-all-cell">
+                                    <input type="checkbox" name="request_ids[]" value="<?= $r['id'] ?>" class="form-check-input pending-checkbox">
+                                </td>
+                                <td><strong>#<?= $r['id'] ?></strong></td>
+                                <td>
+                                    <div style="font-weight: 600;"><?= $name ?></div>
+                                    <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($r['email']) ?></div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="status-badge status-pending">
+                                            <?= htmlspecialchars($r['request_type']) ?>
+                                        </span>
+                                    </div>
+                                    <div style="font-size: 0.85rem; margin-top: 5px;">
+                                        <?= nl2br(htmlspecialchars($r['reason'])) ?>
+                                    </div>
+                                </td>
+                                <td><?= date('M d, Y', strtotime($r['created_at'])) ?></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <form method="post" style="display: inline;">
+                                            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+                                            <button type="submit" name="approve" class="btn-admin btn-approve">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                        </form>
+                                        <form method="post" style="display: inline;">
+                                            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+                                            <button type="submit" name="reject" class="btn-admin btn-reject" onclick="return confirm('Reject this request?');">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        <?php endif; ?>
+
+        <!-- REQUESTS TABLE (approved / rejected) -->
+        <?php if (in_array($filter,['pending','approved','rejected']) && empty($requests)): ?>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span>
+                        <i class="fas fa-list"></i>
+                        <?= ucfirst($filter) ?> Requests
+                    </span>
+                    <span class="badge">0</span>
+                </div>
+                <div class="admin-card-body">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h4>No <?= $filter ?> requests</h4>
+                        <p>There are currently no <?= $filter ?> ID requests in the system.</p>
+                    </div>
+                </div>
+            </div>
+        <?php elseif (in_array($filter,['pending','approved','rejected']) && !empty($requests)): ?>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span>
+                        <i class="fas fa-list"></i>
+                        <?= ucfirst($filter) ?> Requests
+                    </span>
+                    <span class="badge"><?= count($requests) ?></span>
+                </div>
+                <div class="admin-card-body">
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Request ID</th>
+                                    <th>Student Information</th>
+                                    <th>Request Details</th>
+                                    <th>Requested</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($requests as $r):
+                                    $name = htmlspecialchars($r['first_name'].' '.$r['last_name']);
+                                    $statusClass = 'status-'.$filter;
+                                ?>
+                                <tr>
+                                    <td><strong>#<?= $r['id'] ?></strong></td>
+                                    <td>
+                                        <div style="font-weight: 600;"><?= $name ?></div>
+                                        <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($r['email']) ?></div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <span class="status-badge status-pending">
+                                                <?= htmlspecialchars($r['request_type']) ?>
+                                            </span>
+                                        </div>
+                                        <div style="font-size: 0.85rem; margin-top: 5px;">
+                                            <?= nl2br(htmlspecialchars($r['reason'])) ?>
+                                        </div>
+                                    </td>
+                                    <td><?= date('M d, Y', strtotime($r['created_at'])) ?></td>
+                                    <td>
+                                        <span class="status-badge <?= $statusClass ?>">
+                                            <?= ucfirst($filter) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <?php if ($filter === 'pending'): ?>
+                                                <form method="post" style="display: inline;">
+                                                    <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+                                                    <button type="submit" name="approve" class="btn-admin btn-approve">
+                                                        <i class="fas fa-check"></i> Approve
+                                                    </button>
+                                                </form>
+                                                <form method="post" style="display: inline;">
+                                                    <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+                                                    <button type="submit" name="reject" class="btn-admin btn-reject" onclick="return confirm('Reject this request?');">
+                                                        <i class="fas fa-times"></i> Reject
+                                                    </button>
+                                                </form>
+                                            <?php elseif ($filter === 'approved'): ?>
+                                                <form method="post" style="display: inline;">
+                                                    <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+                                                    <button type="submit" name="generate_id" class="btn-admin btn-generate">
+                                                        <i class="fas fa-id-card"></i> Generate ID
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
-    <?php endif; ?>
 
-    <!-- filter links -->
-    <p>
-        <b>Filter:</b>
-        <a href="?filter=pending" <?=($filter==='pending'   ?'style="font-weight:bold;"':'')?>>Pending</a> |
-        <a href="?filter=approved" <?=($filter==='approved'  ?'style="font-weight:bold;"':'')?>>Approved</a> |
-        <a href="?filter=rejected" <?=($filter==='rejected'  ?'style="font-weight:bold;"':'')?>>Rejected</a> |
-        <a href="?filter=generated" <?=($filter==='generated' ?'style="font-weight:bold;"':'')?>>Generated</a> |
-    </p>
-
-    <!-- BULK ACTIONS SECTION FOR APPROVED REQUESTS -->
-    <?php if ($filter === 'approved' && !empty($approvedRequests)): ?>
-    <div class="bulk-section">
-        <h3>Bulk Operations</h3>
-        <form method="post" id="bulkForm">
-            <div class="bulk-actions">
-                <button type="submit" name="bulk_generate_ids" onclick="return confirm('Generate IDs for all selected requests?')">
-                    🚀 Generate Selected IDs
-                </button>
-                <span id="selectedCount">0 selected</span>
+        <!-- ISSUED CARDS TABLE (generated) -->
+        <?php if (in_array($filter,['generated'])): ?>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <span>
+                        <i class="fas fa-id-card"></i>
+                        Generated ID Cards
+                    </span>
+                    <span class="badge"><?= count($issued) ?></span>
+                </div>
+                <div class="admin-card-body">
+                    <?php if (empty($issued)): ?>
+                        <div class="empty-state">
+                            <i class="fas fa-id-card"></i>
+                            <h4>No generated IDs</h4>
+                            <p>There are currently no generated ID cards in the system.</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID Number</th>
+                                        <th>Student Information</th>
+                                        <th>Issue Date</th>
+                                        <th>Expiry Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($issued as $row):
+                                        $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
+                                        // Use the actual ID field that exists - either 'id' or 'id_number'
+                                        $issuedId = $row['id'] ?? $row['id_number'] ?? 'N/A';
+                                    ?>
+                                    <tr>
+                                        <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
+                                        <td>
+                                            <div style="font-weight: 600;"><?= $name ?></div>
+                                            <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($row['email'] ?? '') ?></div>
+                                        </td>
+                                        <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
+                                        <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
+                                        <td>
+                                            <span class="status-badge status-generated">
+                                                <?= ucfirst($row['status']) ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <?php
+                                                if ($row['status']==='generated'):
+                                                    $file = $row['digital_id_file'] ?? null;
+                                                    if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
+                                                        $safe   = htmlspecialchars($file);
+                                                        $jsSafe = addslashes($safe);
+                                                ?>
+                                                        <a href="../uploads/digital_id/<?= $safe ?>" target="_blank" class="btn-admin btn-view" title="View ID">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="../uploads/digital_id/<?= $safe ?>" download class="btn-admin btn-generate" title="Download ID">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                        <button type="button" onclick="window.open('../uploads/digital_id/<?= $jsSafe ?>', '_blank').print();" class="btn-admin" title="Print ID">
+                                                            <i class="fas fa-print"></i>
+                                                        </button>
+                                                        <form method="post" style="display: inline;">
+                                                            <input type="hidden" name="issued_id" value="<?= $row['id_number'] ?>">
+                                                            <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
+                                                                <i class="fas fa-sync"></i>
+                                                            </button>
+                                                        </form>
+                                                    <?php else: ?>
+                                                        <span class="text-muted" style="font-size: 0.85rem;">File missing</span>
+                                                        <form method="post" style="display: inline;">
+                                                            <input type="hidden" name="issued_id" value="<?= $row['id_number'] ?>">
+                                                            <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
+                                                                <i class="fas fa-sync"></i> Regenerate
+                                                            </button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-            
-            <table border="1" cellpadding="6">
-                <tr>
-                    <th class="select-all-cell">
-                        <input type="checkbox" id="selectAllApproved">
-                    </th>
-                    <th>Req-ID</th>
-                    <th>Student</th>
-                    <th>Email</th>
-                    <th>Course</th>
-                    <th>Year Level</th>
-                    <th>Requested</th>
-                    <th>Action</th>
-                </tr>
-                <?php foreach ($approvedRequests as $r): 
-                    $name = htmlspecialchars($r['first_name'].' '.$r['last_name']);
-                ?>
-                <tr>
-                    <td>
-                        <input type="checkbox" name="request_ids[]" value="<?= $r['id'] ?>" class="request-checkbox">
-                    </td>
-                    <td><?= $r['id'] ?></td>
-                    <td><?= $name ?></td>
-                    <td><?= htmlspecialchars($r['email']) ?></td>
-                    <td><?= htmlspecialchars($r['course'] ?? 'N/A') ?></td>
-                    <td><?= htmlspecialchars($r['year_level'] ?? 'N/A') ?></td>
-                    <td><?= date('M d, Y', strtotime($r['created_at'])) ?></td>
-                    <td>
-                        <form method="post" style="display:inline;">
-                            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
-                            <button name="generate_id">Generate Single ID</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
-        </form>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
-
-    <!-- BULK APPROVE FOR PENDING REQUESTS -->
-    <?php if ($filter === 'pending' && !empty($requests)): ?>
-    <div class="bulk-section">
-        <h3>Bulk Approve</h3>
-        <form method="post">
-            <button type="submit" name="bulk_approve" onclick="return confirm('Approve all selected pending requests?')">
-                ✅ Approve Selected
-            </button>
-            
-            <table border="1" cellpadding="6">
-                <tr>
-                    <th class="select-all-cell">
-                        <input type="checkbox" id="selectAllPending">
-                    </th>
-                    <th>Req-ID</th>
-                    <th>Student</th>
-                    <th>Type</th>
-                    <th>Reason</th>
-                    <th>Requested</th>
-                    <th>Action</th>
-                </tr>
-                <?php foreach ($requests as $r):
-                    $name = htmlspecialchars($r['first_name'].' '.$r['last_name']);
-                ?>
-                <tr>
-                    <td>
-                        <input type="checkbox" name="request_ids[]" value="<?= $r['id'] ?>" class="pending-checkbox">
-                    </td>
-                    <td><?= $r['id'] ?></td>
-                    <td><?= $name ?></td>
-                    <td><?= htmlspecialchars($r['request_type']) ?></td>
-                    <td><?= nl2br(htmlspecialchars($r['reason'])) ?></td>
-                    <td><?= $r['created_at'] ?></td>
-                    <td>
-                        <form method="post" style="display:inline;">
-                            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
-                            <button name="approve">Approve</button>
-                            <button name="reject" onclick="return confirm('Reject request?');">Reject</button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
-        </form>
-    </div>
-    <?php endif; ?>
-
-    <!-- ----------- REQUESTS (approved / rejected) ----------- -->
-    <?php if (in_array($filter,['pending','approved','rejected']) && empty($requests)): ?>
-        <p>No <?= $filter ?> requests found.</p>
-    <?php endif; ?>
-
-    <!-- ----------- ISSUED (generated / completed) ----------- -->
-<?php if (in_array($filter,['generated'])): ?>
-<h3>Issued Cards</h3>
-<?php if (empty($issued)): ?>
-    <p>No generated IDs found.</p>
-<?php else: ?>
-<table border="1" cellpadding="6">
-    <tr>
-        <th>ID Number</th>
-        <th>Student</th>
-        <th>Issue Date</th>
-        <th>Expiry</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
-    <?php foreach ($issued as $row):
-        $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
-        // Use the actual ID field that exists - either 'id' or 'id_number'
-        $issuedId = $row['id'] ?? $row['id_number'] ?? 'N/A';
-    ?>
-    <tr>
-        <td><?= htmlspecialchars($row['id_number']) ?></td>
-        <td><?= $name ?></td>
-        <td><?= $row['issue_date'] ?></td>
-        <td><?= $row['expiry_date'] ?></td>
-        <td><?= $row['status'] ?></td>
-        <td>
-            <?php
-            if ($row['status']==='generated'):
-                $file = $row['digital_id_file'] ?? null;
-                if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
-                    $safe   = htmlspecialchars($file);
-                    $jsSafe = addslashes($safe);
-
-                    echo '<a href="../uploads/digital_id/'.$safe.'" target="_blank">View</a> | ';
-                    echo '<a href="../uploads/digital_id/'.$safe.'" download>Download</a> | ';
-                    echo '<button type="button" onclick="window.open(\'../uploads/digital_id/'.$jsSafe.'\', \'_blank\').print();">Print</button> | ';
-                    echo '<form method="post" style="display:inline;" onsubmit="return confirm(\'Regenerate ID card?\');">';
-                    echo   '<input type="hidden" name="issued_id" value="'.$row['id_number'].'">';
-                    echo   '<button name="regenerate">Regenerate</button>';
-                    echo '</form>';
-                else:
-                    echo '<em>No file yet</em> | ';
-                    echo '<form method="post" style="display:inline;" onsubmit="return confirm(\'Regenerate ID card?\');">';
-                    echo   '<input type="hidden" name="issued_id" value="'.$row['id_number'].'">';
-                    echo   '<button name="regenerate">Regenerate</button>';
-                    echo '</form>';
-                endif;
-            endif;
-            ?>
-        </td>
-    </tr>
-    <?php endforeach; ?>
-</table>
-<?php endif; ?>
-<?php endif; ?>
 
     <script>
-        // Select All functionality for approved requests
+        // Select All functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Approved requests select all
             const selectAllApproved = document.getElementById('selectAllApproved');
@@ -340,6 +545,7 @@ if (isset($_SESSION['bulk_operation_result'])) {
                     checkboxes.forEach(checkbox => {
                         checkbox.checked = this.checked;
                     });
+                    updatePendingSelectedCount();
                 });
             }
 
@@ -353,33 +559,78 @@ if (isset($_SESSION['bulk_operation_result'])) {
                 }
             }
 
+            // Update selected count for pending requests
+            function updatePendingSelectedCount() {
+                const checkboxes = document.querySelectorAll('.pending-checkbox');
+                const checked = document.querySelectorAll('.pending-checkbox:checked');
+                const countElement = document.getElementById('pendingSelectedCount');
+                if (countElement) {
+                    countElement.textContent = `${checked.length} selected`;
+                }
+            }
+
             // Add event listeners to all checkboxes
-            const checkboxes = document.querySelectorAll('.request-checkbox');
-            checkboxes.forEach(checkbox => {
+            const requestCheckboxes = document.querySelectorAll('.request-checkbox');
+            requestCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', updateSelectedCount);
             });
 
-            // Initial count update
+            const pendingCheckboxes = document.querySelectorAll('.pending-checkbox');
+            pendingCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updatePendingSelectedCount);
+            });
+
+            // Confirm bulk generation
+            const bulkGenerateBtn = document.querySelector('button[name="bulk_generate_ids"]');
+            if (bulkGenerateBtn) {
+                bulkGenerateBtn.addEventListener('click', function(e) {
+                    const checked = document.querySelectorAll('.request-checkbox:checked');
+                    if (checked.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one request to generate IDs.');
+                        return false;
+                    }
+                    if (!confirm(`Generate IDs for ${checked.length} selected students?`)) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // Confirm bulk approval
+            const bulkApproveBtn = document.querySelector('button[name="bulk_approve"]');
+            if (bulkApproveBtn) {
+                bulkApproveBtn.addEventListener('click', function(e) {
+                    const checked = document.querySelectorAll('.pending-checkbox:checked');
+                    if (checked.length === 0) {
+                        e.preventDefault();
+                        alert('Please select at least one request to approve.');
+                        return false;
+                    }
+                    if (!confirm(`Approve ${checked.length} selected requests?`)) {
+                        e.preventDefault();
+                    }
+                });
+            }
+
+            // Back to top button functionality
+            window.onscroll = function() {
+                const backToTopBtn = document.querySelector('.back-to-top');
+                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                    backToTopBtn.style.display = 'flex';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
+            };
+
+            // Initial count updates
             updateSelectedCount();
+            updatePendingSelectedCount();
         });
 
-        // Confirm bulk generation
-        function confirmBulkGeneration() {
-            const checked = document.querySelectorAll('.request-checkbox:checked');
-            if (checked.length === 0) {
-                alert('Please select at least one request to generate IDs.');
-                return false;
-            }
-            return confirm(`Generate IDs for ${checked.length} selected students?`);
-        }
-
-        // Add confirmation to bulk generate button
-        const bulkGenerateBtn = document.querySelector('button[name="bulk_generate_ids"]');
-        if (bulkGenerateBtn) {
-            bulkGenerateBtn.addEventListener('click', function(e) {
-                if (!confirmBulkGeneration()) {
-                    e.preventDefault();
-                }
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
             });
         }
     </script>

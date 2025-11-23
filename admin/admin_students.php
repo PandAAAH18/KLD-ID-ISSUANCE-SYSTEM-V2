@@ -5,8 +5,9 @@ require_once 'classes/StudentManager.php';
 if (($_SESSION['user_type'] ?? '') !== 'admin') {
     redirect('../index.php');
 }
+require_once 'admin_header.php';
 $studentModel = new StudentManager();
- 
+
 if (isset($_GET['action']) && $_GET['action'] === 'get_student' && isset($_GET['id'])) {
     $student = $studentModel->getStudentById($_GET['id']);
     header('Content-Type: application/json');
@@ -136,6 +137,7 @@ if ($hasSearch) {
 } else {
     $students = $studentModel->getAllStudents();
 }
+
 // Check account status for each student
 foreach ($students as &$student) {
     $accountInfo = $studentModel->checkStudentHasAccount($student['email']);
@@ -147,14 +149,11 @@ foreach ($students as &$student) {
 }
 unset($student);
 
-
 // Get student counts for dashboard
 $totalStudents = $studentModel->countStudentsByFilters(['deleted_at' => 'active']);
 $completedProfiles = $studentModel->countStudentsByFilters(['profile_completed' => 1, 'deleted_at' => 'active']);
 $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed' => 0, 'deleted_at' => 'active']);
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -163,238 +162,352 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Student Management</title>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-    <h1>Student Management</h1>
+    <div class="admin-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2><i class="fas fa-users"></i> Student Management</h2>
+            <p>Manage student records, profiles, and accounts</p>
+        </div>
 
-    <!-- Display Messages -->
-    <?php if (isset($message)): ?>
-    <div style="color: green; padding: 10px; border: 1px solid green; margin: 10px 0;"><?= $message ?></div>
-    <?php endif; ?>
+        <!-- Display Messages -->
+        <?php if (isset($message)): ?>
+        <div class="alert-banner alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div><?= $message ?></div>
+        </div>
+        <?php endif; ?>
 
-    <?php if (isset($error)): ?>
-    <div style="color: red; padding: 10px; border: 1px solid red; margin: 10px 0;"><?= $error ?></div>
-    <?php endif; ?>
+        <?php if (isset($error)): ?>
+        <div class="alert-banner alert-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <div><?= $error ?></div>
+        </div>
+        <?php endif; ?>
 
-    <!-- Display Import Errors -->
-    <?php if (isset($import_errors) && !empty($import_errors)): ?>
-    <div style="color: orange; padding: 10px; border: 1px solid orange; margin: 10px 0;">
-        <strong>Import Errors:</strong>
-        <ul>
-            <?php foreach ($import_errors as $import_error): ?>
-            <li><?= htmlspecialchars($import_error) ?></li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-    <?php endif; ?>
-
-    <!-- Statistics Dashboard -->
-    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-        <h3>Statistics</h3>
-        <p>Total Students: <?= $totalStudents ?></p>
-        <p>Completed Profiles: <?= $completedProfiles ?></p>
-        <p>Incomplete Profiles: <?= $incompleteProfiles ?></p>
-    </div>
-
-    <!-- Search and Filter Section -->
-    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-        <h3>Search & Filter</h3>
-
-        <!-- Search Form -->
-        <form method="GET" style="margin-bottom: 10px;">
-            <input type="text" name="search_keyword" placeholder="Search by name or email"
-                value="<?= $_GET['search_keyword'] ?? '' ?>">
-            <button type="submit" name="search">Search</button>
-            <a href="admin_students.php">Clear</a>
-        </form>
-
-        <!-- Filter Form -->
-        <form method="GET">
-            <select name="course">
-                <option value="">All Courses</option>
-                <option value="BS Computer Science"
-                    <?= ($filters['course'] === 'BS Computer Science') ? 'selected' : '' ?>>BS Computer Science</option>
-                <option value="BS Engineering" <?= ($filters['course'] === 'BS Engineering') ? 'selected' : '' ?>>BS
-                    Engineering</option>
-                <option value="BS Information System"
-                    <?= ($filters['course'] === 'BS Information System') ? 'selected' : '' ?>>BS Information System
-                </option>
-                <option value="BS Nursing" <?= ($filters['course'] === 'BS Nursing') ? 'selected' : '' ?>>BS Nursing
-                </option>
-                <option value="BS Midwifery" <?= ($filters['course'] === 'BS Midwifery') ? 'selected' : '' ?>>BS
-                    Midwifery</option>
-                <option value="BS Psychology" <?= ($filters['course'] === 'BS Psychology') ? 'selected' : '' ?>>BS
-                    Psychology</option>
-            </select>
-
-            <select name="year_level">
-                <option value="">All Year Levels</option>
-                <option value="1st Year" <?= ($filters['year_level'] === '1st Year') ? 'selected' : '' ?>>1st Year
-                </option>
-                <option value="2nd Year" <?= ($filters['year_level'] === '2nd Year') ? 'selected' : '' ?>>2nd Year
-                </option>
-                <option value="3rd Year" <?= ($filters['year_level'] === '3rd Year') ? 'selected' : '' ?>>3rd Year
-                </option>
-                <option value="4th Year" <?= ($filters['year_level'] === '4th Year') ? 'selected' : '' ?>>4th Year
-                </option>
-            </select>
-
-            <select name="profile_completed">
-                <option value="">All Profiles</option>
-                <option value="1" <?= ($filters['profile_completed'] === '1') ? 'selected' : '' ?>>Completed</option>
-                <option value="0" <?= ($filters['profile_completed'] === '0') ? 'selected' : '' ?>>Incomplete</option>
-            </select>
-
-            <button type="submit">Apply Filters</button>
-        </form>
-    </div>
-
-    <!-- CSV Import Section -->
-    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-        <h3>Import Students from CSV</h3>
-        <form method="POST" enctype="multipart/form-data">
-            <input type="file" name="csv_file" accept=".csv" required>
-            <button type="submit" name="import_students">Import CSV</button>
-        </form>
-        <p><small>CSV format: email, student_id, first_name, last_name</small></p>
-    </div>
-
-    <!-- Add Student Form -->
-    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-        <h3>Add New Student</h3>
-        <form method="POST">
-            <input type="text" name="first_name" placeholder="First Name" required>
-            <input type="text" name="last_name" placeholder="Last Name" required>
-            <input type="email" name="email" placeholder="Email" required>
-            <button type="submit" name="add_student">Add Student</button>
-        </form>
-    </div>
-
-    <!-- Students List -->
-    <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
-        <h3>Students List (<?= count($students) ?> students)</h3>
-
-        <!-- Bulk Actions Form -->
-        <form method="POST" id="bulkForm">
-            <div style="margin-bottom: 10px;">
-                <button type="submit" name="bulk_action" value="export">Export Selected</button>
-                <button type="submit" name="bulk_action" value="delete"
-                    onclick="return confirm('Are you sure you want to delete selected students?')">Delete
-                    Selected</button>
-            </div>
-
-            <table border="1" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th><input type="checkbox" id="selectAll"></th>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Student ID</th>
-                        <th>Course</th>
-                        <th>Year Level</th>
-                        <th>Profile Completed</th>
-                        <th>Account Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($students as $student): ?>
-                    <tr>
-                        <td><input type="checkbox" name="student_ids[]" value="<?= $student['id'] ?>"
-                                class="student-checkbox"></td>
-                        <td><?= $student['id'] ?></td>
-                        <td><?= htmlspecialchars($student['first_name'] . ' ' . $student['last_name']) ?></td>
-                        <td><?= htmlspecialchars($student['email']) ?></td>
-                        <td>
-                            <?php if (empty($student['student_id'])): ?>
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="action" value="assign_id">
-                                <input type="hidden" name="email" value="<?= $student['email'] ?>">
-                                <input type="text" name="student_id" placeholder="Enter ID" size="10" required>
-                                <button type="submit">Assign</button>
-                            </form>
-                            <?php else: ?>
-                            <?= htmlspecialchars($student['student_id']) ?>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= htmlspecialchars($student['course'] ?? 'N/A') ?></td>
-                        <td><?= htmlspecialchars($student['year_level'] ?? 'N/A') ?></td>
-                        <td><?= $student['profile_completed'] ? 'Yes' : 'No' ?></td>
-                        <td>
-                            <?php if (!empty($student['user_data']['user_data']['user_id'])): ?>
-                            <span style="color: green;">✅ Registered</span><br>
-                            Verified: <?= !empty($student['user_data']['user_data']['is_verified']) ? 'Yes' : 'No' ?>
-                            <?php else: ?>
-                            <span style="color: red;">❌ No account</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <!-- View Button that opens student details page -->
-                            <a href="student_details.php?id=<?= $student['id'] ?>" style="text-decoration: none;">
-                                <button type="button">View</button>
-                            </a>
-
-                            <!-- Delete Button -->
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="student_id" value="<?= $student['id'] ?>">
-                                <button type="submit" name="delete_student"
-                                    onclick="return confirm('Are you sure you want to delete this student?')">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
+        <!-- Display Import Errors -->
+        <?php if (isset($import_errors) && !empty($import_errors)): ?>
+        <div class="alert-banner alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Import completed with <?= count($import_errors) ?> errors:</strong>
+                <ul style="margin: 10px 0 0 20px;">
+                    <?php foreach ($import_errors as $import_error): ?>
+                    <li><?= htmlspecialchars($import_error) ?></li>
                     <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+        <?php endif; ?>
 
-                    <?php if (empty($students)): ?>
-                    <tr>
-                        <td colspan="10" style="text-align: center;">No students found</td>
-                    </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </form>
+        <!-- Statistics Dashboard -->
+        <div class="stats-dashboard">
+            <div class="stat-card">
+                <div class="stat-number"><?= $totalStudents ?></div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $completedProfiles ?></div>
+                <div class="stat-label">Completed Profiles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= $incompleteProfiles ?></div>
+                <div class="stat-label">Incomplete Profiles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number"><?= count($students) ?></div>
+                <div class="stat-label">Currently Displayed</div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <span><i class="fas fa-search"></i> Search & Filter Students</span>
+            </div>
+            <div class="admin-card-body">
+                <!-- Search Form -->
+                <form method="GET" class="search-form">
+                    <input type="text" name="search_keyword" class="search-input" 
+                           placeholder="Search by name, email, or student ID..."
+                           value="<?= htmlspecialchars($_GET['search_keyword'] ?? '') ?>">
+                    <button type="submit" name="search" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <a href="admin_students.php" class="btn btn-outline">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </form>
+
+                <!-- Filter Form -->
+                <form method="GET" class="filter-form">
+                    <div class="form-group">
+                        <label>Course</label>
+                        <select name="course" class="form-select">
+                            <option value="">All Courses</option>
+                            <option value="BS Computer Science" <?= ($filters['course'] === 'BS Computer Science') ? 'selected' : '' ?>>BS Computer Science</option>
+                            <option value="BS Engineering" <?= ($filters['course'] === 'BS Engineering') ? 'selected' : '' ?>>BS Engineering</option>
+                            <option value="BS Information System" <?= ($filters['course'] === 'BS Information System') ? 'selected' : '' ?>>BS Information System</option>
+                            <option value="BS Nursing" <?= ($filters['course'] === 'BS Nursing') ? 'selected' : '' ?>>BS Nursing</option>
+                            <option value="BS Midwifery" <?= ($filters['course'] === 'BS Midwifery') ? 'selected' : '' ?>>BS Midwifery</option>
+                            <option value="BS Psychology" <?= ($filters['course'] === 'BS Psychology') ? 'selected' : '' ?>>BS Psychology</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <select name="year_level" class="form-select">
+                            <option value="">All Year Levels</option>
+                            <option value="1st Year" <?= ($filters['year_level'] === '1st Year') ? 'selected' : '' ?>>1st Year</option>
+                            <option value="2nd Year" <?= ($filters['year_level'] === '2nd Year') ? 'selected' : '' ?>>2nd Year</option>
+                            <option value="3rd Year" <?= ($filters['year_level'] === '3rd Year') ? 'selected' : '' ?>>3rd Year</option>
+                            <option value="4th Year" <?= ($filters['year_level'] === '4th Year') ? 'selected' : '' ?>>4th Year</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Profile Status</label>
+                        <select name="profile_completed" class="form-select">
+                            <option value="">All Profiles</option>
+                            <option value="1" <?= ($filters['profile_completed'] === '1') ? 'selected' : '' ?>>Completed</option>
+                            <option value="0" <?= ($filters['profile_completed'] === '0') ? 'selected' : '' ?>>Incomplete</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary" style="height: 46px;">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="action-section">
+            <h3><i class="fas fa-plus-circle"></i> Quick Actions</h3>
+            <p>Add new students or import multiple records via CSV</p>
+            
+            <div class="form-row">
+                <!-- Add Student Form -->
+                <form method="POST" class="form-group" style="flex: 2;">
+                    <div class="form-row">
+                        <input type="text" name="first_name" class="form-input" placeholder="First Name" required>
+                        <input type="text" name="last_name" class="form-input" placeholder="Last Name" required>
+                        <input type="email" name="email" class="form-input" placeholder="Email Address" required>
+                        <button type="submit" name="add_student" class="btn btn-primary" style="height: 46px;">
+                            <i class="fas fa-user-plus"></i> Add Student
+                        </button>
+                    </div>
+                </form>
+
+                <!-- CSV Import Form -->
+                <form method="POST" enctype="multipart/form-data" class="form-group" style="flex: 1;">
+                    <div class="form-row">
+                        <input type="file" name="csv_file" class="form-input" accept=".csv" required 
+                               style="border: 2px dashed var(--school-gray); padding: 10px;">
+                        <button type="submit" name="import_students" class="btn btn-secondary" style="height: 46px;">
+                            <i class="fas fa-file-import"></i> Import CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> CSV format: email, student_id, first_name, last_name
+            </p>
+        </div>
+
+        <!-- Students List -->
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <span><i class="fas fa-list"></i> Students List</span>
+                <span class="badge"><?= count($students) ?> students</span>
+            </div>
+            <div class="admin-card-body">
+                <!-- Bulk Actions -->
+                <div class="bulk-section">
+                    <div class="bulk-actions">
+                        <button type="submit" form="bulkForm" name="bulk_action" value="export" class="btn btn-export">
+                            <i class="fas fa-download"></i> Export Selected
+                        </button>
+                        <button type="submit" form="bulkForm" name="bulk_action" value="delete" class="btn btn-danger"
+                                onclick="return confirm('Are you sure you want to delete selected students?')">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                        <span id="selectedCount" class="text-muted">0 students selected</span>
+                    </div>
+                </div>
+
+                <!-- Students Table -->
+                <form method="POST" id="bulkForm">
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th class="select-all-cell">
+                                        <input type="checkbox" id="selectAll" class="form-check-input">
+                                    </th>
+                                    <th>ID</th>
+                                    <th>Student Information</th>
+                                    <th>Academic Details</th>
+                                    <th>Profile Status</th>
+                                    <th>Account Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($students)): ?>
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">
+                                            <i class="fas fa-users-slash"></i>
+                                            <h4>No Students Found</h4>
+                                            <p>No students match your current search criteria</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php else: ?>
+                                <?php foreach ($students as $student): ?>
+                                <tr>
+                                    <td class="select-all-cell">
+                                        <input type="checkbox" name="student_ids[]" value="<?= $student['id'] ?>" 
+                                               class="form-check-input student-checkbox">
+                                    </td>
+                                    <td><?= $student['id'] ?></td>
+                                    <td>
+                                        <div style="font-weight: 600;"><?= htmlspecialchars($student['first_name'] . ' ' . $student['last_name']) ?></div>
+                                        <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($student['email']) ?></div>
+                                        <div style="font-size: 0.85rem;">
+                                            <?php if (empty($student['student_id'])): ?>
+                                            <form method="POST" class="inline-form" style="margin-top: 5px;">
+                                                <input type="hidden" name="action" value="assign_id">
+                                                <input type="hidden" name="email" value="<?= $student['email'] ?>">
+                                                <div style="display: flex; gap: 5px;">
+                                                    <input type="text" name="student_id" class="form-input" 
+                                                           placeholder="Enter ID" required style="padding: 4px 8px; font-size: 0.8rem;">
+                                                    <button type="submit" class="btn btn-small btn-primary">
+                                                        <i class="fas fa-id-card"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                            <?php else: ?>
+                                            <span style="color: var(--school-green); font-weight: 500;">
+                                                <i class="fas fa-id-card"></i> <?= htmlspecialchars($student['student_id']) ?>
+                                            </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div><?= htmlspecialchars($student['course'] ?? 'Not set') ?></div>
+                                        <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($student['year_level'] ?? 'Not set') ?></div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge <?= $student['profile_completed'] ? 'status-completed' : 'status-incomplete' ?>">
+                                            <?= $student['profile_completed'] ? 'Complete' : 'Incomplete' ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if ($student['has_account']): ?>
+                                        <span class="status-badge status-registered">Registered</span>
+                                        <div style="font-size: 0.75rem; margin-top: 2px;">
+                                            <?= $student['is_verified'] ? 'Verified' : 'Pending' ?>
+                                        </div>
+                                        <?php else: ?>
+                                        <span class="status-badge status-unregistered">No Account</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="student_details.php?id=<?= $student['id'] ?>" 
+                                               class="btn-admin btn-view" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button type="button" onclick="openEditModal(<?= $student['id'] ?>)" 
+                                                    class="btn-admin btn-edit" title="Edit Student">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form method="POST" style="display: inline;">
+                                                <input type="hidden" name="student_id" value="<?= $student['id'] ?>">
+                                                <button type="submit" name="delete_student" 
+                                                        class="btn-admin btn-danger" title="Delete Student"
+                                                        onclick="return confirm('Are you sure you want to delete this student?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Back to Top Button -->
+        <button class="back-to-top" onclick="scrollToTop()">
+            <i class="fas fa-chevron-up"></i>
+        </button>
     </div>
 
-    <!-- Edit Student Modal (hidden by default) -->
-    <div id="editModal"
-        style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 1px solid #ccc; z-index: 1000;">
-        <h3>Edit Student</h3>
-        <form method="POST" id="editForm">
-            <input type="hidden" name="student_id" id="edit_student_id">
-            <div>
-                <label>First Name:</label>
-                <input type="text" name="first_name" id="edit_first_name" required>
+    <!-- Edit Student Modal -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Student</h3>
+                <button type="button" class="close-modal" onclick="closeEditModal()">&times;</button>
             </div>
-            <div>
-                <label>Last Name:</label>
-                <input type="text" name="last_name" id="edit_last_name" required>
-            </div>
-            <div>
-                <label>Email:</label>
-                <input type="email" name="email" id="edit_email" required>
-            </div>
-            <div>
-                <label>Student ID:</label>
-                <input type="text" name="student_id" id="edit_student_id_field">
-            </div>
-            <div>
-                <label>Course:</label>
-                <input type="text" name="course" id="edit_course">
-            </div>
-            <div>
-                <label>Year Level:</label>
-                <input type="text" name="year_level" id="edit_year_level">
-            </div>
-            <div>
-                <label>Contact Number:</label>
-                <input type="text" name="contact_number" id="edit_contact_number">
-            </div>
-            <div>
-                <button type="submit" name="update_student">Update Student</button>
-                <button type="button" onclick="closeEditModal()">Cancel</button>
-            </div>
-        </form>
+            <form method="POST" id="editForm">
+                <input type="hidden" name="student_id" id="edit_student_id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" id="edit_first_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" id="edit_last_name" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" id="edit_email" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Student ID</label>
+                        <input type="text" name="student_id" id="edit_student_id_field" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Course</label>
+                        <input type="text" name="course" id="edit_course" class="form-input">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year Level</label>
+                        <input type="text" name="year_level" id="edit_year_level" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Number</label>
+                        <input type="text" name="contact_number" id="edit_contact_number" class="form-input">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" name="update_student" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Student
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -404,6 +517,18 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
         });
+        updateSelectedCount();
+    });
+
+    // Update selected count
+    function updateSelectedCount() {
+        const selected = document.querySelectorAll('.student-checkbox:checked').length;
+        document.getElementById('selectedCount').textContent = `${selected} students selected`;
+    }
+
+    // Add event listeners to all checkboxes
+    document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
     });
 
     // Edit Modal functions
@@ -419,7 +544,7 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                 document.getElementById('edit_course').value = student.course || '';
                 document.getElementById('edit_year_level').value = student.year_level || '';
                 document.getElementById('edit_contact_number').value = student.contact_number || '';
-                document.getElementById('editModal').style.display = 'block';
+                document.getElementById('editModal').style.display = 'flex';
             })
             .catch(error => {
                 console.error('Error fetching student:', error);
@@ -438,6 +563,24 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
             closeEditModal();
         }
     });
+
+    // Back to top functionality
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Show/hide back to top button
+    window.addEventListener('scroll', function() {
+        const backToTop = document.querySelector('.back-to-top');
+        if (window.pageYOffset > 300) {
+            backToTop.style.display = 'flex';
+        } else {
+            backToTop.style.display = 'none';
+        }
+    });
+
+    // Initialize selected count
+    updateSelectedCount();
     </script>
 </body>
 
