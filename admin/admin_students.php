@@ -120,19 +120,40 @@ if (isset($_GET['action']) && $_GET['action'] === 'assign_id' && isset($_GET['em
 $filters = [
     'course' => $_GET['course'] ?? $_POST['course'] ?? '',
     'year_level' => $_GET['year_level'] ?? $_POST['year_level'] ?? '',
-    'profile_completed' => $_GET['profile_completed'] ?? $_POST['profile_completed'] ?? ''
+    'profile_completed' => $_GET['profile_completed'] ?? $_POST['profile_completed'] ?? '',
+    'account_status' => $_GET['account_status'] ?? $_POST['account_status'] ?? ''
 ];
 
 // Get students based on filters or search
 $hasSearch = isset($_GET['search_keyword']) && !empty($_GET['search_keyword']);
 $hasFilters = isset($_GET['course']) && $_GET['course'] !== '' || 
               isset($_GET['year_level']) && $_GET['year_level'] !== '' || 
-              isset($_GET['profile_completed']) && $_GET['profile_completed'] !== '';
+              isset($_GET['profile_completed']) && $_GET['profile_completed'] !== '' ||
+              isset($_GET['account_status']) && $_GET['account_status'] !== '';
 
 if ($hasSearch) {
     $students = $studentModel->searchStudents($_GET['search_keyword']);
 } else if ($hasFilters) {
-    $students = $studentModel->filterStudents($filters);
+    // Separate account_status from other filters
+    $otherFilters = [
+        'course' => $filters['course'],
+        'year_level' => $filters['year_level'],
+        'profile_completed' => $filters['profile_completed']
+    ];
+    
+    // Check if only account_status is filtered
+    $onlyAccountStatus = empty($otherFilters['course']) && 
+                         empty($otherFilters['year_level']) && 
+                         empty($otherFilters['profile_completed']) &&
+                         !empty($filters['account_status']);
+    
+    if ($onlyAccountStatus) {
+        // If ONLY account_status is filtered, get all students first
+        $students = $studentModel->getAllStudents();
+    } else {
+        // Otherwise, apply other filters first
+        $students = $studentModel->filterStudents($otherFilters);
+    }
 } else {
     $students = $studentModel->getAllStudents();
 }
@@ -141,12 +162,36 @@ if ($hasSearch) {
 foreach ($students as &$student) {
     $accountInfo = $studentModel->checkStudentHasAccount($student['email']);
     
-    $student['has_account'] = ($accountInfo !== false);
-    $student['user_data'] = $accountInfo;
-    $student['role'] = $accountInfo['role'] ?? null;
-    $student['is_verified'] = $accountInfo['is_verified'] ?? false;
+    // If accountInfo is false, student is unregistered
+    // If accountInfo is an array, check the has_account key
+    if ($accountInfo === false) {
+        $student['has_account'] = false;
+        $student['user_data'] = null;
+        $student['role'] = null;
+        $student['is_verified'] = false;
+    } else {
+        $student['has_account'] = $accountInfo['has_account'] ?? false;
+        $student['user_data'] = $accountInfo;
+        $student['role'] = $accountInfo['user_data']['role'] ?? null;
+        $student['is_verified'] = $accountInfo['user_data']['is_verified'] ?? false;
+    }
 }
 unset($student);
+
+// Apply account status filter if set
+if (!empty($filters['account_status'])) {
+    if ($filters['account_status'] === 'unregistered') {
+        $students = array_filter($students, function($s) {
+            return !$s['has_account'];
+        });
+    } elseif ($filters['account_status'] === 'registered') {
+        $students = array_filter($students, function($s) {
+            return $s['has_account'];
+        });
+    }
+    // Re-index array after filtering
+    $students = array_values($students);
+}
 
 require_once 'admin_header.php';
 
@@ -276,6 +321,15 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                             <option value="">All Profiles</option>
                             <option value="1" <?= ($filters['profile_completed'] === '1') ? 'selected' : '' ?>>Completed</option>
                             <option value="0" <?= ($filters['profile_completed'] === '0') ? 'selected' : '' ?>>Incomplete</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Account Status</label>
+                        <select name="account_status" class="form-select">
+                            <option value="">All Students</option>
+                            <option value="registered" <?= ($filters['account_status'] === 'registered') ? 'selected' : '' ?>>Registered</option>
+                            <option value="unregistered" <?= ($filters['account_status'] === 'unregistered') ? 'selected' : '' ?>>Unregistered</option>
                         </select>
                     </div>
 

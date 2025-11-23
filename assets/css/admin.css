@@ -1601,3 +1601,24 @@ button, .btn {
         font-size: 0.65rem;
     }
 }
+
+/* ===== STUDENT DETAILS PAGE RESPONSIVE ===== */
+@media (max-width: 1024px) {
+    div[style*="grid-template-columns: 1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    div[style*="display: grid"][style*="gap: 25px"] {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+    
+    div[style*="display: grid"][style*="gap: 20px"] {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+}

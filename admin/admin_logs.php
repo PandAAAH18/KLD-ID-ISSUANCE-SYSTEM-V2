@@ -372,7 +372,7 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                                             $hasChanges = ($oldData !== '-' || $newData !== '-');
                                         ?>
                                         <?php if ($hasChanges): ?>
-                                            <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="toggleAuditDetails(event)" title="View changes">
+                                            <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="toggleAuditDetails(this)" title="View changes">
                                                 <i class="fas fa-eye"></i> Details
                                             </button>
                                             <div class="audit-details" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-width: 350px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; right: 0; left: auto;">
@@ -412,14 +412,23 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
         });
 
         // Toggle audit details popup
-        function toggleAuditDetails(event) {
-            event.preventDefault();
-            const details = event.currentTarget.nextElementSibling;
-            if (details && details.classList.contains('audit-details')) {
-                const isHidden = details.style.display === 'none';
-                document.querySelectorAll('.audit-details').forEach(d => d.style.display = 'none');
-                if (isHidden) {
-                    details.style.display = 'block';
+        function toggleAuditDetails(button) {
+            // Find the details div - next sibling
+            const detailsDiv = button.nextElementSibling;
+            
+            if (detailsDiv && detailsDiv.classList.contains('audit-details')) {
+                // Close all other details first
+                document.querySelectorAll('.audit-details').forEach(d => {
+                    if (d !== detailsDiv) {
+                        d.style.display = 'none';
+                    }
+                });
+                
+                // Toggle current details
+                if (detailsDiv.style.display === 'none' || detailsDiv.style.display === '') {
+                    detailsDiv.style.display = 'block';
+                } else {
+                    detailsDiv.style.display = 'none';
                 }
             }
         }
