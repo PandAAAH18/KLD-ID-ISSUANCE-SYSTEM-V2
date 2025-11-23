@@ -1,14 +1,11 @@
-php
 <?php
 require_once '../includes/config.php';
 require_once 'student_header.php';
 require_once 'student.php';
-
-// Add PHPMailer autoload
-require_once '../vendor/autoload.php';
-
+require_once __DIR__ . '/../vendor/autoload.php'; 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
 
 if (
     !isset($_SESSION['user_id'], $_SESSION['user_type'], $_SESSION['student_id']) ||
@@ -29,186 +26,49 @@ $msgType = '';
 
 // Handle ticket submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_ticket'])) {
-    $subject = trim($_POST['subject'] ?? '');
+    $subject  = trim($_POST['subject']  ?? '');
     $category = trim($_POST['category'] ?? '');
-    $message = trim($_POST['message'] ?? '');
-    $ticketId = 'TKT-' . strtoupper(substr(uniqid(), -6));
+    $message  = trim($_POST['message']  ?? '');
+    $fromMail = filter_var($stu['email'], FILTER_VALIDATE_EMAIL);
 
-    if ($subject && $category && $message) {
-        // Save ticket to database (you'll need to implement this)
-        // $ticketSaved = saveTicketToDatabase($stu->getId(), $subject, $category, $message, $ticketId);
-        $ticketSaved = true; // Temporary for testing
-        
-        if ($ticketSaved) {
-            // Send email notification
-            $emailSent = sendTicketNotification($stu, $ticketId, $subject, $category, $message);
-            
-            $msg = '✓ Ticket submitted successfully! Reference: ' . $ticketId;
-            if ($emailSent) {
-                $msg .= ' (Confirmation email sent)';
-            }
+    if ($subject && $category && $message && filter_var($fromMail, FILTER_VALIDATE_EMAIL)) {
+        $ticketRef = 'TKT-' . strtoupper(substr(uniqid(), -6));
+
+        $mail = new PHPMailer(true);
+        try {
+            /* ---------- SMTP still uses YOUR Gmail ---------- */
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'caballeroangelo321@gmail.com'; // your account
+            $mail->Password   = 'flzv unam icfk yxok';         // your app pwd
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+
+            /* ---------- MESSAGE ---------- */
+            $mail->setFrom($fromMail);                 // student’s address
+            $mail->addReplyTo($fromMail);              // replies go to student
+            $mail->addAddress('caballeroangelo321@gmail.com'); // you
+            $mail->Subject = "New Support Ticket: $subject";
+            $mail->Body    = "Ticket Reference: $ticketRef\n"
+                           . "From: $fromMail\n"
+                           . "Category: $category\n\n"
+                           . "Message:\n$message\n";
+
+            $mail->send();
+
+            $msg     = "✓ Ticket submitted successfully! Reference: $ticketRef";
             $msgType = 'success';
-        } else {
-            $msg = '✕ Failed to save ticket. Please try again.';
+        } catch (Exception $e) {
+            $msg     = '✗ Could not send ticket. Mailer Error: ' . $mail->ErrorInfo;
             $msgType = 'error';
         }
     } else {
-        $msg = '✕ Please fill in all required fields.';
+        $msg     = '✕ Please fill in all fields with a valid e-mail address.';
         $msgType = 'error';
     }
 }
 
-// Function to send ticket notification email
-function sendTicketNotification($student, $ticketId, $subject, $category, $message) {
-    try {
-        $mail = new PHPMailer(true);
-        
-        // Server settings (Configure these with your SMTP settings)
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com'; // Replace with your SMTP server
-        $mail->SMTPAuth = true;
-        $mail->Username = 'your-email@gmail.com'; // Replace with your email
-        $mail->Password = 'your-app-password'; // Replace with your app password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-        
-        // If you don't have SMTP, you can use sendmail instead:
-        // $mail->isSendmail();
-        
-        // Recipients
-        $mail->setFrom('support@kld.edu.ph', 'KLD Support System');
-        $mail->addAddress($student->getEmail(), $student->getFullName()); // Student's email
-        $mail->addReplyTo('support@kld.edu.ph', 'KLD Support');
-        
-        // CC to support team (optional)
-        $mail->addCC('support@kld.edu.ph');
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = 'Support Ticket Received: ' . $ticketId;
-        
-        // Email body template
-        $mail->Body = createEmailTemplate($student, $ticketId, $subject, $category, $message);
-        $mail->AltBody = createPlainTextTemplate($student, $ticketId, $subject, $category, $message);
-        
-        $mail->send();
-        return true;
-        
-    } catch (Exception $e) {
-        // Log the error but don't show it to the user
-        error_log("PHPMailer Error: {$mail->ErrorInfo}");
-        return false;
-    }
-}
-
-// HTML email template
-function createEmailTemplate($student, $ticketId, $subject, $category, $message) {
-    $categoryLabels = [
-        'id_application' => 'ID Application',
-        'profile' => 'Profile',
-        'account' => 'Account',
-        'technical' => 'Technical Issue',
-        'other' => 'Other'
-    ];
-    
-    $categoryName = $categoryLabels[$category] ?? ucfirst($category);
-    
-    return "
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #1b5e20; color: white; padding: 20px; text-align: center; }
-            .content { background: #f9f9f9; padding: 20px; }
-            .ticket-info { background: white; padding: 15px; margin: 10px 0; border-left: 4px solid #1b5e20; }
-            .footer { background: #eee; padding: 15px; text-align: center; font-size: 12px; }
-        </style>
-    </head>
-    <body>
-        <div class='container'>
-            <div class='header'>
-                <h1>KLD Support Ticket Received</h1>
-            </div>
-            <div class='content'>
-                <p>Dear {$student->getFullName()},</p>
-                <p>Thank you for contacting Kolehiyo ng Lungsod ng Dasmariñas Support. We have received your support ticket and will get back to you within 24 hours.</p>
-                
-                <div class='ticket-info'>
-                    <h3>Ticket Details:</h3>
-                    <p><strong>Ticket ID:</strong> {$ticketId}</p>
-                    <p><strong>Subject:</strong> {$subject}</p>
-                    <p><strong>Category:</strong> {$categoryName}</p>
-                    <p><strong>Message:</strong><br>{$message}</p>
-                </div>
-                
-                <p><strong>What happens next?</strong></p>
-                <ul>
-                    <li>Our support team will review your ticket</li>
-                    <li>You'll receive updates via email</li>
-                    <li>We aim to respond within 24 hours</li>
-                </ul>
-                
-                <p>If you need immediate assistance, please contact us:</p>
-                <ul>
-                    <li>📧 Email: support@kld.edu.ph</li>
-                    <li>📱 Phone: +63 (555) 123-4567</li>
-                    <li>🏢 Office: Registrar's Office - Building 1, Room 101</li>
-                </ul>
-            </div>
-            <div class='footer'>
-                <p>Kolehiyo ng Lungsod ng Dasmariñas<br>
-                Dasmariñas City, Cavite<br>
-                This is an automated message. Please do not reply to this email.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ";
-}
-
-// Plain text email template
-function createPlainTextTemplate($student, $ticketId, $subject, $category, $message) {
-    $categoryLabels = [
-        'id_application' => 'ID Application',
-        'profile' => 'Profile',
-        'account' => 'Account',
-        'technical' => 'Technical Issue',
-        'other' => 'Other'
-    ];
-    
-    $categoryName = $categoryLabels[$category] ?? ucfirst($category);
-    
-    return "
-KLD SUPPORT TICKET RECEIVED
-
-Dear {$student->getFullName()},
-
-Thank you for contacting Kolehiyo ng Lungsod ng Dasmariñas Support. We have received your support ticket and will get back to you within 24 hours.
-
-TICKET DETAILS:
-Ticket ID: {$ticketId}
-Subject: {$subject}
-Category: {$categoryName}
-Message: {$message}
-
-WHAT HAPPENS NEXT?
-- Our support team will review your ticket
-- You'll receive updates via email
-- We aim to respond within 24 hours
-
-FOR IMMEDIATE ASSISTANCE:
-Email: support@kld.edu.ph
-Phone: +63 (555) 123-4567
-Office: Registrar's Office - Building 1, Room 101
-
-Kolehiyo ng Lungsod ng Dasmariñas
-Dasmariñas City, Cavite
-
-This is an automated message. Please do not reply to this email.
-    ";
-}
 $faqs = [
     [
         'category' => 'ID Application',
@@ -308,8 +168,9 @@ $faqs = [
             <div class="ticket-body">
                 <p>Can't find what you're looking for? Submit a support ticket and our team will get back to you within 24 hours.</p>
 
-                <form method="post" onsubmit="handleSubmit(event)">
+                <form method="post">
                     <div class="form-row">
+                        <div class="form-row full">
                         <div class="form-group required">
                             <label>Subject</label>
                             <input type="text" name="subject" placeholder="Brief description of your issue" required>
