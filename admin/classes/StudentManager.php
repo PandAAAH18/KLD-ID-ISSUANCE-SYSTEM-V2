@@ -320,9 +320,14 @@ public function bulkDeleteStudents(array $studentIds): bool
     return $stmt->execute($studentIds);
 }
 
-public function bulkExportStudents(array $studentIds = []): array
+public function bulkExportStudents(array $studentIds = []): void
 {
     try {
+        // Check if headers have already been sent
+        if (headers_sent()) {
+            throw new Exception('Headers already sent, cannot export CSV');
+        }
+
         if (empty($studentIds)) {
             $sql = "SELECT * FROM student WHERE deleted_at IS NULL";
             $stmt = $this->db->prepare($sql);
@@ -337,20 +342,18 @@ public function bulkExportStudents(array $studentIds = []): array
         $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         if (empty($students)) {
-            return [
-                'success' => false,
-                'message' => 'No students found to export'
-            ];
+            throw new Exception('No students found to export');
         }
 
         $this->outputCSV($students);
-        exit;
+        exit; // Stop execution after CSV output
         
     } catch (Exception $e) {
-        return [
-            'success' => false,
-            'message' => 'Export failed: ' . $e->getMessage()
-        ];
+        // If we can't output CSV, show an error
+        if (!headers_sent()) {
+            header('Content-Type: text/html');
+        }
+        die('Export failed: ' . $e->getMessage());
     }
 }
 

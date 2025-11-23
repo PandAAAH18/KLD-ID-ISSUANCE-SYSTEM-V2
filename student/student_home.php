@@ -42,6 +42,7 @@ $signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspec
 $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 ?>
 
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 
@@ -475,6 +476,9 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
     <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
 
     <div class="portrait-id-container">
+=======
+<!-- PAGE CONTENT STARTS HERE -->
+>>>>>>> f77bc95ad377522d31bb7e87d8d97eddc1a29788
         <div class="portrait-id-card">
 
             <!-- FRONT -->
@@ -760,3 +764,8 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         alert('QR Code scanner feature coming soon!');
     }
 </script>
+            </div><!-- End admin-content -->
+        </main><!-- End admin-main -->
+    </div><!-- End admin-wrapper -->
+</body>
+</html>

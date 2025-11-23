@@ -63,21 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply / Renew School ID</title>
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/admin.css" rel="stylesheet">
-    <link href="../assets/css/student.css" rel="stylesheet">
-</head>
 
-<body class="admin-body">
-
-    <!-- BACK-TO-TOP BUTTON -->
-    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
+<!-- PAGE CONTENT STARTS HERE -->
 
     <!-- INCOMPLETE PROFILE WARNING -->
     <?php if ($incomplete): ?>
@@ -414,5 +401,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             });
         }
     </script>
+            </div><!-- End admin-content -->
+        </main><!-- End admin-main -->
+    </div><!-- End admin-wrapper -->
 </body>
 </html>

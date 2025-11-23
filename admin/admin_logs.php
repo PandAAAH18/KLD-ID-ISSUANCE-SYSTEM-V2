@@ -7,7 +7,7 @@ if (($_SESSION['user_type'] ?? '') !== 'admin') {
     http_response_code(403);
     exit('Access denied');
 }
-require_once 'admin_header.php';
+
 
 $adminModel = new Admin();
 $db = $adminModel->getDb();
@@ -69,6 +69,48 @@ $dataStmt = $db->prepare($dataSql);
 $dataStmt->execute($params);
 $logs = $dataStmt->fetchAll(PDO::FETCH_ASSOC);
 
+/* ----------  HANDLE CSV EXPORT  ---------- */
+if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+    // Output CSV headers
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="audit_logs_export_' . date('Y-m-d_H-i-s') . '.csv"');
+    
+    // Create output stream
+    $output = fopen('php://output', 'w');
+    fputs($output, "\xEF\xBB\xBF");
+    
+    // CSV headers
+    $headers = [
+        'ID', 'Timestamp', 'Admin ID', 'Admin Name', 'Action', 
+        'Table Name', 'Record ID', 'Old Data', 'New Data',
+        'IP Address', 'User Agent'
+    ];
+    fputcsv($output, $headers);
+    
+    // CSV data rows
+    foreach ($logs as $log) {
+        // ... same formatting logic as above ...
+        $row = [
+            $log['id'],
+            $log['created_at'],
+            $log['user_id'] ?? '',
+            $log['admin_name'] ?? 'System',
+            $log['action'],
+            $log['table_name'],
+            $log['record_id'] ?? '',
+            $oldDataFormatted,
+            $newDataFormatted,
+            $log['ip_address'] ?? '',
+            $log['user_agent'] ?? ''
+        ];
+        
+        fputcsv($output, $row);
+    }
+    
+    fclose($output);
+    exit;
+}
+
 /* ----------  QUICK HELPER  ---------- */
 function html($s) { return htmlspecialchars($s ?? '', ENT_QUOTES); }
 function sel($field, $value) { return isset($_GET[$field]) && $_GET[$field] === $value ? 'selected' : ''; }
@@ -102,6 +144,8 @@ $actionCounts = $db->query("
     ORDER BY count DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+require_once 'admin_header.php';
+
 // Get recent activity stats
 $todayCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE DATE(created_at) = CURDATE()")->fetchColumn();
 $weekCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
@@ -113,42 +157,13 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>System Logs - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .audit-data {
-            margin: 0;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
-            max-width: 300px;
-            max-height: 100px;
-            overflow: auto;
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #e9ecef;
-        }
-        .user-agent {
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .action-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-    </style>
 </head>
 
-<body>
+<body class="admin-body">
     <!-- Back to Top Button -->
     <button class="back-to-top" onclick="scrollToTop()">
         <i class="fas fa-chevron-up"></i>
@@ -156,7 +171,7 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
 
     <div class="admin-container">
         <!-- ========== PAGE HEADER ========== -->
-        <div class="page-header">
+        <div class="page-header" style="overflow: hidden;">
             <h2><i class="fas fa-clipboard-list"></i> System Audit Logs</h2>
             <p>Monitor system activities, user actions, and administrative changes</p>
         </div>
@@ -300,28 +315,24 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                                 <tr>
                                     <th>ID</th>
                                     <th>Timestamp</th>
-                                    <th>Administrator</th>
+                                    <th>Admin</th>
                                     <th>Action</th>
                                     <th>Table</th>
                                     <th>Record ID</th>
-                                    <th>Old Data</th>
-                                    <th>New Data</th>
-                                    <th>IP Address</th>
-                                    <th>User Agent</th>
+                                    <th>Changes</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($logs as $row): ?>
                                 <tr>
                                     <td><strong>#<?= html($row['id']) ?></strong></td>
-                                    <td>
-                                        <div style="font-weight: 600;"><?= date('M d, Y', strtotime($row['created_at'])) ?></div>
-                                        <div style="font-size: 0.75rem; color: #666;"><?= date('H:i:s', strtotime($row['created_at'])) ?></div>
+                                    <td style="font-size: 0.9rem;">
+                                        <div><?= date('M d', strtotime($row['created_at'])) ?></div>
+                                        <div style="font-size: 0.8rem; color: #666;"><?= date('H:i', strtotime($row['created_at'])) ?></div>
                                     </td>
-                                    <td>
+                                    <td style="font-size: 0.9rem;">
                                         <?php if ($row['admin_name']): ?>
-                                            <div style="font-weight: 600;"><?= html($row['admin_name']) ?></div>
-                                            <div style="font-size: 0.75rem; color: #666;">ID: <?= html($row['user_id']) ?></div>
+                                            <div><?= substr(html($row['admin_name']), 0, 12) ?></div>
                                         <?php else: ?>
                                             <span style="color: #666;">System</span>
                                         <?php endif; ?>
@@ -339,11 +350,11 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                                                 'export' => 'status-registered',
                                                 default => 'status-unregistered'
                                             } ?>">
-                                            <?= html($row['action']) ?>
+                                            <?= html(ucfirst(str_replace('_', ' ', $row['action']))) ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-size: 0.8rem;">
+                                        <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem;">
                                             <?= html($row['table_name']) ?>
                                         </code>
                                     </td>
@@ -355,18 +366,25 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <pre class="audit-data"><?= formatAuditData($row['old_data']) ?></pre>
-                                    </td>
-                                    <td>
-                                        <pre class="audit-data"><?= formatAuditData($row['new_data']) ?></pre>
-                                    </td>
-                                    <td>
-                                        <code style="font-size: 0.8rem;"><?= html($row['ip_address']) ?></code>
-                                    </td>
-                                    <td>
-                                        <span class="user-agent" title="<?= html($row['user_agent']) ?>">
-                                            <?= html($row['user_agent']) ?>
-                                        </span>
+                                        <?php 
+                                            $oldData = formatAuditData($row['old_data']);
+                                            $newData = formatAuditData($row['new_data']);
+                                            $hasChanges = ($oldData !== '-' || $newData !== '-');
+                                        ?>
+                                        <?php if ($hasChanges): ?>
+                                            <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="toggleAuditDetails(event)" title="View changes">
+                                                <i class="fas fa-eye"></i> Details
+                                            </button>
+                                            <div class="audit-details" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-width: 350px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; right: 0; left: auto;">
+                                                <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px;">Old Data:</strong>
+                                                <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0 0 8px 0; white-space: pre-wrap; word-wrap: break-word;"><?= $oldData ?></pre>
+                                                <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px; margin-top: 8px;">New Data:</strong>
+                                                <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><?= $newData ?></pre>
+                                                <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 8px; cursor: pointer;" onclick="this.closest('.audit-details').style.display='none';">Close</button>
+                                            </div>
+                                        <?php else: ?>
+                                            <span style="color: #999; font-size: 0.9rem;">-</span>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -393,27 +411,32 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
             }
         });
 
+        // Toggle audit details popup
+        function toggleAuditDetails(event) {
+            event.preventDefault();
+            const details = event.currentTarget.nextElementSibling;
+            if (details && details.classList.contains('audit-details')) {
+                const isHidden = details.style.display === 'none';
+                document.querySelectorAll('.audit-details').forEach(d => d.style.display = 'none');
+                if (isHidden) {
+                    details.style.display = 'block';
+                }
+            }
+        }
+
+        // Close details when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.audit-details') && !e.target.closest('button')) {
+                document.querySelectorAll('.audit-details').forEach(d => d.style.display = 'none');
+            }
+        });
+
         // Export logs functionality
         function exportLogs() {
             const params = new URLSearchParams(window.location.search);
             params.append('export', 'csv');
             window.location.href = '?' + params.toString();
         }
-
-        // Auto-expand audit data on click
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('audit-data')) {
-                const pre = e.target;
-                if (pre.style.maxHeight === 'none') {
-                    pre.style.maxHeight = '100px';
-                    pre.style.position = 'static';
-                } else {
-                    pre.style.maxHeight = 'none';
-                    pre.style.position = 'relative';
-                    pre.style.zIndex = '10';
-                }
-            }
-        });
 
         // Mobile sidebar toggle
         document.getElementById('mobileMenuBtn').addEventListener('click', function() {

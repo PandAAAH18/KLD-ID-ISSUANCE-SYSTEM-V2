@@ -21,46 +21,9 @@ if (!$stu) {
 $avatarPath = $stu['photo'] ? '../uploads/student_photos/' . htmlspecialchars($stu['photo']) : '../uploads/default_avatar.png';
 $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 ?>
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/student.css" rel="stylesheet">
-    <link href="../assets/css/admin.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-         
-        .school-navbar {
-            background: linear-gradient(135deg, var(--school-green) 0%, #2d5c2d 100%);
-            border-bottom: 4px solid var(--school-yellow);
-            padding: 9px 16px;
-            position: relative;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            height: auto;
-            min-height: 65px;
-            backdrop-filter: blur(10px);
-            background-attachment: fixed;
-        }
-    </style>
-</head>
+<!-- PAGE CONTENT STARTS HERE -->
 
-<body>
-    <!-- BACK-TO-TOP BUTTON -->
-    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
-    <!-- PROFILE CARD -->
     <div class="profile-wrapper">
         <div class="profile-container">
             <div class="profile-card-header">
@@ -168,6 +131,9 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
             });
         }
     </script>
+            </div><!-- End admin-content -->
+        </main><!-- End admin-main -->
+    </div><!-- End admin-wrapper -->
 </body>
 
 </html>
