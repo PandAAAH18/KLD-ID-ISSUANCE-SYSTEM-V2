@@ -303,19 +303,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <script>
-        // ▬▬▬▬ FLOATING NOTIFICATION SYSTEM ▬▬▬▬
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `floating-notification ${type}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-            // Display for 5 seconds total: 2.5s slide-in + 2.5s slide-out
-            setTimeout(() => {
-                notification.classList.add('hide');
-                setTimeout(() => notification.remove(), 5000);
-            }, 5000);
+    <script>
+        // ▬▬▬▬ DRAGGABLE MODAL NOTIFICATION SYSTEM ▬▬▬▬
+        function showNotification(message, type = 'info') {
+            const iconMap = {
+                'success': 'success',
+                'warning': 'warning',
+                'error': 'error',
+                'info': 'info'
+            };
+
+            const colorMap = {
+                'success': '#4caf50',
+                'warning': '#ff9800',
+                'error': '#f44336',
+                'info': '#2196f3'
+            };
+
+            Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                html: message,
+                icon: iconMap[type] || 'info',
+                confirmButtonColor: colorMap[type] || '#2196f3',
+                confirmButtonText: 'OK',
+                draggable: true,
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    modal.style.borderRadius = '12px';
+                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
+                }
+            });
         }
 
         // ▬▬▬▬ FORM VALIDATION ▬▬▬▬
@@ -369,13 +388,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return false;
             }
 
-            // If validation passes, show success message and submit form
-            showNotification('Form data is complete. Saving...', 'success');
-
-            // Submit form after showing the notification
-            setTimeout(() => {
-                event.target.closest('form').submit();
-            }, 500);
+            // If validation passes, show success message and submit form after user confirms
+            Swal.fire({
+                title: 'Success',
+                html: 'Form data is complete. Saving...',
+                icon: 'success',
+                confirmButtonColor: '#4caf50',
+                confirmButtonText: 'OK',
+                draggable: true,
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    modal.style.borderRadius = '12px';
+                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
+                }
+            }).then((result) => {
+                // Submit form only after user clicks OK
+                if (result.isConfirmed) {
+                    event.target.closest('form').submit();
+                }
+            });
         }
 
         // ▬▬▬▬ PASSWORD TOGGLE ▬▬▬▬
