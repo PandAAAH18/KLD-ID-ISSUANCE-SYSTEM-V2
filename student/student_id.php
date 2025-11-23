@@ -242,6 +242,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
 
     <?php endif; ?>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         // Show notification on submit
         function handleSubmit(event) {
@@ -253,62 +255,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                 return false;
             }
 
-            // Show floating success notification before form submission
-            showNotification('Application submitted successfully! You will be notified once processed.', 'success');
-
-            // Allow form to submit after 1.5 seconds
-            setTimeout(() => {
-                event.target.submit();
-            }, 1500);
+            // Show success notification and wait for user confirmation before submitting
+            Swal.fire({
+                title: 'Success',
+                html: 'Application submitted successfully! You will be notified once processed.',
+                icon: 'success',
+                confirmButtonColor: '#4caf50',
+                confirmButtonText: 'OK',
+                draggable: true,
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    modal.style.borderRadius = '12px';
+                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    event.target.submit();
+                }
+            });
         }
 
-        // Show floating notification alert
+        // Show draggable modal alert
         function showNotification(message, type) {
-            // Remove existing notification if any
-            const existingNotif = document.getElementById('notificationAlert');
-            if (existingNotif) {
-                existingNotif.remove();
-            }
+            const iconMap = {
+                'success': 'success',
+                'warning': 'warning',
+                'error': 'error',
+                'info': 'info'
+            };
 
-            // Create notification element
-            const notification = document.createElement('div');
-            notification.id = 'notificationAlert';
-            notification.className = `alert-${type}`;
-            notification.style.cssText = `
-                    position: fixed;
-                    top: 100px;
-                    right: 20px;
-                    width: 400px;
-                    z-index: 9999;
-                    padding: 16px 20px;
-                    border-radius: 8px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    font-size: 14px;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                    animation: slideIn 0.5s ease-out;
-                `;
+            const colorMap = {
+                'success': '#4caf50',
+                'warning': '#ff9800',
+                'error': '#f44336',
+                'info': '#2196f3'
+            };
 
-            const icon = type === 'success' ? '✓' : type === 'warning' ? '⚠️' : 'ℹ️';
-            notification.innerHTML = `
-                    <span style="font-size: 18px; margin-right: 10px;">${icon}</span>
-                    <span>${message}</span>
-                `;
-
-            document.body.appendChild(notification);
-
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (notification) {
-                    notification.style.animation = 'slideOut 0.4s ease-out forwards';
-                    setTimeout(() => {
-                        if (notification && notification.parentNode) {
-                            notification.remove();
-                        }
-                    }, 400);
+            Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                html: message,
+                icon: iconMap[type] || 'info',
+                confirmButtonColor: colorMap[type] || '#2196f3',
+                confirmButtonText: 'OK',
+                draggable: true,
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    modal.style.borderRadius = '12px';
+                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
                 }
-            }, 5000);
+            });
         }
 
         // Add animations

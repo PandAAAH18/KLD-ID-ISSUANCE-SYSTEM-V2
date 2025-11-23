@@ -1532,11 +1532,11 @@ body {
 }
 
 .portrait-id-card {
-    width: 420px;
-    height: 675px;
+    width: 450px;
+    height: 600px;
     position: relative;
     margin: auto;
-    transition: transform 0.6s;
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform-style: preserve-3d;
     cursor: pointer;
 }
@@ -1548,139 +1548,392 @@ body {
 .portrait-side {
     width: 450px;
     height: 600px;
-    border-radius: 12px;
+    border-radius: 14px;
     position: absolute;
     backface-visibility: hidden;
     overflow: hidden;
-    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.3);
-    background: #fff;
+    box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.18);
+    background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+    display: flex;
+    flex-direction: column;
 }
 
-/* ---------------- FRONT ---------------- */
+/* ▬▬▬▬ PORTRAIT FRONT ▬▬▬▬ */
 .portrait-front {
-    background: #fff;
-    border: 2px solid #1b5e20;
+    background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+    padding: 30px 25px;
+    position: relative;
 }
 
-.pf-header {
-    background: #1b5e20;
-    padding: 20px;
-    text-align: center;
+.emblem-background {
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(27, 94, 32, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.id-header {
+    background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
     color: white;
-    font-weight: bold;
-    font-size: 20px;
+    padding: 18px 20px;
+    text-align: center;
+    border-radius: 10px;
+    margin: -30px -25px 20px -25px;
+    box-shadow: 0px 4px 12px rgba(27, 94, 32, 0.2);
+    position: relative;
+    z-index: 1;
 }
 
-.pf-photo {
-    width: 180px;
-    height: 225px;
-    border: 2px solid #1b5e20;
-    margin: 15px auto;
-    display: block;
+.id-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+
+.photo-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.student-photo {
+    width: 200px;
+    height: 250px;
+    border: 3px solid #1b5e20;
+    border-radius: 8px;
     object-fit: cover;
     background: white;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.12);
 }
 
-.pf-details {
+.student-info {
+    position: relative;
+    z-index: 1;
     text-align: center;
-    padding: 5px 15px;
+    margin: 15px 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
-.pf-details p {
-    margin: 4px 0;
+.student-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #1b5e20;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+}
+
+.student-course {
+    margin: 8px 0 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    letter-spacing: 0.2px;
+}
+
+.student-id-number {
+    margin: 10px 0 0 0;
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 900;
+    color: #1b5e20;
+    letter-spacing: 0.5px;
 }
 
-.pf-idnumber {
-    margin-top: 10px;
-    font-size: 24px;
-    font-weight: bold;
-    color: #000;
-}
-
-.pf-signature {
-    width: 100%;
+.signature-section {
+    position: relative;
+    z-index: 1;
     text-align: center;
-    margin-top: 25px;
+    margin-top: 15px;
 }
 
-.pf-signature-line {
-    border-top: 1px solid #333;
-    width: 75%;
-    margin: auto;
-    margin-top: 5px;
-    font-size: 12px;
+.signature-placeholder {
+    width: 180px;
+    height: 50px;
+    border-top: 2px solid #333;
+    margin: 0 auto 5px;
 }
 
-/* ---------------- BACK ---------------- */
+.signature-label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* ▬▬▬▬ PORTRAIT BACK ▬▬▬▬ */
 .portrait-back {
     transform: rotateY(180deg);
-    background: white;
-    border: 2px solid #1b5e20;
-    padding: 20px;
-    text-align: center;
+    background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+    padding: 30px 25px;
+    position: relative;
 }
 
-.back-title {
-    color: #1b5e20;
-    font-weight: bold;
+.emergency-section {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    margin-bottom: 25px;
+    background: linear-gradient(135deg, #f0f8f5 0%, #e8f5e9 100%);
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #1b5e20;
+}
+
+.emergency-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #0d3817;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
     margin-bottom: 10px;
 }
 
-.qr-code {
-    width: 200px;
-    height: 200px;
-    margin: 20px auto;
-    display: block;
-    background: white;
-    padding: 8px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    object-fit: cover;
+.emergency-name {
+    margin: 5px 0 0 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1b5e20;
+    letter-spacing: 0.2px;
 }
 
-.reg-signature {
-    margin-top: 30px;
-    font-size: 12px;
-    border-top: 1px solid #333;
-    width: 60%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-top: 5px;
+.emergency-contact {
+    margin: 3px 0 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 0.2px;
+}
+
+.bottom-section {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-grow: 1;
+    align-items: center;
+}
+
+.registrar-section {
+    text-align: center;
+}
+
+.registrar-label {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+}
+
+.qr-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.qr-code {
+    width: 140px;
+    height: 140px;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid #1b5e20;
+    object-fit: cover;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.id-disclaimer {
+    position: relative;
+    z-index: 1;
+    margin: 15px 0 15px 0;
+    font-size: 9px;
+    color: #999;
+    text-align: center;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.2px;
 }
 
 .id-actions {
-    margin-top: 20px;
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    width: 80%;
-    margin-left: auto;
-    margin-right: auto;
+    gap: 10px;
+    width: 100%;
 }
 
 .id-btn {
-    background: #1b5e20;
+    background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
     color: white;
     border: none;
-    padding: 12px 18px;
+    padding: 12px 16px;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease;
+    letter-spacing: 0.3px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0px 3px 10px rgba(27, 94, 32, 0.2);
+    text-transform: uppercase;
 }
 
 .id-btn:hover {
-    background: #0d3817;
+    background: linear-gradient(135deg, #0d3817 0%, #052010 100%);
     transform: translateY(-2px);
+    box-shadow: 0px 6px 16px rgba(27, 94, 32, 0.3);
 }
 
 .id-btn:active {
     transform: translateY(0);
+    box-shadow: 0px 2px 8px rgba(27, 94, 32, 0.2);
 }
+
+.download-btn {
+    background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+}
+
+.scan-btn {
+    background: linear-gradient(135deg, #0d3817 0%, #052010 100%);
+}
+
+@media (max-width: 768px) {
+    .portrait-id-card {
+        width: 380px;
+        height: 505px;
+    }
+
+    .portrait-side {
+        width: 380px;
+        height: 505px;
+    }
+
+    .id-header h2 {
+        font-size: 14px;
+    }
+
+    .student-photo {
+        width: 160px;
+        height: 200px;
+    }
+
+    .student-name {
+        font-size: 14px;
+    }
+
+    .student-course {
+        font-size: 12px;
+    }
+
+    .student-id-number {
+        font-size: 16px;
+    }
+
+    .qr-code {
+        width: 110px;
+        height: 110px;
+    }
+
+    .id-btn {
+        font-size: 12px;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .portrait-id-card {
+        width: 300px;
+        height: 400px;
+    }
+
+    .portrait-side {
+        width: 300px;
+        height: 400px;
+        padding: 20px 15px;
+    }
+
+    .id-header {
+        margin: -20px -15px 15px -15px;
+        padding: 15px;
+    }
+
+    .id-header h2 {
+        font-size: 12px;
+    }
+
+    .student-photo {
+        width: 130px;
+        height: 160px;
+    }
+
+    .student-name {
+        font-size: 13px;
+    }
+
+    .student-course {
+        font-size: 11px;
+    }
+
+    .student-id-number {
+        font-size: 14px;
+    }
+
+    .emergency-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .emergency-title {
+        font-size: 11px;
+    }
+
+    .emergency-name {
+        font-size: 13px;
+    }
+
+    .emergency-contact {
+        font-size: 12px;
+    }
+
+    .qr-code {
+        width: 90px;
+        height: 90px;
+    }
+
+    .qr-section {
+        gap: 5px;
+    }
+
+    .id-disclaimer {
+        font-size: 8px;
+        margin: 10px 0;
+    }
+
+    .id-btn {
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+}
+/*student-home*/
 
 /* ▬▬▬▬ BACK TO TOP BUTTON ▬▬▬▬ */
 .back-to-top {

@@ -58,39 +58,66 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 
             <!-- FRONT -->
             <div class="portrait-side portrait-front">
-                <div class="pf-header">KOLEHIYO NG LUNGSOD NG DASMARIÑAS</div>
-
-                <img src="<?php echo $avatar; ?>" class="pf-photo">
-
-                <div class="pf-details">
-                    <p><?php echo $studentName; ?></p>
-                    <p><?php echo $course; ?></p>
-                    <p class="pf-idnumber"><?php echo $studentID; ?></p>
+                <!-- Decorative circular emblem background -->
+                <div class="emblem-background"></div>
+                
+                <!-- Green Header -->
+                <div class="id-header">
+                    <h2>KOLEHIYO NG LUNGSOD NG DASMARIÑAS</h2>
                 </div>
 
-                <div class="pf-signature">
-                    <img src="../uploads/signature.png" width="120">
-                    <div class="pf-signature-line">SIGNATURE OF CARDHOLDER</div>
+                <!-- Photo Section with Border -->
+                <div class="photo-container">
+                    <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
+                </div>
+
+                <!-- Student Information -->
+                <div class="student-info">
+                    <p class="student-name"><?php echo $studentName; ?></p>
+                    <p class="student-course"><?php echo $course; ?></p>
+                    <p class="student-id-number"><?php echo $studentID; ?></p>
+                </div>
+
+                <!-- Signature Section -->
+                <div class="signature-section">
+                    <div class="signature-placeholder"></div>
+                    <p class="signature-label">SIGNATURE OF CARDHOLDER</p>
                 </div>
             </div>
 
             <!-- BACK -->
             <div class="portrait-side portrait-back">
-                <p class="back-title">In case of emergency, contact:</p>
-                <p><strong>Marlyn Concepcion</strong></p>
-                <p>09462274362</p>
-
-                <img src="<?php echo $qrcode; ?>" class="qr-code">
-
-                <div class="reg-signature">
-                    Registrar Signature
+                <!-- Green Header -->
+                <div class="id-header">
+                    <h2>KOLEHIYO NG LUNGSOD NG DASMARIÑAS</h2>
                 </div>
 
+                <!-- Emergency Contact Section -->
+                <div class="emergency-section">
+                    <p class="emergency-title">In case of emergency, please contact:</p>
+                    <p class="emergency-name">Marlyn Concepcion</p>
+                    <p class="emergency-contact">09462274362</p>
+                </div>
+
+                <!-- QR Code and Registrar Signature Section -->
+                <div class="bottom-section">
+                    <div class="registrar-section">
+                        <div class="signature-placeholder"></div>
+                        <p class="registrar-label">Leo Guisseppe N. Dinglasan<br>REGISTRAR</p>
+                    </div>
+                    <div class="qr-section">
+                        <img src="<?php echo $qrcode; ?>" alt="QR Code" class="qr-code">
+                    </div>
+                </div>
+
+                <!-- Disclaimer -->
+                <p class="id-disclaimer">This card is the property of KOLEHIYO NG LUNGSOD NG DASMARIÑAS. In case of loss, please return to the Registrar's Office.</p>
+
+                <!-- Action Buttons -->
                 <div class="id-actions">
                     <button onclick="downloadVisualID(event)" class="id-btn download-btn">
                         Download Visual ID
                     </button>
-
                     <button onclick="scanQRCode(event)" class="id-btn scan-btn">
                         Scan QR Code
                     </button>
