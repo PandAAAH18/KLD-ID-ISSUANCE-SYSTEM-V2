@@ -207,6 +207,27 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             color: var(--accent-orange);
             transform: scale(1.25);
         }
+
+        .nav-link[href*="logout"] {
+            color: rgba(255, 100, 100, 0.95);
+            margin-top: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            padding-top: 20px;
+        }
+
+        .nav-link[href*="logout"]:hover {
+            color: #ff6b6b;
+            background: rgba(255, 100, 100, 0.15);
+            border-left-color: #ff6b6b;
+        }
+
+        .nav-link[href*="logout"] i {
+            color: #ff6b6b;
+        }
+
+        .nav-link[href*="logout"]:hover i {
+            color: #ff5252;
+        }
         
         .sidebar-footer {
             padding: 20px 0;
@@ -488,6 +509,12 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                         <span>Help</span>
                     </a>
                 </div>
+                <div class="nav-item">
+                    <a class="nav-link" href="../includes/logout.php">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
             </nav>
         </aside>
         
@@ -507,10 +534,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                         <i class="fas fa-envelope"></i>
                         <span><?= htmlspecialchars($_SESSION['email'] ?? 'Student') ?></span>
                     </div>
-                    <a href="../includes/logout.php" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </a>
                 </div>
             </header>
             

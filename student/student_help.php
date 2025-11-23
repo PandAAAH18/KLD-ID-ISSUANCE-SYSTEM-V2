@@ -114,6 +114,814 @@ $faqs = [
 ?>
 
 <!-- PAGE CONTENT STARTS HERE -->
+<style>
+:root {
+    --primary-dark: #1b5e20;
+    --primary-medium: #2e7d32;
+    --primary-light: #4caf50;
+    --accent-orange: #ff9800;
+    --accent-orange-dark: #f57c00;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.help-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* PAGE HEADER */
+.help-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    color: white;
+    padding: 60px 40px;
+    margin-bottom: 50px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    animation: slideInDown 0.5s ease-out;
+}
+
+.help-header-content h1 {
+    margin: 0 0 15px 0;
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.help-header-content p {
+    margin: 0;
+    font-size: 1.2rem;
+    opacity: 0.95;
+    font-weight: 500;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* CONTACT SECTION */
+.contact-section {
+    margin-bottom: 60px;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin-bottom: 35px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid var(--accent-orange);
+    letter-spacing: 0.3px;
+}
+
+.contact-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.contact-card {
+    background: white;
+    padding: 35px 30px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    border-top: 5px solid var(--primary-light);
+    text-align: center;
+}
+
+.contact-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-5px);
+}
+
+.contact-icon {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    transition: var(--transition);
+}
+
+.contact-card:hover .contact-icon {
+    transform: scale(1.15);
+}
+
+.contact-card h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.35rem;
+    color: var(--primary-dark);
+    font-weight: 700;
+}
+
+.contact-card p {
+    margin: 12px 0;
+    color: #666;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.contact-card a {
+    color: var(--accent-orange);
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.contact-card a:hover {
+    color: var(--accent-orange-dark);
+    text-decoration: underline;
+}
+
+/* ALERT MESSAGES */
+.alert-banner {
+    padding: 18px 25px;
+    border-radius: 10px;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 600;
+    animation: slideInDown 0.4s ease-out;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+    border-left: 5px solid var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.alert-error {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
+    border-left: 5px solid #f44336;
+    color: #d32f2f;
+}
+
+/* TICKET CARD */
+.ticket-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    margin-bottom: 60px;
+    transition: var(--transition);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.ticket-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.ticket-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    color: white;
+    padding: 28px 30px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.ticket-body {
+    padding: 40px;
+}
+
+.ticket-body > p {
+    color: #666;
+    font-size: 1.05rem;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* FORM STYLING */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.form-row.full {
+    grid-template-columns: 1fr;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group label {
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 0.95rem;
+}
+
+.form-group.required label::after {
+    content: ' *';
+    color: #f44336;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 14px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: #f8f9fa;
+    transition: var(--transition);
+    color: #333;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #999;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+}
+
+/* TICKET ACTIONS */
+.ticket-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn-submit,
+.btn-reset {
+    padding: 14px 32px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+}
+
+.btn-submit:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
+}
+
+.btn-reset {
+    background: #f5f5f5;
+    color: var(--primary-dark);
+    border: 2px solid #ddd;
+}
+
+.btn-reset:hover {
+    background: #eee;
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+/* GUIDELINES CONTAINER */
+.guidelines-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    margin-bottom: 60px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.guidelines-header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    color: white;
+    padding: 28px 30px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.guidelines-body {
+    padding: 40px;
+}
+
+.guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+/* GUIDELINE CARDS */
+.guideline-card {
+    background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+    border-radius: 12px;
+    border: 2px solid #e8e8e8;
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.guideline-card:hover {
+    border-color: var(--accent-orange);
+    box-shadow: var(--shadow-md);
+}
+
+.guideline-card-wide {
+    grid-column: 1 / -1;
+}
+
+.guideline-header {
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: white;
+    transition: var(--transition);
+}
+
+.guideline-card:hover .guideline-header {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
+}
+
+.guideline-header > div {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.guideline-icon {
+    font-size: 2.5rem;
+    min-width: 60px;
+    text-align: center;
+}
+
+.guideline-header h4 {
+    margin: 0 0 8px 0;
+    color: var(--primary-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.guideline-header p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.guideline-toggle {
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.guideline-card.expanded .guideline-toggle {
+    transform: rotate(180deg);
+    color: var(--accent-orange);
+}
+
+.guideline-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: var(--transition);
+    padding: 0 25px;
+    background: white;
+}
+
+.guideline-card.expanded .guideline-content {
+    max-height: 2000px;
+    padding: 25px;
+}
+
+.guideline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 25px 0;
+}
+
+.guideline-list li {
+    padding: 12px 0;
+    padding-left: 30px;
+    position: relative;
+    color: #555;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.guideline-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--primary-light);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.highlight-box,
+.success-box {
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.highlight-box {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%);
+    border-left: 4px solid var(--accent-orange);
+    color: #666;
+}
+
+.success-box {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+    border-left: 4px solid var(--primary-light);
+    color: #333;
+}
+
+/* SCHEDULE TABLE */
+.schedule-wrapper {
+    overflow-x: auto;
+    margin-bottom: 25px;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+}
+
+.schedule-table thead {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    color: white;
+}
+
+.schedule-table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 700;
+    border: none;
+    letter-spacing: 0.3px;
+}
+
+.schedule-table td {
+    padding: 16px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.schedule-table tbody tr:hover {
+    background: rgba(76, 175, 80, 0.05);
+}
+
+.status-label {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-label.active {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
+    color: white;
+}
+
+.status-label.inactive {
+    background: #e0e0e0;
+    color: #999;
+}
+
+/* TIPS SECTION */
+.tips-section {
+    padding: 20px;
+    background: linear-gradient(135deg, #f0f8f5 0%, #e8f5e9 100%);
+    border-radius: 10px;
+    border: 2px solid var(--primary-light);
+}
+
+.tips-section h4 {
+    margin: 0 0 15px 0;
+    color: var(--primary-dark);
+    font-size: 1.1rem;
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    padding: 10px 0;
+    padding-left: 30px;
+    position: relative;
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.tips-list li::before {
+    content: '💡';
+    position: absolute;
+    left: 0;
+}
+
+/* SEARCH CONTAINER */
+.search-container {
+    margin-bottom: 30px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.search-box {
+    position: relative;
+    max-width: 500px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.3rem;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 14px 16px 14px 50px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    background: white;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+}
+
+/* FAQ FILTERS */
+.faq-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    border-radius: 20px;
+    background: white;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-btn:hover {
+    border-color: var(--accent-orange);
+    color: var(--accent-orange);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
+    border-color: var(--primary-light);
+    color: white;
+}
+
+/* FAQ LIST */
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.faq-item {
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e8e8e8;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.faq-item:hover {
+    border-color: var(--accent-orange);
+    box-shadow: var(--shadow-md);
+}
+
+.faq-question {
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+    transition: var(--transition);
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.faq-item:hover .faq-question {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
+}
+
+.faq-category {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--primary-light);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+
+.faq-toggle {
+    font-size: 1.2rem;
+    color: var(--primary-dark);
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: white;
+}
+
+.faq-answer.open {
+    max-height: 500px;
+}
+
+.faq-answer p {
+    padding: 25px;
+    margin: 0;
+    color: #666;
+    line-height: 1.8;
+    font-weight: 400;
+    font-size: 0.95rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .help-header {
+        padding: 40px 25px;
+        margin-bottom: 40px;
+        border-radius: 12px;
+    }
+    
+    .help-header-content h1 {
+        font-size: 2rem;
+    }
+    
+    .help-header-content p {
+        font-size: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.6rem;
+        margin-bottom: 25px;
+    }
+    
+    .contact-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .ticket-body {
+        padding: 25px;
+    }
+    
+    .guidelines-body {
+        padding: 25px;
+    }
+    
+    .guidelines-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .guideline-card-wide {
+        grid-column: 1;
+    }
+    
+    .schedule-wrapper {
+        font-size: 0.85rem;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 12px;
+    }
+    
+    .faq-filters {
+        gap: 8px;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .help-wrapper {
+        padding: 0;
+    }
+    
+    .help-header {
+        padding: 30px 20px;
+        margin-bottom: 30px;
+    }
+    
+    .help-header-content h1 {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+    }
+    
+    .ticket-body,
+    .guidelines-body {
+        padding: 20px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .ticket-actions {
+        flex-direction: column;
+    }
+    
+    .btn-submit,
+    .btn-reset {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .guideline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .guideline-header > div {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .contact-card {
+        padding: 25px 20px;
+    }
+}
+</style>
 
     <div class="help-wrapper">
         <!-- PAGE HEADER -->
@@ -129,14 +937,14 @@ $faqs = [
             <div class="section-title">Contact Information</div>
             <div class="contact-cards">
                 <div class="contact-card">
-                    <div class="contact-icon">📧</div>
+                    <div class="contact-icon"><i class="fas fa-envelope" style="color: var(--primary-light);"></i></div>
                     <h3>Email Support</h3>
                     <p>Send us your inquiry and we'll respond within 24 hours</p>
                     <a href="mailto:support@school.edu">kld.edu.ph</a>
                 </div>
 
                 <div class="contact-card">
-                    <div class="contact-icon">📱</div>
+                    <div class="contact-icon"><i class="fas fa-phone" style="color: var(--accent-orange);"></i></div>
                     <h3>Phone Support</h3>
                     <p>Call us during office hours for immediate assistance</p>
                     <p style="color: #1b5e20; font-weight: 700; font-size: 16px; margin: 10px 0 0 0;">+63 (555) 123-4567</p>
@@ -144,7 +952,7 @@ $faqs = [
                 </div>
 
                 <div class="contact-card">
-                    <div class="contact-icon">🏢</div>
+                    <div class="contact-icon"><i class="fas fa-building" style="color: var(--primary-dark);"></i></div>
                     <h3>Visit Us</h3>
                     <p>Registrar's Office - Building 1, Room 101</p>
                     <p style="color: #1b5e20; font-weight: 600; margin: 10px 0 0 0;">Kolehiyo ng Lungsod ng Dasmariñas</p>
@@ -196,8 +1004,8 @@ $faqs = [
                     </div>
 
                     <div class="ticket-actions">
-                        <button type="submit" name="submit_ticket" class="btn-submit">✓ Submit Ticket</button>
-                        <button type="reset" class="btn-reset">↻ Clear</button>
+                        <button type="submit" name="submit_ticket" class="btn-submit"><i class="fas fa-paper-plane"></i> Submit Ticket</button>
+                        <button type="reset" class="btn-reset"><i class="fas fa-redo"></i> Clear</button>
                     </div>
                 </form>
             </div>
@@ -218,7 +1026,7 @@ $faqs = [
                         <div class="guideline-card" onclick="toggleGuidelineCard(this)">
                             <div class="guideline-header">
                                 <div>
-                                    <div class="guideline-icon">📸</div>
+                                    <div class="guideline-icon"><i class="fas fa-camera" style="color: var(--accent-orange);"></i></div>
                                     <h4>Photo Requirements</h4>
                                     <p>Recent professional photo (3x4 or 4x6) in JPG/PNG format with clear facial features and neutral background</p>
                                 </div>
@@ -247,7 +1055,7 @@ $faqs = [
                         <div class="guideline-card" onclick="toggleGuidelineCard(this)">
                             <div class="guideline-header">
                                 <div>
-                                    <div class="guideline-icon">👕</div>
+                                    <div class="guideline-icon"><i class="fas fa-shirt" style="color: var(--primary-light);"></i></div>
                                     <h4>Allowed Clothing</h4>
                                     <p>School uniform recommended. White or light-colored solid tops. Avoid graphics, logos, or patterned clothing</p>
                                 </div>
@@ -276,7 +1084,7 @@ $faqs = [
                         <div class="guideline-card" onclick="toggleGuidelineCard(this)">
                             <div class="guideline-header">
                                 <div>
-                                    <div class="guideline-icon">📍</div>
+                                    <div class="guideline-icon"><i class="fas fa-map-marker-alt" style="color: var(--primary-medium);"></i></div>
                                     <h4>Pickup Location</h4>
                                     <p>Registrar's Office - Building 1, Room 101. Present valid student ID and reference number for pickup</p>
                                 </div>
@@ -305,7 +1113,7 @@ $faqs = [
                         <div class="guideline-card guideline-card-wide" onclick="toggleGuidelineCard(this)">
                             <div class="guideline-header">
                                 <div>
-                                    <div class="guideline-icon">📅</div>
+                                    <div class="guideline-icon"><i class="fas fa-calendar-alt" style="color: var(--accent-orange-dark);"></i></div>
                                     <h4>Printing Schedule</h4>
                                     <p>Processing time: 3-5 business days. Check your email for notification when your ID is ready</p>
                                 </div>
@@ -386,7 +1194,7 @@ $faqs = [
                 <!-- SEARCH BAR -->
                 <div class="search-container">
                     <div class="search-box">
-                        <span class="search-icon">🔍</span>
+                        <span class="search-icon"><i class="fas fa-search"></i></span>
                         <input type="text" id="faqSearch" placeholder="Search FAQs...">
                     </div>
                 </div>
@@ -420,6 +1228,55 @@ $faqs = [
             </div>
         </div>
     </div>
+
+    <!-- BACK TO TOP BUTTON -->
+    <div id="backToTopBtn" class="back-to-top">
+        <i class="fas fa-chevron-up"></i>
+    </div>
+
+    <style>
+    .back-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
+        color: white;
+        padding: 14px 16px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        opacity: 0;
+        transition: var(--transition);
+        z-index: 999;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .back-to-top.visible {
+        opacity: 1;
+    }
+
+    .back-to-top:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+    }
+
+    .back-to-top:active {
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 480px) {
+        .back-to-top {
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 14px;
+            font-size: 1rem;
+        }
+    }
+    </style>
 
     <script>
         // Handle form submission with alert
@@ -637,6 +1494,24 @@ $faqs = [
             }
         `;
         document.head.appendChild(highlightStyle);
+
+        // Back to top button functionality
+        const backToTopBtn = document.getElementById('backToTopBtn');
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+        });
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     </script>
             </div><!-- End admin-content -->
         </main><!-- End admin-main -->
