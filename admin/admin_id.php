@@ -6,7 +6,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type']!=='admin'){
     header('Location: ../index.php'); exit();
 }
 
-require_once 'admin_header.php';
 
 $adm = new IdManager();
 
@@ -86,9 +85,10 @@ if (isset($_SESSION['bulk_operation_result'])) {
     $bulkResult = $_SESSION['bulk_operation_result'];
     unset($_SESSION['bulk_operation_result']);
 }
+        require_once 'admin_header.php';
 
-// Get counts for statistics
-$pendingCount = count($adm->getRequestsByStatus('pending'));
+        // Get counts for statistics
+        $pendingCount = count($adm->getRequestsByStatus('pending'));
 $approvedCount = count($adm->getRequestsByStatus('approved'));
 $rejectedCount = count($adm->getRequestsByStatus('rejected'));
 $generatedCount = count($adm->getIssuedByStatus('generated'));

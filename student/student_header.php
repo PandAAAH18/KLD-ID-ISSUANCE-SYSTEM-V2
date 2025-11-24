@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Student Portal | KLD</title>
+    <title>Student Dashboard | School Portal</title>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Local Bootstrap CSS -->
@@ -23,32 +23,27 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             --primary-dark: #1b5e20;
             --primary-medium: #2e7d32;
             --primary-light: #4caf50;
-            --accent-orange: #ff9800;
-            --accent-orange-dark: #f57c00;
-            --sidebar-width: 280px;
-            --header-height: 75px;
-            --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
-            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --accent-yellow: #ffd600;
+            --accent-yellow-light: #ffecb3;
+            --sidebar-width: 260px;
+            --sidebar-collapsed-width: 70px;
+            --header-height: 70px;
+            --transition-speed: 0.3s;
         }
-        
-        * {
-            box-sizing: border-box;
-        }
-        
+
         .admin-body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+            background: #f8f9fa;
             min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         /* Modern Sidebar Navigation */
         .admin-wrapper {
             display: flex;
             min-height: 100vh;
         }
-        
+
         .admin-sidebar {
             width: var(--sidebar-width);
             background: linear-gradient(180deg, var(--primary-dark) 0%, #0d3817 100%);
@@ -58,396 +53,606 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             left: 0;
             top: 0;
             z-index: 1000;
-            transition: var(--transition);
-            box-shadow: 8px 0 32px rgba(0, 0, 0, 0.2);
+            transition: all var(--transition-speed) ease;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             overflow-x: hidden;
+            transform: translateX(0);
         }
-        
-        .admin-sidebar::-webkit-scrollbar {
-            width: 8px;
+
+        .admin-sidebar.closed {
+            transform: translateX(-100%);
         }
-        
-        .admin-sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+
+        /* Collapsed State */
+        .admin-sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
         }
-        
-        .admin-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.25);
+
+        .admin-sidebar.collapsed.closed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-close-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px 12px;
             border-radius: 4px;
+            transition: all var(--transition-speed) ease;
+            flex-shrink: 0;
         }
-        
-        .admin-sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.4);
+
+        .sidebar-close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
-        
+
+        .admin-sidebar.collapsed .sidebar-brand span,
+        .admin-sidebar.collapsed .nav-item span {
+            display: none;
+            opacity: 0;
+        }
+
+        .admin-sidebar.collapsed .nav-link {
+            padding: 14px 20px;
+            justify-content: center;
+        }
+
+        .admin-sidebar.collapsed .nav-link i {
+            margin-right: 0;
+            font-size: 1.3rem;
+        }
+
+        .admin-sidebar.collapsed .sidebar-toggle {
+            transform: rotate(180deg);
+        }
+
         .sidebar-header {
-            padding: 35px 20px;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.12);
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.05) 100%);
-            text-align: center;
-            position: relative;
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        
-        .sidebar-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 20%;
-            right: 20%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, var(--accent-orange) 50%, transparent 100%);
-        }
-        
+
         .sidebar-brand {
             color: white;
             text-decoration: none;
-            font-weight: 800;
-            font-size: 1.4rem;
+            font-weight: 700;
+            font-size: 1.3rem;
             display: flex;
             align-items: center;
-            gap: 14px;
-            justify-content: center;
-            letter-spacing: 0.6px;
-            transition: var(--transition);
+            gap: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all var(--transition-speed) ease;
         }
-        
-        .sidebar-brand:hover {
-            transform: scale(1.02);
-        }
-        
+
         .sidebar-brand i {
-            color: var(--accent-orange);
-            font-size: 1.8rem;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            transition: var(--transition);
+            color: var(--accent-yellow);
+            font-size: 1.5rem;
+            flex-shrink: 0;
         }
-        
-        .sidebar-brand:hover i {
-            transform: rotate(5deg) scale(1.1);
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        
+
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         .sidebar-nav {
-            padding: 25px 0;
+            padding: 20px 0;
         }
-        
+
         .nav-item {
-            margin-bottom: 10px;
-            padding: 0 12px;
+            margin-bottom: 5px;
+            position: relative;
         }
-        
+
         .nav-link {
-            color: rgba(255, 255, 255, 0.85);
-            padding: 13px 18px;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 14px 25px;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 15px;
-            transition: var(--transition);
-            border-left: 5px solid transparent;
-            border-radius: 8px;
-            font-weight: 550;
-            position: relative;
-            overflow: hidden;
+            gap: 12px;
+            transition: all var(--transition-speed) ease;
+            border-left: 4px solid transparent;
+            font-weight: 500;
+            white-space: nowrap;
         }
-        
-        .nav-link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateX(-100%);
-            transition: var(--transition);
-            z-index: -1;
-        }
-        
-        .nav-link i {
-            width: 24px;
-            text-align: center;
-            font-size: 1.2rem;
-            transition: var(--transition);
-            flex-shrink: 0;
-        }
-        
-        .nav-link span {
-            transition: var(--transition);
-            flex: 1;
-        }
-        
+
         .nav-link:hover {
             color: white;
-            background: rgba(255, 255, 255, 0.12);
-            border-left-color: var(--accent-orange);
-            padding-left: 22px;
-            transform: translateX(3px);
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--accent-yellow);
         }
-        
-        .nav-link:hover::before {
-            transform: translateX(0);
-        }
-        
-        .nav-link:hover i {
-            transform: scale(1.2) rotate(-5deg);
-            color: var(--accent-orange);
-        }
-        
+
         .nav-link.active {
             color: white;
-            background: linear-gradient(90deg, rgba(255, 152, 0, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
-            border-left-color: var(--accent-orange);
-            padding-left: 22px;
-            box-shadow: inset -4px 0 12px rgba(255, 152, 0, 0.15);
-            font-weight: 700;
-        }
-        
-        .nav-link.active i {
-            color: var(--accent-orange);
-            transform: scale(1.25);
+            background: rgba(255, 255, 255, 0.15);
+            border-left-color: var(--accent-yellow);
         }
 
-        .nav-link[href*="logout"] {
-            color: rgba(255, 100, 100, 0.95);
-            margin-top: 20px;
-            border-top: 2px solid rgba(255, 255, 255, 0.1);
-            padding-top: 20px;
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            transition: all var(--transition-speed) ease;
         }
 
-        .nav-link[href*="logout"]:hover {
-            color: #ff6b6b;
-            background: rgba(255, 100, 100, 0.15);
-            border-left-color: #ff6b6b;
-        }
-
-        .nav-link[href*="logout"] i {
-            color: #ff6b6b;
-        }
-
-        .nav-link[href*="logout"]:hover i {
-            color: #ff5252;
-        }
-        
-        .sidebar-footer {
-            padding: 20px 0;
-            border-top: 2px solid rgba(255, 255, 255, 0.1);
-            margin-top: auto;
-            background: rgba(0, 0, 0, 0.1);
-        }
-        
         /* Main Content Area */
         .admin-main {
             flex: 1;
             margin-left: var(--sidebar-width);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            transition: margin-left var(--transition-speed) ease;
         }
-        
+
+        .admin-main.sidebar-collapsed {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+
         .admin-header {
             background: white;
             height: var(--header-height);
-            border-bottom: 2px solid #e8eef5;
+            border-bottom: 1px solid #e0e0e0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 40px;
-            box-shadow: var(--shadow-md);
+            padding: 0 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             position: sticky;
             top: 0;
             z-index: 999;
-            backdrop-filter: blur(10px);
         }
-        
+
         .header-left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
+            flex: 1;
         }
-        
+
         .header-title {
-            font-size: 1.75rem;
-            font-weight: 700;
+            font-size: 1.5rem;
+            font-weight: 600;
             color: var(--primary-dark);
             margin: 0;
-            letter-spacing: 0.3px;
-            transition: var(--transition);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .breadcrumb-item+.breadcrumb-item::before {
+            content: ">";
+            padding: 0 8px;
+        }
+
+        .breadcrumb-item.active {
+            color: var(--primary-medium);
+            font-weight: 500;
+        }
+
         .user-menu {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
+            position: relative;
         }
-        
+
         .user-info {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #f0f8f5 0%, #e8f5e9 100%);
+            gap: 10px;
+            padding: 8px 16px;
+            background: #f8f9fa;
             border-radius: 25px;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--primary-dark);
-            border: 2px solid rgba(27, 94, 32, 0.15);
-            transition: var(--transition);
-            max-width: 250px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            border: 1px solid transparent;
+            min-width: 0;
         }
-        
+
         .user-info:hover {
-            border-color: rgba(27, 94, 32, 0.3);
-            box-shadow: var(--shadow-sm);
+            background: #e9ecef;
+            border-color: #dee2e6;
         }
-        
+
         .user-info i {
-            color: var(--accent-orange);
-            font-size: 1.3rem;
+            color: var(--primary-medium);
             flex-shrink: 0;
         }
-        
-        .logout-btn {
-            background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-dark) 100%);
-            color: white;
-            border: none;
-            padding: 11px 26px;
+
+        .user-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        /* Dropdown Menu */
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
             border-radius: 8px;
-            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            padding: 8px 0;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all var(--transition-speed) ease;
+            z-index: 2000;
+            border: 1px solid #e0e0e0;
+            pointer-events: none;
+        }
+
+        .user-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .dropdown-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-weight: 700;
-            transition: var(--transition);
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all var(--transition-speed) ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 0.9rem;
             cursor: pointer;
-            box-shadow: 0 4px 16px rgba(255, 152, 0, 0.3);
-            font-size: 0.95rem;
         }
-        
-        .logout-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(255, 152, 0, 0.4);
-            color: white;
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            color: var(--primary-dark);
         }
-        
-        .logout-btn:active {
-            transform: translateY(-1px);
+
+        .dropdown-item i {
+            width: 16px;
+            color: var(--primary-medium);
+            flex-shrink: 0;
         }
-        
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 8px 0;
+        }
+
+        .logout-item {
+            color: #dc3545 !important;
+        }
+
+        .logout-item:hover {
+            background: #fff5f5 !important;
+            color: #dc3545 !important;
+        }
+
         /* Content Container */
         .admin-content {
-            padding: 40px;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
-            flex: 1;
-            overflow-y: auto;
+            padding: 30px;
+            background: #f8f9fa;
+            min-height: calc(100vh - var(--header-height));
         }
-        
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: #f8f9fa;
+        }
+
+        /* Tooltip for collapsed sidebar */
+        .nav-item .tooltip-text {
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed);
+            z-index: 1001;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+        }
+
+        .nav-item .tooltip-text::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: transparent #333 transparent transparent;
+        }
+
+        .admin-sidebar.collapsed .nav-item:hover .tooltip-text {
+            opacity: 1;
+            visibility: visible;
+        }
+
         /* Mobile Responsive */
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             .admin-sidebar {
-                width: 290px;
                 transform: translateX(-100%);
-                box-shadow: 8px 0 32px rgba(0, 0, 0, 0.25);
+                width: 280px;
             }
-            
+
+            .admin-sidebar.closed {
+                transform: translateX(-100%);
+            }
+
             .admin-sidebar.mobile-open {
                 transform: translateX(0);
             }
-            
-            .admin-main {
-                margin-left: 0;
+
+            .admin-sidebar.mobile-open.closed {
+                transform: translateX(0);
             }
-            
-            .mobile-menu-btn {
+
+            .sidebar-close-btn {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: none;
-                border: 2px solid var(--primary-dark);
-                border-radius: 8px;
-                font-size: 1.3rem;
-                color: var(--primary-dark);
-                cursor: pointer;
-                transition: var(--transition);
-                width: 45px;
-                height: 45px;
             }
-            
-            .mobile-menu-btn:hover {
-                color: var(--accent-orange);
-                border-color: var(--accent-orange);
-                background: rgba(255, 152, 0, 0.08);
-                transform: scale(1.05);
+
+            .admin-sidebar.collapsed {
+                transform: translateX(-100%);
+                width: 280px;
             }
-            
-            .admin-header {
-                padding: 0 20px;
-                height: 70px;
+
+            .admin-sidebar.mobile-open.collapsed {
+                transform: translateX(0);
+                width: 280px;
             }
-            
-            .header-title {
-                font-size: 1.4rem;
+
+            .admin-sidebar.mobile-open.collapsed .sidebar-brand span,
+            .admin-sidebar.mobile-open.collapsed .nav-item span {
+                display: flex;
+                opacity: 1;
             }
-            
-            .admin-content {
-                padding: 25px;
+
+            .admin-sidebar.mobile-open.collapsed .nav-link {
+                padding: 14px 25px;
+                justify-content: flex-start;
             }
-            
-            .user-menu {
-                gap: 12px;
-            }
-            
-            .user-info {
-                padding: 8px 16px;
-                font-size: 0.9rem;
-                max-width: 180px;
-            }
-            
-            .logout-btn {
-                padding: 10px 20px;
-                font-size: 0.85rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .sidebar-brand span {
-                display: none;
-            }
-            
-            .sidebar-brand {
+
+            .admin-sidebar.mobile-open.collapsed .nav-link i {
+                margin-right: 12px;
                 font-size: 1.1rem;
             }
-            
-            .user-info span {
-                display: none;
+
+            .admin-main {
+                margin-left: 0;
             }
-            
-            .logout-btn span {
-                display: none;
+
+            .admin-main.sidebar-collapsed {
+                margin-left: 0;
             }
-            
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
             .admin-header {
-                padding: 0 15px;
+                padding: 0 20px;
+                gap: 15px;
             }
-            
+
             .header-left {
                 gap: 12px;
             }
-            
+
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .user-menu {
+                gap: 10px;
+            }
+
+            .user-name {
+                max-width: 100px;
+            }
+
+            .breadcrumb {
+                display: none;
+            }
+
+            .sidebar-toggle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .admin-header {
+                padding: 0 15px;
+            }
+
             .header-title {
                 font-size: 1.2rem;
             }
-        }
-        
-        /* Desktop only */
-        @media (min-width: 769px) {
-            .mobile-menu-btn {
-                display: none !important;
+
+            .user-info {
+                padding: 6px 12px;
+            }
+
+            .user-name {
+                max-width: 80px;
+                font-size: 0.9rem;
+            }
+
+            .admin-content {
+                padding: 20px 15px;
+            }
+
+            .sidebar-brand {
+                font-size: 1.1rem;
             }
         }
-        
+
+        @media (max-width: 576px) {
+            .admin-header {
+                padding: 0 12px;
+                height: 60px;
+            }
+
+            .header-title {
+                font-size: 1rem;
+                max-width: 120px;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .user-info {
+                padding: 6px 8px;
+                gap: 8px;
+            }
+
+            .user-info i {
+                font-size: 1.3rem;
+            }
+
+            .admin-content {
+                padding: 15px 12px;
+            }
+
+            .mobile-menu-btn {
+                font-size: 1.3rem;
+                padding: 6px;
+            }
+
+            .sidebar-brand {
+                font-size: 1rem;
+            }
+
+            .sidebar-nav {
+                padding: 15px 0;
+            }
+
+            .nav-link {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .admin-header {
+                padding: 0 10px;
+                height: 55px;
+            }
+
+            .header-title {
+                font-size: 0.95rem;
+                max-width: 100px;
+            }
+
+            .header-left {
+                gap: 10px;
+            }
+
+            .mobile-menu-btn {
+                font-size: 1.2rem;
+                padding: 5px;
+            }
+
+            .user-info {
+                padding: 5px 6px;
+                min-width: auto;
+            }
+
+            .admin-content {
+                padding: 12px 10px;
+                min-height: calc(100vh - 55px);
+            }
+
+            .sidebar-header {
+                padding: 20px 15px;
+            }
+
+            .sidebar-brand {
+                font-size: 0.95rem;
+                gap: 8px;
+            }
+
+            .sidebar-brand i {
+                font-size: 1.2rem;
+            }
+
+            .nav-link {
+                padding: 12px 18px;
+                gap: 10px;
+                font-size: 0.9rem;
+            }
+
+            .nav-link i {
+                font-size: 1rem;
+            }
+        }
+
         /* Overlay for mobile */
         .sidebar-overlay {
             position: fixed;
@@ -455,17 +660,41 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 999;
             display: none;
-            transition: opacity 0.3s ease;
-            opacity: 0;
-            backdrop-filter: blur(3px);
         }
-        
+
         .sidebar-overlay.active {
             display: block;
-            opacity: 1;
+        }
+
+        /* Click outside to close */
+        .dropdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 1500;
+            display: none;
+            pointer-events: none;
+        }
+
+        .dropdown-overlay.active {
+            display: block;
+            pointer-events: auto;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: color var(--transition-speed) ease, background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
         }
     </style>
 </head>
@@ -473,117 +702,233 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
 <body class="admin-body">
     <!-- Mobile Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
+
     <div class="admin-wrapper">
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-header">
                 <a href="student_home.php" class="sidebar-brand">
-                    <i class="fas fa-graduation-cap"></i>
                     <span>Student Portal</span>
                 </a>
+                <button class="sidebar-close-btn" id="sidebarCloseBtn" title="Close sidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
             </div>
-            
+
             <nav class="sidebar-nav">
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_home.php' ? 'active' : '' ?>" href="student_home.php">
-                        <i class="fas fa-home"></i>
-                        <span>Home</span>
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                        <span class="tooltip-text">Dashboard</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_profile.php' ? 'active' : '' ?>" href="student_profile.php">
                         <i class="fas fa-user-circle"></i>
-                        <span>Profile</span>
+                        <span>My Profile</span>
+                        <span class="tooltip-text">My Profile</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_id.php' ? 'active' : '' ?>" href="student_id.php">
                         <i class="fas fa-id-card"></i>
-                        <span>My ID</span>
+                        <span>My ID Card</span>
+                        <span class="tooltip-text">My ID Card</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_help.php' ? 'active' : '' ?>" href="student_help.php">
                         <i class="fas fa-question-circle"></i>
-                        <span>Help</span>
+                        <span>Help & Support</span>
+                        <span class="tooltip-text">Help & Support</span>
                     </a>
                 </div>
-                <div class="nav-item">
-                    <a class="nav-link" href="../includes/logout.php">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
-                    </a>
-                </div>
-            </nav>
-        </aside>
-        
-        <!-- Main Content Area -->
-        <main class="admin-main">
-            <!-- Top Header -->
-            <header class="admin-header">
-                <div class="header-left">
-                    <button class="mobile-menu-btn" id="mobileMenuBtn">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h1 class="header-title" id="pageTitle">Student Portal</h1>
-                </div>
-                
-                <div class="user-menu">
-                    <div class="user-info">
-                        <i class="fas fa-envelope"></i>
-                        <span><?= htmlspecialchars($_SESSION['email'] ?? 'Student') ?></span>
+                <div style="border-top: 1px solid rgba(255, 255, 255, 0.1); margin-top: 20px; padding-top: 20px;">
+                    <div class="nav-item">
+                        <a class="nav-link" href="../includes/logout.php" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                            <span class="tooltip-text">Logout</span>
+                        </a>
                     </div>
                 </div>
-            </header>
-            
+    </div>
+    </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main" id="adminMain">
+        <!-- Top Header -->
+        <header class="admin-header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="header-title" id="pageTitle">Student Portal</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb" id="breadcrumb">
+                            <li class="breadcrumb-item"><a href="student_home.php">Home</a></li>
+                            <li class="breadcrumb-item active" id="currentPageBreadcrumb">Dashboard</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="user-menu">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="user-name"><?= htmlspecialchars($_SESSION['email'] ?? 'Student') ?></span>
+                </div>
+            </div>
+        </header>
+
             <!-- Page Content -->
             <div class="admin-content">
+                <!-- Page content will be inserted here -->
             </div>
         </main>
     </div>
-    
-    <script>
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const adminSidebar = document.getElementById('adminSidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', function() {
-                adminSidebar.classList.toggle('mobile-open');
-                sidebarOverlay.classList.toggle('active');
-            });
+
+<script>
+        // Mobile sidebar toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            sidebar.classList.add('mobile-open');
+            overlay.classList.add('active');
+
+            // Prevent body scroll when sidebar is open
+            document.body.style.overflow = 'hidden';
+        });
+
+        // Sidebar close button (mobile only)
+        document.getElementById('sidebarCloseBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+            document.getElementById('adminSidebar').classList.remove('mobile-open');
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        // Sidebar collapse/expand toggle (desktop only)
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const main = document.getElementById('adminMain');
+
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('sidebar-collapsed');
+
+            // Update toggle icon
+            const icon = this.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.className = 'fas fa-chevron-right';
+            } else {
+                icon.className = 'fas fa-chevron-left';
+            }
+
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+
+        // User dropdown toggle
+        // REMOVED - logout moved to sidebar
+
+        // Close window resize (for mobile orientation changes)
+        window.addEventListener('resize', function() {
+            // Removed dropdown logic
+        });
+
+        // Update page title and breadcrumb based on current page
+const pageTitles = {
+    'student_home.php': {
+        title: 'Dashboard Overview',
+        breadcrumb: 'Dashboard'
+    },
+    'student_profile.php': {
+        title: 'My Profile',
+        breadcrumb: 'My Profile'
+    },
+    'student_id.php': {
+        title: 'My ID Card',
+        breadcrumb: 'My ID Card'
+    },
+    'student_help.php': {
+        title: 'Help & Support',
+        breadcrumb: 'Help & Support'
+    },
+    'edit_profile.php': {
+        title: 'Edit Profile',
+        breadcrumb: 'Edit Profile'
+    }
+};
+
+        const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
+        if (pageTitles[currentPage]) {
+            document.getElementById('pageTitle').textContent = pageTitles[currentPage].title;
+            document.getElementById('currentPageBreadcrumb').textContent = pageTitles[currentPage].breadcrumb;
         }
-        
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', function() {
-                adminSidebar.classList.remove('mobile-open');
-                sidebarOverlay.classList.remove('active');
-            });
-        }
-        
-        // Close sidebar when a nav link is clicked on mobile
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
+
+        // Handle escape key to close menus
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('userDropdown')?.classList.remove('active');
+                document.getElementById('dropdownOverlay')?.classList.remove('active');
+                document.getElementById('adminSidebar').classList.remove('mobile-open');
+                document.getElementById('sidebarOverlay').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Restore sidebar state from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const main = document.getElementById('adminMain');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                main.classList.add('sidebar-collapsed');
+
+                // Update toggle icon
+                const icon = toggleBtn.querySelector('i');
+                icon.className = 'fas fa-chevron-right';
+            }
+        });
+
+        // Auto-close sidebar on mobile when clicking a link
+        document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    adminSidebar.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
+                if (window.innerWidth <= 1024) {
+                    document.getElementById('adminSidebar').classList.remove('mobile-open');
+                    document.getElementById('sidebarOverlay').classList.remove('active');
+                    document.body.style.overflow = '';
                 }
             });
         });
-        
-        // Update page title based on current page
-        function updatePageTitle() {
-            const activeLink = document.querySelector('.nav-link.active');
-            if (activeLink) {
-                const titleText = activeLink.querySelector('span').textContent;
-                document.getElementById('pageTitle').textContent = titleText;
+
+        // Close sidebar when window is resized to mobile size
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 1024) {
+                document.getElementById('adminSidebar').classList.remove('mobile-open');
+                document.getElementById('sidebarOverlay').classList.remove('active');
+                document.body.style.overflow = '';
             }
-        }
-        
-        updatePageTitle();
+        });
     </script>
 </body>
 

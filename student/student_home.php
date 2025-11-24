@@ -42,10 +42,8 @@ $signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspec
 $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
 ?>
 
-<<<<<<< HEAD
     <!DOCTYPE html>
     <html lang="en">
-
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,11 +70,14 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             /* PORTRAIT ID CARD CONTAINER */
             .portrait-id-container {
                 perspective: 1200px;
-                padding: 30px 20px;
+                padding: 40px 20px;
                 display: flex;
                 justify-content: center;
-                align-items: center;
-                min-height: 500px;
+                align-items: flex-start;
+                width: 100%;
+                margin: 0 auto;
+                position: relative;
+                z-index: 1;
             }
 
             .portrait-id-card {
@@ -86,6 +87,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                 transform-style: preserve-3d;
                 transition: var(--transition);
                 cursor: pointer;
+                flex-shrink: 0;
             }
 
             .portrait-id-card:hover {
@@ -113,7 +115,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             /* WELCOME BOX ENHANCEMENT */
             .welcome-box {
                 width: 95%;
-                margin: 40px auto;
+                margin: 50px auto 40px auto;
                 background: linear-gradient(135deg, white 0%, #f9f9f9 100%);
                 border-left: 6px solid var(--primary-dark);
                 padding: 35px;
@@ -123,6 +125,9 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                 gap: 40px;
                 align-items: center;
                 transition: var(--transition);
+                clear: both;
+                position: relative;
+                z-index: 2;
             }
 
             .welcome-box:hover {
@@ -234,6 +239,9 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                 width: 95%;
                 margin: 40px auto;
                 padding: 0;
+                position: relative;
+                z-index: 2;
+                clear: both;
             }
 
             .func-table-container>h3 {
@@ -475,11 +483,9 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
         <!-- BACK TO TOP BUTTON -->
         <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
 
-        <div class="portrait-id-container">
-            =======
-            <!-- PAGE CONTENT STARTS HERE -->
-            >>>>>>> f77bc95ad377522d31bb7e87d8d97eddc1a29788
-            <div class="portrait-id-card">
+        <main class="admin-main" id="adminMain">
+            <div class="portrait-id-container">
+                <div class="portrait-id-card">
 
                 <!-- FRONT -->
                 <div class="portrait-side portrait-front">
@@ -552,7 +558,6 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -578,7 +583,7 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                 </div>
             </div>
         </div>
-
+                            
         <!-- ▬▬▬▬ STUDENT FUNCTIONS ▬▬▬▬ -->
         <div class="func-table-container">
             <h3>Quick Access</h3>
@@ -662,12 +667,12 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
                         </button>
                     </div>
                 </div>
-            </div>
         </div>
     </body>
 
-    </html>
-    <script>
+</html>
+
+<script>
         // ▬▬▬▬ ID HISTORY TOGGLE FUNCTIONALITY ▬▬▬▬
         function toggleHistorySection(headerElement) {
             const section = headerElement.closest('.id-history-header') ? headerElement.closest('.id-history-header').closest('.id-history-section') : headerElement.closest('.id-history-section');
@@ -764,9 +769,3 @@ $qrcode = "../uploads/sample_qr.png"; // You can update this path as needed
             alert('QR Code scanner feature coming soon!');
         }
     </script>
-    </div><!-- End admin-content -->
-    </main><!-- End admin-main -->
-    </div><!-- End admin-wrapper -->
-    </body>
-
-    </html>

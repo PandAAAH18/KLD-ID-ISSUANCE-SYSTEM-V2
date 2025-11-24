@@ -9,16 +9,16 @@ body {
 /* ▬▬▬▬ WELCOME BOX ▬▬▬▬ */
 .welcome-box {
     width: 95%;
-    margin: 20px auto;
+    margin-top: 20px;
     background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
     border-left: 8px solid #1b5e20;
     padding: 25px 80px;
     border-radius: 12px;
     box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.12);
-    display: flex;
-    gap: 35px;
     align-items: center;
     transition: box-shadow 0.3s ease, transform 0.3s ease;
+    position: relative;
+    z-index: 2;
 }
 
 .welcome-box:hover {
@@ -1529,11 +1529,10 @@ body {
     width: 95%;
     margin: 95px auto;
     perspective: 1000px;
+    margin-bottom: 40px;
 }
 
 .portrait-id-card {
-    width: 450px;
-    height: 600px;
     position: relative;
     margin: auto;
     transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -1942,6 +1941,12 @@ body {
         padding: 8px 10px;
     }
 }
+.welcome-box {
+    position: relative;
+    z-index: 2;
+    margin-top: 20px;
+}
+
 /*student-home*/
 
 /* ▬▬▬▬ BACK TO TOP BUTTON ▬▬▬▬ */
@@ -5044,5 +5049,82 @@ body {
         bottom: 20px;
         right: 20px;
         font-size: 20px;
+    }
+}
+
+/* ================================
+   RESPONSIVE FIXES
+   ================================ */
+
+/* Tablets */
+@media (max-width: 992px) {
+
+    .portrait-id-container {
+        padding: 20px 10px;
+    }
+
+    .portrait-id-card {
+        width: 350px;
+        height: 520px;
+    }
+
+    .welcome-box {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .welcome-content-wrapper {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .welcome-info {
+        text-align: center;
+    }
+}
+
+/* Phones */
+@media (max-width: 576px) {
+
+    .portrait-id-card {
+        width: 90%;
+        height: auto;
+        aspect-ratio: 3 / 4;
+    }
+
+    .portrait-id-container {
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    .welcome-box {
+        width: 95%;
+        padding: 25px 15px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .welcome-box img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .welcome-info h2 {
+        font-size: 22px;
+        text-align: center;
+    }
+
+    .welcome-info p {
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        padding: 6px 12px;
     }
 }

@@ -11,8 +11,104 @@ class Student extends User
     }
 
     /**
+     * Validate student data before update
+     * Returns array of errors if validation fails, empty array if valid
+     */
+    public function validateStudentData(array $data): array {
+        $errors = [];
+
+        if (isset($data['first_name'])) {
+            $fn = trim($data['first_name']);
+            if (empty($fn)) {
+                $errors['first_name'] = 'First name is required';
+            } elseif (strlen($fn) < 2) {
+                $errors['first_name'] = 'First name must be at least 2 characters';
+            } elseif (strlen($fn) > 50) {
+                $errors['first_name'] = 'First name must not exceed 50 characters';
+            }
+        }
+
+        if (isset($data['last_name'])) {
+            $ln = trim($data['last_name']);
+            if (empty($ln)) {
+                $errors['last_name'] = 'Last name is required';
+            } elseif (strlen($ln) < 2) {
+                $errors['last_name'] = 'Last name must be at least 2 characters';
+            } elseif (strlen($ln) > 50) {
+                $errors['last_name'] = 'Last name must not exceed 50 characters';
+            }
+        }
+
+        if (isset($data['contact_number'])) {
+            $cn = trim($data['contact_number']);
+            if (empty($cn)) {
+                $errors['contact_number'] = 'Contact number is required';
+            } elseif (!preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $cn)) {
+                $errors['contact_number'] = 'Contact number must be valid (at least 10 digits)';
+            }
+        }
+
+        if (isset($data['course'])) {
+            if (empty(trim($data['course']))) {
+                $errors['course'] = 'Course is required';
+            }
+        }
+
+        if (isset($data['year_level'])) {
+            if (empty(trim($data['year_level']))) {
+                $errors['year_level'] = 'Year level is required';
+            }
+        }
+
+        if (isset($data['gender'])) {
+            $gender = trim($data['gender']);
+            if (!empty($gender) && !in_array($gender, ['Male', 'Female'], true)) {
+                $errors['gender'] = 'Invalid gender selection';
+            }
+        }
+
+        if (isset($data['blood_type'])) {
+            $bt = trim($data['blood_type']);
+            if (!empty($bt)) {
+                $valid = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                if (!in_array($bt, $valid, true)) {
+                    $errors['blood_type'] = 'Invalid blood type';
+                }
+            }
+        }
+
+        if (isset($data['dob'])) {
+            $dob = trim($data['dob']);
+            if (!empty($dob)) {
+                $dobTime = strtotime($dob);
+                if ($dobTime === false) {
+                    $errors['dob'] = 'Invalid date format';
+                } elseif ($dobTime > time()) {
+                    $errors['dob'] = 'Date of birth cannot be in the future';
+                }
+            }
+        }
+
+        if (isset($data['address'])) {
+            $addr = trim($data['address']);
+            if (!empty($addr) && strlen($addr) > 500) {
+                $errors['address'] = 'Address must not exceed 500 characters';
+            }
+        }
+
+        if (isset($data['emergency_contact'])) {
+            $ec = trim($data['emergency_contact']);
+            if (!empty($ec) && !preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $ec)) {
+                $errors['emergency_contact'] = 'Emergency contact must be a valid phone number';
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
      * Update a student's profile row.
-     * Returns true on success, false on failure.
+     * Returns array with success status and message
      */
 
     // ---------------------------------------- COMPLETE PROFILE UPDATE WITH OPTIONAL PHOTO UPLOAD ----------------------------------------
@@ -154,58 +250,234 @@ public function saveUploadedFile(array $file, string $subFolder): string
 }
 
     /* generic update – accepts associative array of columns */
-    public function updateStudent(int $studentId, array $data): void
+    public function updateStudent(int $studentId, array $data): array
     {
-        if (!$data) return;
+        if (!$data) {
+            return [
+                'success' => false,
+                'message' => 'No data provided for update',
+                'errors' => []
+            ];
+        }
 
-        $db = $this->getDb();
+        // Validate data
+        $validationErrors = $this->validateStudentData($data);
+        if (!empty($validationErrors)) {
+            return [
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validationErrors
+            ];
+        }
 
-        // List of real, allowed columns in your `student` table
-        $allowed = [
-            'first_name',
-            'last_name',
-            'middle_name',
-            'year_level',
-            'course',
-            'contact_number',
-            'address',
-            'photo',
-            'dob',
-            'gender',
-            'blood_type',
-            'emergency_contact_name',
-            'emergency_contact',
-            'cor',
-            'signature',
-            'password_hash',
-            'updated_at'
-        ];
+        try {
+            $db = $this->getDb();
+            $db->beginTransaction();
 
-        // Filter invalid columns
-        $clean = [];
-        foreach ($data as $col => $val) {
-            if (in_array($col, $allowed, true)) {
-                $clean[$col] = $val;
+            // List of real, allowed columns in your `student` table
+            $allowed = [
+                'first_name',
+                'last_name',
+                'middle_name',
+                'year_level',
+                'course',
+                'contact_number',
+                'address',
+                'photo',
+                'dob',
+                'gender',
+                'blood_type',
+                'emergency_contact_name',
+                'emergency_contact',
+                'cor',
+                'signature',
+                'password_hash',
+                'updated_at'
+            ];
+
+            // Filter invalid columns and trim values
+            $clean = [];
+            foreach ($data as $col => $val) {
+                if (in_array($col, $allowed, true)) {
+                    // Trim string values but keep nulls and special types
+                    if (is_string($val)) {
+                        $val = trim($val);
+                        // Don't store empty strings, convert to null instead
+                        if ($val === '' && $col !== 'password_hash') {
+                            $val = null;
+                        }
+                    }
+                    $clean[$col] = $val;
+                }
             }
+
+            if (!$clean) {
+                $db->rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'No valid data fields to update',
+                    'errors' => []
+                ];
+            }
+
+            // Always set updated_at to current timestamp
+            $clean['updated_at'] = date('Y-m-d H:i:s');
+
+            // Build SET clause
+            $set = [];
+            foreach ($clean as $col => $val) {
+                $set[] = "$col = :$col";
+            }
+
+            $sql = "UPDATE student SET " . implode(', ', $set) . " WHERE id = :id AND deleted_at IS NULL";
+
+            $stmt = $db->prepare($sql);
+
+            foreach ($clean as $col => $val) {
+                $stmt->bindValue(":$col", $val);
+            }
+
+            $stmt->bindValue(":id", $studentId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $db->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Student profile updated successfully',
+                'errors' => []
+            ];
+        } catch (Throwable $e) {
+            $db->rollBack();
+            error_log(__METHOD__ . ' : ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Failed to update student profile',
+                'errors' => ['database' => 'Database error occurred']
+            ];
+        }
+    }
+
+    /**
+     * Get student by ID with optional select fields
+     */
+    public function findByIdWith(int $student_id, array $fields = []): ?array {
+        $db = $this->getDb();
+        $selectFields = empty($fields) ? '*' : implode(', ', $fields);
+        $stmt = $db->prepare("SELECT $selectFields FROM student WHERE id = ? AND deleted_at IS NULL LIMIT 1");
+        $stmt->execute([$student_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    /**
+     * Get multiple students with filtering and pagination
+     */
+    public function getStudents(int $limit = 50, int $offset = 0, array $filters = []): array {
+        $db = $this->getDb();
+        $where = ['deleted_at IS NULL'];
+
+        if (isset($filters['course']) && !empty($filters['course'])) {
+            $where[] = 'course = :course';
+        }
+        if (isset($filters['year_level']) && !empty($filters['year_level'])) {
+            $where[] = 'year_level = :year_level';
+        }
+        if (isset($filters['search']) && !empty($filters['search'])) {
+            $where[] = "(CONCAT(first_name, ' ', last_name) LIKE :search OR email LIKE :search)";
         }
 
-        if (!$clean) return; // nothing valid to update
+        $whereClause = implode(' AND ', $where);
+        $sql = "SELECT * FROM student WHERE $whereClause LIMIT :limit OFFSET :offset";
 
-        // Build SET clause
-        $set = [];
-        foreach ($clean as $col => $val) {
-            $set[] = "$col = :$col";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        if (isset($filters['course'])) {
+            $stmt->bindValue(':course', $filters['course']);
+        }
+        if (isset($filters['year_level'])) {
+            $stmt->bindValue(':year_level', $filters['year_level']);
+        }
+        if (isset($filters['search'])) {
+            $stmt->bindValue(':search', '%' . $filters['search'] . '%');
         }
 
-        $sql = "UPDATE student SET " . implode(', ', $set) . " WHERE id = :id";
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Count total students with optional filters
+     */
+    public function countStudents(array $filters = []): int {
+        $db = $this->getDb();
+        $where = ['deleted_at IS NULL'];
+
+        if (isset($filters['course']) && !empty($filters['course'])) {
+            $where[] = 'course = :course';
+        }
+        if (isset($filters['year_level']) && !empty($filters['year_level'])) {
+            $where[] = 'year_level = :year_level';
+        }
+
+        $whereClause = implode(' AND ', $where);
+        $sql = "SELECT COUNT(*) as count FROM student WHERE $whereClause";
 
         $stmt = $db->prepare($sql);
 
-        foreach ($clean as $col => $val) {
-            $stmt->bindValue(":$col", $val);
+        if (isset($filters['course'])) {
+            $stmt->bindValue(':course', $filters['course']);
+        }
+        if (isset($filters['year_level'])) {
+            $stmt->bindValue(':year_level', $filters['year_level']);
         }
 
-        $stmt->bindValue(":id", $studentId, PDO::PARAM_INT);
         $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'] ?? 0;
+    }
+
+    /**
+     * Validate file before upload
+     */
+    public function validateFile(array $file, array $options = []): array {
+        $errors = [];
+        $maxSize = $options['max_size'] ?? 5242880; // 5MB default
+        $allowedMimes = $options['mime_types'] ?? ['image/jpeg', 'image/png'];
+        $allowedExts = $options['extensions'] ?? ['jpg', 'jpeg', 'png'];
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $uploadErrors = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds PHP upload limit',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds form limit',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file selected',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Cannot write to disk',
+                UPLOAD_ERR_EXTENSION => 'Upload blocked by extension'
+            ];
+            $errors['upload'] = $uploadErrors[$file['error']] ?? 'Unknown upload error';
+            return ['valid' => false, 'errors' => $errors];
+        }
+
+        if ($file['size'] > $maxSize) {
+            $errors['size'] = 'File size exceeds maximum allowed (' . ($maxSize / 1048576) . 'MB)';
+        }
+
+        if (!in_array($file['type'], $allowedMimes, true)) {
+            $errors['mime'] = 'File type not allowed';
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExts, true)) {
+            $errors['extension'] = 'File extension not allowed';
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors
+        ];
     }
 }

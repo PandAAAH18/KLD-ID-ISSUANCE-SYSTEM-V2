@@ -21,6 +21,8 @@ if (!$stu) {
 /* ---------- handle post ---------- */
 $msg = '';
 $error_msg = '';
+$validation_errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* text fields */
@@ -70,69 +72,584 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     /* Only proceed if no password errors */
     if (empty($error_msg)) {
-        /* files */
-        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK)
-            $data['photo'] = $stuObj->saveUploadedFile($_FILES['profile_photo'], 'student_photos');
+        /* Validate file uploads before processing */
+        $fileUploadErrors = [];
 
-        if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] === UPLOAD_ERR_OK)
-            $data['cor'] = $stuObj->saveUploadedFile($_FILES['cor_photo'], 'student_cor');
-
-        if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK)
-            $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
-
-        $stuObj->updateStudent($stu['id'], $data);
-
-        /* Update password in users table if changed */
-        if (isset($data['password_hash'])) {
-            $db = $stuObj->getDb();
-            $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE email = :email");
-            $stmt->execute([
-                ':hash' => $data['password_hash'],
-                ':email' => $_SESSION['email']
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $validation = $stuObj->validateFile($_FILES['profile_photo'], [
+                'max_size' => 5242880, // 5MB
+                'mime_types' => ['image/jpeg', 'image/png'],
+                'extensions' => ['jpg', 'jpeg', 'png']
             ]);
+            if (!$validation['valid']) {
+                $fileUploadErrors['profile_photo'] = $validation['errors'];
+            } else {
+                try {
+                    $data['photo'] = $stuObj->saveUploadedFile($_FILES['profile_photo'], 'student_photos');
+                } catch (Throwable $e) {
+                    $fileUploadErrors['profile_photo'] = [$e->getMessage()];
+                }
+            }
         }
 
-        if (!$msg) $msg = 'Profile updated successfully!';
-        /* re-read row */
-        $stu = $stuObj->findById($stu['id']);
+        if (isset($_FILES['signature']) && $_FILES['signature']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $validation = $stuObj->validateFile($_FILES['signature'], [
+                'max_size' => 5242880, // 5MB
+                'mime_types' => ['image/jpeg', 'image/png'],
+                'extensions' => ['jpg', 'jpeg', 'png']
+            ]);
+            if (!$validation['valid']) {
+                $fileUploadErrors['signature'] = $validation['errors'];
+            } else {
+                try {
+                    $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
+                } catch (Throwable $e) {
+                    $fileUploadErrors['signature'] = [$e->getMessage()];
+                }
+            }
+        }
+
+        if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $validation = $stuObj->validateFile($_FILES['cor_photo'], [
+                'max_size' => 10485760, // 10MB
+                'mime_types' => ['image/jpeg', 'image/png', 'application/pdf'],
+                'extensions' => ['jpg', 'jpeg', 'png', 'pdf']
+            ]);
+            if (!$validation['valid']) {
+                $fileUploadErrors['cor_photo'] = $validation['errors'];
+            } else {
+                try {
+                    $data['cor'] = $stuObj->saveUploadedFile($_FILES['cor_photo'], 'student_cor');
+                } catch (Throwable $e) {
+                    $fileUploadErrors['cor_photo'] = [$e->getMessage()];
+                }
+            }
+        }
+
+        if (!empty($fileUploadErrors)) {
+            $error_msg = 'File upload error(s) occurred. Please check your files and try again.';
+            $validation_errors = $fileUploadErrors;
+        } else {
+            // Update student profile
+            $result = $stuObj->updateStudent($stu['id'], $data);
+            
+            if ($result['success']) {
+                $msg = $result['message'];
+                /* re-read row */
+                $stu = $stuObj->findById($stu['id']);
+            } else {
+                $error_msg = $result['message'];
+                $validation_errors = $result['errors'];
+            }
+
+            /* Update password in users table if changed */
+            if (isset($data['password_hash'])) {
+                try {
+                    $db = $stuObj->getDb();
+                    $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE email = :email");
+                    $stmt->execute([
+                        ':hash' => $data['password_hash'],
+                        ':email' => $_SESSION['email']
+                    ]);
+                } catch (Throwable $e) {
+                    error_log('Password update error: ' . $e->getMessage());
+                }
+            }
+        }
     }
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile</title>
-    <link href="../assets/css/bootstrap.min.css" rel="stylesheet">
-    <link href="../assets/css/admin.css" rel="stylesheet">
-    <link href="../assets/css/student.css" rel="stylesheet">
-</head>
-
-<body class="admin-body">
-
-    <!-- BACK-TO-TOP BUTTON -->
-    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
-
-    <!-- PAGE HEADER -->
-    <div class="profile-wrapper">
-        <div class="edit-header">
-            <h1>Edit Your Profile</h1>
-            <p>Keep your information up-to-date and accurate</p>
-        </div>
-
         <!-- FORM CONTAINER -->
         <div class="form-container">
-            <div class="form-section-header">
-                Personal Information
-            </div>
+            <style>
+                /* Enhanced Form Styling */
+                .form-container {
+                    max-width: 1000px;
+                    margin: 0 auto;
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+                    overflow: hidden;
+                }
+
+                .form-body {
+                    padding: 40px;
+                }
+
+                .form-section-title {
+                    font-size: 1.3rem;
+                    font-weight: 700;
+                    color: #1b5e20;
+                    margin-bottom: 24px;
+                    margin-top: 32px;
+                    padding-bottom: 12px;
+                    border-bottom: 3px solid #2e7d32;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .form-section-title:first-of-type {
+                    margin-top: 0;
+                }
+
+                .form-section-title i {
+                    color: #2e7d32;
+                    font-size: 1.4rem;
+                }
+
+                .form-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 24px;
+                    margin-bottom: 24px;
+                }
+
+                .form-grid.full {
+                    grid-template-columns: 1fr;
+                }
+
+                .form-group {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .form-group label {
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .form-group.required label::after {
+                    content: '*';
+                    color: #dc3545;
+                    font-weight: bold;
+                }
+
+                .form-group input,
+                .form-group select,
+                .form-group textarea {
+                    padding: 12px 14px;
+                    border: 1.5px solid #e0e0e0;
+                    border-radius: 8px;
+                    font-size: 0.95rem;
+                    font-family: inherit;
+                    transition: all 0.3s ease;
+                    background-color: #fafafa;
+                }
+
+                .form-group input:focus,
+                .form-group select:focus,
+                .form-group textarea:focus {
+                    outline: none;
+                    border-color: #2e7d32;
+                    background-color: white;
+                    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+                }
+
+                .form-group input::placeholder,
+                .form-group textarea::placeholder {
+                    color: #999;
+                }
+
+                .form-group textarea {
+                    resize: vertical;
+                    min-height: 120px;
+                }
+
+                /* Password Section */
+                .password-section {
+                    margin-top: 40px;
+                    padding-top: 32px;
+                    border-top: 1px solid #e0e0e0;
+                }
+
+                .password-toggle-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 12px 20px;
+                    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .password-toggle-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+                }
+
+                .password-box {
+                    display: none;
+                    margin-top: 24px;
+                    padding: 24px;
+                    background: #f5f5f5;
+                    border-radius: 8px;
+                    border-left: 4px solid #ffd600;
+                }
+
+                .password-box.active {
+                    display: block;
+                }
+
+                /* File Upload Section */
+                .file-upload-section {
+                    margin-top: 40px;
+                    padding-top: 32px;
+                    border-top: 1px solid #e0e0e0;
+                }
+
+                .file-upload-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    gap: 24px;
+                }
+
+                .file-upload-card {
+                    border: 2px dashed #e0e0e0;
+                    border-radius: 12px;
+                    padding: 20px;
+                    text-align: center;
+                    transition: all 0.3s ease;
+                    background: #f9f9f9;
+                }
+
+                .file-upload-card:hover {
+                    border-color: #2e7d32;
+                    background: #fafbf9;
+                }
+
+                .file-upload-label {
+                    display: block;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 16px;
+                }
+
+                .file-status-indicator {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: #e8f5e9;
+                    color: #2e7d32;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    margin-bottom: 12px;
+                }
+
+                .file-status-indicator::before {
+                    content: '✓';
+                    font-weight: bold;
+                    font-size: 1rem;
+                }
+
+                .file-preview-image {
+                    max-width: 100%;
+                    max-height: 150px;
+                    border-radius: 8px;
+                    margin: 12px 0;
+                    display: block;
+                }
+
+                .signature-preview {
+                    background: white;
+                    border: 1px solid #e0e0e0;
+                    padding: 10px;
+                }
+
+                .file-name {
+                    font-size: 0.85rem;
+                    color: #666;
+                    margin: 12px 0;
+                    word-break: break-all;
+                }
+
+                .btn-replace {
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+                    color: white;
+                    border: none;
+                    padding: 10px 16px;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    margin-top: 12px;
+                }
+
+                .btn-replace:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+                }
+
+                .file-input-wrapper {
+                    margin-top: 12px;
+                }
+
+                .file-input-wrapper input[type="file"] {
+                    display: block;
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    cursor: pointer;
+                }
+
+                .file-hint {
+                    font-size: 0.8rem;
+                    color: #999;
+                    margin-top: 8px;
+                    font-style: italic;
+                }
+
+                /* Action Buttons */
+                .form-actions {
+                    display: flex;
+                    gap: 16px;
+                    margin-top: 40px;
+                    padding-top: 32px;
+                    border-top: 1px solid #e0e0e0;
+                    flex-wrap: wrap;
+                }
+
+                .btn-primary,
+                .btn-secondary {
+                    padding: 14px 28px;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    text-decoration: none;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                }
+
+                .btn-primary {
+                    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+                    color: white;
+                }
+
+                .btn-primary:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 6px 20px rgba(46, 125, 50, 0.3);
+                }
+
+                .btn-primary:active {
+                    transform: translateY(-1px);
+                }
+
+                .btn-secondary {
+                    background: #f0f0f0;
+                    color: #333;
+                    border: 2px solid #e0e0e0;
+                }
+
+                .btn-secondary:hover {
+                    background: #e0e0e0;
+                    border-color: #999;
+                }
+
+                /* Back to Top Button */
+                .back-to-top {
+                    position: fixed;
+                    bottom: 30px;
+                    right: 30px;
+                    width: 50px;
+                    height: 50px;
+                    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 999;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+
+                .back-to-top:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 20px rgba(46, 125, 50, 0.4);
+                }
+
+                /* Responsive Design */
+                @media (max-width: 768px) {
+                    .form-body {
+                        padding: 24px;
+                    }
+
+                    .form-grid {
+                        grid-template-columns: 1fr;
+                        gap: 18px;
+                    }
+
+                    .form-section-title {
+                        font-size: 1.1rem;
+                        margin-bottom: 18px;
+                    }
+
+                    .form-actions {
+                        flex-direction: column;
+                    }
+
+                    .btn-primary,
+                    .btn-secondary {
+                        width: 100%;
+                    }
+
+                    .file-upload-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .back-to-top {
+                        width: 45px;
+                        height: 45px;
+                        bottom: 20px;
+                        right: 20px;
+                        font-size: 1.2rem;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .form-body {
+                        padding: 16px;
+                    }
+
+                    .form-grid {
+                        gap: 14px;
+                    }
+
+                    .form-group input,
+                    .form-group select,
+                    .form-group textarea {
+                        padding: 10px 12px;
+                        font-size: 0.9rem;
+                    }
+
+                    .form-section-title {
+                        font-size: 1rem;
+                        margin: 24px 0 16px 0;
+                    }
+
+                    .password-box {
+                        padding: 16px;
+                    }
+
+                    .btn-primary,
+                    .btn-secondary {
+                        padding: 12px 20px;
+                        font-size: 0.9rem;
+                    }
+                }
+
+                /* Validation States */
+                .form-group input:invalid:not(:placeholder-shown),
+                .form-group select:invalid {
+                    border-color: #dc3545;
+                }
+
+                .form-group input:valid:not(:placeholder-shown),
+                .form-group select:valid {
+                    border-color: #4caf50;
+                }
+
+                /* Loading State */
+                .btn-primary:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+
+                /* Sidebar Toggle Button Styling */
+                .sidebar-toggle {
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 1.2rem;
+                    cursor: pointer;
+                    padding: 8px 10px;
+                    border-radius: 6px;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    position: relative;
+                }
+
+                .sidebar-toggle:hover {
+                    background: rgba(255, 255, 255, 0.15);
+                    transform: scale(1.1);
+                }
+
+                .sidebar-toggle:active {
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: scale(0.95);
+                }
+
+                .sidebar-toggle i {
+                    transition: transform 0.3s ease;
+                }
+
+                /* Collapsed sidebar toggle appearance */
+                .admin-sidebar.collapsed .sidebar-toggle {
+                    justify-content: center;
+                    width: 100%;
+                }
+            </style>
 
             <div class="form-body">
+                <!-- Alert Messages -->
+                <?php if (!empty($msg)): ?>
+                    <div style="background: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px; border-radius: 6px; margin-bottom: 24px; color: #2e7d32; display: flex; align-items: flex-start; gap: 12px;">
+                        <i class="fas fa-check-circle" style="font-size: 1.2rem; flex-shrink: 0; margin-top: 2px;"></i>
+                        <div>
+                            <strong>Success:</strong> <?= htmlspecialchars($msg) ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($error_msg)): ?>
+                    <div style="background: #ffebee; border-left: 4px solid #dc3545; padding: 16px; border-radius: 6px; margin-bottom: 24px; color: #c41c3b; display: flex; align-items: flex-start; gap: 12px;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 1.2rem; flex-shrink: 0; margin-top: 2px;"></i>
+                        <div>
+                            <strong>Error:</strong> <?= htmlspecialchars($error_msg) ?>
+                            <?php if (!empty($validation_errors)): ?>
+                                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 0.9rem;">
+                                    <?php foreach ($validation_errors as $field => $errs): ?>
+                                        <?php foreach ((array)$errs as $err): ?>
+                                            <li><?= htmlspecialchars($err) ?></li>
+                                        <?php endforeach; ?>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <form method="post" enctype="multipart/form-data">
 
                     <!-- BASIC INFO SECTION -->
-                    <div class="form-section-title">Basic Information</div>
+                    <div class="form-section-title">📋 Basic Information</div>
                     <div class="form-grid">
                         <div class="form-group required">
                             <label>First Name</label>
@@ -179,7 +696,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- ACADEMIC INFO SECTION -->
-                    <div class="form-section-title">Academic Information</div>
+                    <div class="form-section-title">🎓 Academic Information</div>
                     <div class="form-grid">
                         <div class="form-group required">
                             <label>Course</label>
@@ -215,7 +732,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- CONTACT INFO SECTION -->
-                    <div class="form-section-title">Contact & Emergency</div>
+                    <div class="form-section-title">📞 Contact & Emergency</div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Emergency Contact Name</label>
@@ -235,9 +752,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- PASSWORD SECTION -->
-                    <div style="margin-top: 30px; margin-bottom: 30px; border-top: 1px solid #eee; padding-top: 30px;">
-                        <button type="button" class="btn-info" onclick="togglePasswordSection()" id="togglePwdBtn">🔐 Change Password</button>
-                        <div id="pwdBox" style="display:none; margin-top: 20px;">
+                    <div class="password-section">
+                        <button type="button" class="password-toggle-btn" onclick="togglePasswordSection()" id="togglePwdBtn">
+                            <i class="fas fa-lock"></i>
+                            <span>Change Password</span>
+                        </button>
+                        <div id="pwdBox" class="password-box">
                             <div class="form-grid">
                                 <div class="form-group required">
                                     <label>Current Password</label>
@@ -255,19 +775,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter new password">
                                 </div>
                             </div>
-
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <button type="button" class="btn-info" onclick="togglePasswordSection()" style="background: #999;">Cancel</button>
-                            </div>
                         </div>
                     </div>
 
                     <!-- FILE UPLOADS SECTION -->
-                    <div style="border-top: 1px solid #eee; padding-top: 30px; margin-top: 30px;">
-                        <div class="form-section-title">Upload Documents</div>
-                        <div class="form-grid">
+                    <div class="file-upload-section">
+                        <div class="form-section-title">📁 Upload Documents</div>
+                        <div class="file-upload-grid">
                             <div class="form-group">
-                                <label>Profile Photo</label>
+                                <label class="file-upload-label">🖼️ Profile Photo</label>
                                 <?php if (!empty($stu['photo'])): ?>
                                     <div class="file-status-box">
                                         <div class="file-status-indicator">✓ File Uploaded</div>
@@ -288,7 +804,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
-                                <label>Signature</label>
+                                <label class="file-upload-label">✍️ Signature</label>
                                 <?php if (!empty($stu['signature'])): ?>
                                     <div class="file-status-box">
                                         <div class="file-status-indicator">✓ File Uploaded</div>
@@ -309,7 +825,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
-                                <label>Certificate of Registration</label>
+                                <label class="file-upload-label">📄 Certificate of Registration</label>
                                 <?php if (!empty($stu['cor'])): ?>
                                     <div class="file-status-box">
                                         <div class="file-status-indicator">✓ File Uploaded</div>
@@ -343,16 +859,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- ACTION BUTTONS -->
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary" onclick="handleSubmit(event)">Save Changes</button>
-                        <a href="student_profile.php" class="btn-secondary">Back to Profile</a>
+                        <button type="submit" class="btn-primary" onclick="handleSubmit(event)">
+                            <i class="fas fa-save"></i>
+                            <span>Save Changes</span>
+                        </button>
+                        <a href="student_profile.php" class="btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Back to Profile</span>
+                        </a>
                     </div>
 
                 </form>
             </div>
         </div>
+
+            </div>
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Ensure DOM is ready before attaching event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile sidebar toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', function() {
+                    const sidebar = document.getElementById('adminSidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+
+                    if (sidebar) sidebar.classList.add('mobile-open');
+                    if (overlay) overlay.classList.add('active');
+
+                    // Prevent body scroll when sidebar is open
+                    document.body.style.overflow = 'hidden';
+                });
+            }
+
+            // Sidebar close button (mobile only)
+            const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+            if (sidebarCloseBtn) {
+                sidebarCloseBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sidebar = document.getElementById('adminSidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+
+                    if (sidebar) sidebar.classList.remove('mobile-open');
+                    if (overlay) overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    const sidebar = document.getElementById('adminSidebar');
+                    if (sidebar) sidebar.classList.remove('mobile-open');
+                    this.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+
+            // Sidebar collapse/expand toggle (desktop only)
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('adminSidebar');
+            const main = document.getElementById('adminMain');
+
+            if (sidebarToggle && sidebar && main) {
+                // Restore sidebar state from localStorage on page load
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    main.classList.add('sidebar-collapsed');
+                    const icon = sidebarToggle.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-chevron-right';
+                    }
+                }
+
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    sidebar.classList.toggle('collapsed');
+                    main.classList.toggle('sidebar-collapsed');
+
+                    // Update toggle icon
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        if (sidebar.classList.contains('collapsed')) {
+                            icon.className = 'fas fa-chevron-right';
+                        } else {
+                            icon.className = 'fas fa-chevron-left';
+                        }
+                    }
+
+                    // Save state to localStorage
+                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                });
+            }
+
+            // Auto-close sidebar on mobile when clicking a link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        const sidebar = document.getElementById('adminSidebar');
+                        const overlay = document.getElementById('sidebarOverlay');
+                        if (sidebar) sidebar.classList.remove('mobile-open');
+                        if (overlay) overlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+
+            // Close sidebar when window is resized to mobile size
+            window.addEventListener('resize', function() {
+                if (window.innerWidth <= 1024) {
+                    const sidebar = document.getElementById('adminSidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+                    if (sidebar) sidebar.classList.remove('mobile-open');
+                    if (overlay) overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+    </script>
 
     <script>
         // ▬▬▬▬ DRAGGABLE MODAL NOTIFICATION SYSTEM ▬▬▬▬
@@ -462,12 +1092,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function togglePasswordSection() {
             const pwdBox = document.getElementById('pwdBox');
             const toggleBtn = document.getElementById('togglePwdBtn');
-            if (pwdBox.style.display === 'none') {
-                pwdBox.style.display = 'block';
-                toggleBtn.textContent = '✕ Cancel Password Change';
+            pwdBox.classList.toggle('active');
+            
+            if (pwdBox.classList.contains('active')) {
+                toggleBtn.innerHTML = '<i class="fas fa-lock-open"></i><span>Cancel Password Change</span>';
             } else {
-                pwdBox.style.display = 'none';
-                toggleBtn.textContent = 'Change Password';
+                toggleBtn.innerHTML = '<i class="fas fa-lock"></i><span>Change Password</span>';
                 // Clear password fields
                 document.getElementById('old_password').value = '';
                 document.getElementById('new_password').value = '';
@@ -508,8 +1138,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 fileInputWrapper.querySelector('input[type="file"]').value = '';
             }
         }
+
+        // Update page title based on current page
+        const pageTitles = {
+            'edit_profile.php': {
+                title: 'Edit Profile',
+                breadcrumb: 'Edit Profile'
+            }
+        };
+
+        const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
+        if (pageTitles[currentPage]) {
+            document.getElementById('pageTitle').textContent = pageTitles[currentPage].title;
+            document.getElementById('currentPageBreadcrumb').textContent = pageTitles[currentPage].breadcrumb;
+        }
     </script>
 
-</html>
+</body>
 
 </html>

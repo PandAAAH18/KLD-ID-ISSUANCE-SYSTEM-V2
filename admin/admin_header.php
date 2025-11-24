@@ -56,11 +56,37 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             overflow-x: hidden;
+            transform: translateX(0);
+        }
+        
+        .admin-sidebar.closed {
+            transform: translateX(-100%);
         }
         
         /* Collapsed State */
         .admin-sidebar.collapsed {
             width: var(--sidebar-collapsed-width);
+        }
+        
+        .admin-sidebar.collapsed.closed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-close-btn {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: all var(--transition-speed) ease;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
         
         .admin-sidebar.collapsed .sidebar-brand span,
@@ -412,13 +438,27 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
                 width: 280px;
             }
             
-            .admin-sidebar.collapsed {
+            .admin-sidebar.closed {
                 transform: translateX(-100%);
-                width: 280px;
             }
             
             .admin-sidebar.mobile-open {
                 transform: translateX(0);
+            }
+            
+            .admin-sidebar.mobile-open.closed {
+                transform: translateX(0);
+            }
+            
+            .sidebar-close-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .admin-sidebar.collapsed {
+                transform: translateX(-100%);
+                width: 280px;
             }
             
             .admin-sidebar.mobile-open.collapsed {
@@ -657,6 +697,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
         }
     </style>
 </head>
+
 <body class="admin-body">
     <!-- Mobile Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -668,6 +709,9 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
                 <a href="admin_dashboard.php" class="sidebar-brand">
                     <span>Admin Panel</span>
                 </a>
+                <button class="sidebar-close-btn" id="sidebarCloseBtn" title="Close sidebar">
+                    <i class="fas fa-times"></i>
+                </button>
                 <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
                     <i class="fas fa-chevron-left"></i>
                 </button>
@@ -765,11 +809,22 @@ document.getElementById('mobileMenuBtn').addEventListener('click', function() {
     const sidebar = document.getElementById('adminSidebar');
     const overlay = document.getElementById('sidebarOverlay');
     
-    sidebar.classList.toggle('mobile-open');
-    overlay.classList.toggle('active');
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('active');
     
     // Prevent body scroll when sidebar is open
-    document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+    document.body.style.overflow = 'hidden';
+});
+
+// Sidebar close button (mobile only)
+document.getElementById('sidebarCloseBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
 });
 
 document.getElementById('sidebarOverlay').addEventListener('click', function() {
@@ -778,7 +833,7 @@ document.getElementById('sidebarOverlay').addEventListener('click', function() {
     document.body.style.overflow = '';
 });
 
-// Sidebar collapse/expand toggle
+// Sidebar collapse/expand toggle (desktop only)
 document.getElementById('sidebarToggle').addEventListener('click', function() {
     const sidebar = document.getElementById('adminSidebar');
     const main = document.getElementById('adminMain');
@@ -843,8 +898,8 @@ if (pageTitles[currentPage]) {
 // Handle escape key to close menus
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        document.getElementById('userDropdown').classList.remove('active');
-        document.getElementById('dropdownOverlay').classList.remove('active');
+        document.getElementById('userDropdown')?.classList.remove('active');
+        document.getElementById('dropdownOverlay')?.classList.remove('active');
         document.getElementById('adminSidebar').classList.remove('mobile-open');
         document.getElementById('sidebarOverlay').classList.remove('active');
         document.body.style.overflow = '';
