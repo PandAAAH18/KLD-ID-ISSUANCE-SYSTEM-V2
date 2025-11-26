@@ -3,16 +3,20 @@ require_once 'db.php';
 
 class User
 {
-    protected \PDO $db;
+    protected ?\PDO $db;
 
     public function __construct()
     {
-        $this->db = (new Database())->getConnection();
+        $db = (new Database())->getConnection();
+        if ($db === null) {
+            throw new Exception("Database connection failed");
+        }
+        $this->db = $db;
     }
 
     public function getDb(): PDO {
-    return $this->db;
-}
+        return $this->db;
+    }
 
     /* -------------------- register -------------------- */
     public function create(string $email, string $plainPassword, string $role = 'student'): bool
