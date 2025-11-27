@@ -649,7 +649,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <form method="post" enctype="multipart/form-data">
 
                     <!-- BASIC INFO SECTION -->
-                    <div class="form-section-title">📋 Basic Information</div>
+                    <div class="form-section-title">Basic Information</div>
                     <div class="form-grid">
                         <div class="form-group required">
                             <label>First Name</label>
@@ -696,7 +696,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- ACADEMIC INFO SECTION -->
-                    <div class="form-section-title">🎓 Academic Information</div>
+                    <div class="form-section-title">Academic Information</div>
                     <div class="form-grid">
                         <div class="form-group required">
                             <label>Course</label>
@@ -732,7 +732,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <!-- CONTACT INFO SECTION -->
-                    <div class="form-section-title">📞 Contact & Emergency</div>
+                    <div class="form-section-title">Contact & Emergency</div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Emergency Contact Name</label>
@@ -754,7 +754,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- PASSWORD SECTION -->
                     <div class="password-section">
                         <button type="button" class="password-toggle-btn" onclick="togglePasswordSection()" id="togglePwdBtn">
-                            <i class="fas fa-lock"></i>
                             <span>Change Password</span>
                         </button>
                         <div id="pwdBox" class="password-box">
@@ -780,13 +779,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <!-- FILE UPLOADS SECTION -->
                     <div class="file-upload-section">
-                        <div class="form-section-title">📁 Upload Documents</div>
+                        <div class="form-section-title">Upload Documents</div>
                         <div class="file-upload-grid">
                             <div class="form-group">
-                                <label class="file-upload-label">🖼️ Profile Photo</label>
+                                <label class="file-upload-label">Profile Photo</label>
                                 <?php if (!empty($stu['photo'])): ?>
                                     <div class="file-status-box">
-                                        <div class="file-status-indicator">✓ File Uploaded</div>
+                                        <div class="file-status-indicator">File Uploaded</div>
                                         <img src="../uploads/student_photos/<?= htmlspecialchars($stu['photo']) ?>" alt="Current Photo" class="file-preview-image">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['photo']) ?></p>
                                         <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
@@ -804,10 +803,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
-                                <label class="file-upload-label">✍️ Signature</label>
+                                <label class="file-upload-label">Signature</label>
                                 <?php if (!empty($stu['signature'])): ?>
                                     <div class="file-status-box">
-                                        <div class="file-status-indicator">✓ File Uploaded</div>
+                                        <div class="file-status-indicator">File Uploaded</div>
                                         <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Current Signature" class="file-preview-image signature-preview">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['signature']) ?></p>
                                         <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
@@ -825,10 +824,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="form-group">
-                                <label class="file-upload-label">📄 Certificate of Registration</label>
+                                <label class="file-upload-label">Certificate of Registration</label>
                                 <?php if (!empty($stu['cor'])): ?>
                                     <div class="file-status-box">
-                                        <div class="file-status-indicator">✓ File Uploaded</div>
+                                        <div class="file-status-indicator">File Uploaded</div>
                                         <?php 
                                         $corPath = '../uploads/student_cor/' . htmlspecialchars($stu['cor']);
                                         $corExt = strtolower(pathinfo($stu['cor'], PATHINFO_EXTENSION));
@@ -836,7 +835,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <img src="<?= $corPath ?>" alt="Current COR" class="file-preview-image cor-preview">
                                         <?php else: ?>
                                             <div class="file-preview-placeholder">
-                                                <div class="file-icon">📄</div>
                                                 <div class="file-type"><?= strtoupper($corExt) ?></div>
                                             </div>
                                         <?php endif; ?>

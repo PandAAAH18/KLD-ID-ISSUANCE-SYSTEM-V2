@@ -30,19 +30,6 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
     </button>
 
     <div class="profile-wrapper">
-        <!-- HEADER SECTION -->
-        <div class="profile-header-enhanced">
-            <div class="profile-header-content">
-                <div class="profile-header-icon">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="profile-header-text">
-                    <h1>Your Student Profile</h1>
-                    <p>Complete and verified student information</p>
-                </div>
-            </div>
-        </div>
-
         <div class="profile-container">
             <!-- PROFILE CARD -->
             <div class="profile-card-enhanced">
@@ -70,16 +57,15 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     <!-- ACADEMIC INFORMATION -->
                     <div class="profile-section-enhanced">
                         <div class="profile-section-title">
-                            <i class="fas fa-graduation-cap"></i>
                             <span>Academic Information</span>
                         </div>
                         <div class="info-grid-enhanced">
                             <div class="info-item-enhanced">
-                                <div class="info-label-enhanced"><i class="fas fa-book"></i> Course</div>
+                                <div class="info-label-enhanced"></i> Course</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['course']) ?></div>
                             </div>
                             <div class="info-item-enhanced">
-                                <div class="info-label-enhanced"><i class="fas fa-layer-group"></i> Year Level</div>
+                                <div class="info-label-enhanced"></i> Year Level</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['year_level']) ?></div>
                             </div>
                         </div>
@@ -88,20 +74,19 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     <!-- PERSONAL INFORMATION -->
                     <div class="profile-section-enhanced">
                         <div class="profile-section-title">
-                            <i class="fas fa-user-circle"></i>
                             <span>Personal Information</span>
                         </div>
                         <div class="info-grid-enhanced">
                             <div class="info-item-enhanced">
-                                <div class="info-label-enhanced"><i class="fas fa-calendar"></i> Date of Birth</div>
+                                <div class="info-label-enhanced"></i> Date of Birth</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['dob'] ?? 'N/A') ?></div>
                             </div>
                             <div class="info-item-enhanced">
-                                <div class="info-label-enhanced"><i class="fas fa-venus-mars"></i> Gender</div>
+                                <div class="info-label-enhanced"></i> Gender</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['gender'] ?? 'N/A') ?></div>
                             </div>
                             <div class="info-item-enhanced">
-                                <div class="info-label-enhanced"><i class="fas fa-droplet"></i> Blood Type</div>
+                                <div class="info-label-enhanced"></i> Blood Type</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['blood_type'] ?? 'N/A') ?></div>
                             </div>
                         </div>
@@ -110,20 +95,19 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     <!-- CONTACT INFORMATION -->
                     <div class="profile-section-enhanced">
                         <div class="profile-section-title">
-                            <i class="fas fa-phone"></i>
                             <span>Contact Information</span>
                         </div>
                         <div class="info-grid-enhanced">
                             <div class="info-item-enhanced full-width">
-                                <div class="info-label-enhanced"><i class="fas fa-envelope"></i> Email</div>
+                                <div class="info-label-enhanced"></i> Email</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['email']) ?></div>
                             </div>
                             <div class="info-item-enhanced full-width">
-                                <div class="info-label-enhanced"><i class="fas fa-mobile-alt"></i> Contact Number</div>
+                                <div class="info-label-enhanced"></i> Contact Number</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['contact_number']) ?></div>
                             </div>
                             <div class="info-item-enhanced full-width">
-                                <div class="info-label-enhanced"><i class="fas fa-map-marker-alt"></i> Address</div>
+                                <div class="info-label-enhanced"></i> Address</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['address'] ?? 'N/A') ?></div>
                             </div>
                         </div>
@@ -132,16 +116,15 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     <!-- EMERGENCY INFORMATION -->
                     <div class="profile-section-enhanced">
                         <div class="profile-section-title">
-                            <i class="fas fa-exclamation-triangle"></i>
                             <span>Emergency Contact</span>
                         </div>
                         <div class="info-grid-enhanced">
                             <div class="info-item-enhanced full-width">
-                                <div class="info-label-enhanced"><i class="fas fa-user-shield"></i> Contact Name</div>
+                                <div class="info-label-enhanced"> Contact Name</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['emergency_contact_name'] ?? 'N/A') ?></div>
                             </div>
                             <div class="info-item-enhanced full-width">
-                                <div class="info-label-enhanced"><i class="fas fa-phone-volume"></i> Contact Number</div>
+                                <div class="info-label-enhanced"> Contact Number</div>
                                 <div class="info-value-enhanced"><?= htmlspecialchars($stu['emergency_contact'] ?? 'N/A') ?></div>
                             </div>
                         </div>
@@ -150,23 +133,20 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     <!-- Signature Section -->
                     <div class="profile-section-enhanced signature-section-enhanced">
                         <div class="profile-section-title">
-                            <i class="fas fa-pen-fancy"></i>
                             <span>Your Signature</span>
                         </div>
                         <?php if (!empty($stu['signature'])): ?>
                             <div class="signature-container-enhanced">
                                 <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Student Signature" class="signature-image-enhanced">
                                 <div class="signature-status">
-                                    <i class="fas fa-check-circle"></i>
                                     <span>Signature on file</span>
                                 </div>
                             </div>
                         <?php else: ?>
                             <div class="signature-placeholder-enhanced">
-                                <i class="fas fa-file-upload"></i>
                                 <p>No signature uploaded yet.</p>
                                 <a href="edit_profile.php" class="btn-upload-signature">
-                                    <i class="fas fa-cloud-upload-alt"></i> Upload Signature
+                                    </i> Upload Signature
                                 </a>
                             </div>
                         <?php endif; ?>
@@ -465,7 +445,7 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
             background: white;
             box-shadow: var(--shadow-md);
             transform: translateY(-3px);
-            border-left-color: var(--accent-orange);
+            border-left-color: var(--primary-light);
         }
 
         .info-item-enhanced.full-width {
@@ -499,9 +479,9 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 
         /* SIGNATURE SECTION */
         .signature-section-enhanced {
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(255, 152, 0, 0.02) 100%);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.02) 100%);
             padding: 30px;
-            border: 2px solid var(--accent-orange);
+            border: 2px solid var(--primary-light);
             border-radius: 12px;
         }
 
@@ -526,7 +506,7 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 
         .signature-image-enhanced:hover {
             transform: scale(1.02);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 12px 28px rgba(76, 175, 80, 0.3);
         }
 
         .signature-status {
@@ -540,7 +520,7 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 
         .signature-placeholder-enhanced {
             background: white;
-            border: 3px dashed var(--accent-orange);
+            border: 3px dashed var(--primary-light);
             border-radius: 12px;
             padding: 40px 30px;
             text-align: center;
@@ -552,7 +532,7 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 
         .signature-placeholder-enhanced i {
             font-size: 48px;
-            color: var(--accent-orange);
+            color: var(--primary-light);
         }
 
         .signature-placeholder-enhanced p {
@@ -578,7 +558,8 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 
         .btn-upload-signature:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
             color: white;
         }
 
@@ -595,6 +576,7 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
         .btn-action {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
             padding: 14px 28px;
             border-radius: 8px;
@@ -605,14 +587,15 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
             cursor: pointer;
             transition: var(--transition);
             letter-spacing: 0.3px;
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
             color: white;
             box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
-            min-width: 200px;
-            justify-content: center;
         }
 
         .btn-primary:hover {
@@ -625,13 +608,11 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
             background: #f5f5f5;
             color: var(--primary-dark);
             border: 2px solid #ddd;
-            min-width: 200px;
-            justify-content: center;
         }
 
         .btn-secondary:hover {
-            background: #eee;
-            border-color: var(--primary-dark);
+            background: rgba(76, 175, 80, 0.1);
+            border-color: var(--primary-light);
             transform: translateY(-2px);
             color: var(--primary-dark);
         }
@@ -709,11 +690,13 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
 
             .btn-action {
                 width: 100%;
-                justify-content: center;
+                max-width: 100%;
+                flex: 1 1 100%;
             }
 
             .profile-actions-enhanced {
                 flex-direction: column;
+                gap: 12px;
             }
 
             .back-to-top {

@@ -723,8 +723,8 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_home.php' ? 'active' : '' ?>" href="student_home.php">
                         <i class="fas fa-home"></i>
-                        <span>Dashboard</span>
-                        <span class="tooltip-text">Dashboard</span>
+                        <span>Home</span>
+                        <span class="tooltip-text">Home</span>
                     </a>
                 </div>
                 <div class="nav-item">

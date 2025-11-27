@@ -137,7 +137,7 @@ $faqs = [
 .help-header {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
     color: white;
-    padding: 60px 40px;
+    padding: 30px 45px;
     margin-bottom: 50px;
     border-radius: 16px;
     box-shadow: var(--shadow-lg);
@@ -178,8 +178,8 @@ $faqs = [
     font-size: 2rem;
     font-weight: 700;
     color: var(--primary-dark);
-    margin-bottom: 35px;
-    padding-bottom: 15px;
+    margin-bottom: 20px;
+    padding: 1px 20px;
     border-bottom: 3px solid var(--accent-orange);
     letter-spacing: 0.3px;
 }
@@ -284,7 +284,7 @@ $faqs = [
 .ticket-header {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
     color: white;
-    padding: 28px 30px;
+    padding: 25px 25px;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 0.3px;
@@ -402,6 +402,33 @@ $faqs = [
     transform: translateY(-2px);
 }
 
+/* Fix: prevent the ticket-actions column from stretching to match adjacent grid items
+   and keep buttons a sensible size on desktop while allowing full-width on mobile */
+.ticket-actions {
+    align-self: start; /* keep actions at top of the grid cell */
+    flex-direction: row; /* stack buttons vertically */
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.ticket-actions .btn-submit,
+.ticket-actions .btn-reset {
+    width: 210px; /* fixed desktop width */
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+    .ticket-actions {
+        flex-direction: row;
+        align-items: stretch;
+    }
+    .ticket-actions .btn-submit,
+    .ticket-actions .btn-reset {
+        width: 100%;
+    }
+}
+
 /* GUIDELINES CONTAINER */
 .guidelines-container {
     background: white;
@@ -415,7 +442,7 @@ $faqs = [
 .guidelines-header {
     background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
     color: white;
-    padding: 28px 30px;
+    padding: 20px 25px;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: 0.3px;
@@ -976,31 +1003,27 @@ $faqs = [
             <div class="ticket-body">
                 <p>Can't find what you're looking for? Submit a support ticket and our team will get back to you within 24 hours.</p>
 
-                <form method="post">
-                    <div class="form-row">
-                        <div class="form-row full">
-                        <div class="form-group required">
-                            <label>Subject</label>
-                            <input type="text" name="subject" placeholder="Brief description of your issue" required>
-                        </div>
-                        <div class="form-group required">
-                            <label>Category</label>
-                            <select name="category" required>
-                                <option value="">-- Select Category --</option>
-                                <option value="id_application">ID Application</option>
-                                <option value="profile">Profile</option>
-                                <option value="account">Account</option>
-                                <option value="technical">Technical Issue</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
+                <form method="post" id="ticketForm">
+                    <div class="form-group required">
+                        <label>Subject</label>
+                        <input type="text" name="subject" placeholder="Brief description of your issue" required>
                     </div>
 
-                    <div class="form-row full">
-                        <div class="form-group required">
-                            <label>Message</label>
-                            <textarea name="message" rows="6" placeholder="Please provide detailed information about your issue..." required></textarea>
-                        </div>
+                    <div class="form-group required">
+                        <label>Message</label>
+                        <textarea name="message" rows="6" placeholder="Please provide detailed information about your issue..." required></textarea>
+                    </div>
+
+                    <div class="form-group required">
+                        <label>Category</label>
+                        <select name="category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="id_application">ID Application</option>
+                            <option value="profile">Profile</option>
+                            <option value="account">Account</option>
+                            <option value="technical">Technical Issue</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
 
                     <div class="ticket-actions">
@@ -1018,7 +1041,7 @@ $faqs = [
             <!-- QUICK GUIDELINES OVERVIEW -->
             <div class="guidelines-container">
                 <div class="guidelines-header">
-                    📋 ID Guidelines & Requirements
+                    ID Guidelines & Requirements
                 </div>
                 <div class="guidelines-body">
                     <div class="guidelines-grid">
@@ -1028,7 +1051,6 @@ $faqs = [
                                 <div>
                                     <div class="guideline-icon"><i class="fas fa-camera" style="color: var(--accent-orange);"></i></div>
                                     <h4>Photo Requirements</h4>
-                                    <p>Recent professional photo (3x4 or 4x6) in JPG/PNG format with clear facial features and neutral background</p>
                                 </div>
                                 <span class="guideline-toggle">▼</span>
                             </div>
@@ -1057,8 +1079,7 @@ $faqs = [
                                 <div>
                                     <div class="guideline-icon"><i class="fas fa-shirt" style="color: var(--primary-light);"></i></div>
                                     <h4>Allowed Clothing</h4>
-                                    <p>School uniform recommended. White or light-colored solid tops. Avoid graphics, logos, or patterned clothing</p>
-                                </div>
+                                    </div>
                                 <span class="guideline-toggle">▼</span>
                             </div>
                             <div class="guideline-content">
@@ -1086,8 +1107,7 @@ $faqs = [
                                 <div>
                                     <div class="guideline-icon"><i class="fas fa-map-marker-alt" style="color: var(--primary-medium);"></i></div>
                                     <h4>Pickup Location</h4>
-                                    <p>Registrar's Office - Building 1, Room 101. Present valid student ID and reference number for pickup</p>
-                                </div>
+                                    </div>
                                 <span class="guideline-toggle">▼</span>
                             </div>
                             <div class="guideline-content">
@@ -1115,8 +1135,7 @@ $faqs = [
                                 <div>
                                     <div class="guideline-icon"><i class="fas fa-calendar-alt" style="color: var(--accent-orange-dark);"></i></div>
                                     <h4>Printing Schedule</h4>
-                                    <p>Processing time: 3-5 business days. Check your email for notification when your ID is ready</p>
-                                </div>
+                                    </div>
                                 <span class="guideline-toggle">▼</span>
                             </div>
                             <div class="guideline-content">

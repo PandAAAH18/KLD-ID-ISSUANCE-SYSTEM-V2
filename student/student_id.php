@@ -88,16 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
     <?php else: ?> 
     <!-- PAGE TITLE -->
     <div class="id-application-wrapper">
-        <!-- HEADER SECTION -->
-        <div class="page-header-enhanced">
-            <div class="page-header-icon">
-                <i class="fas fa-id-card"></i>
-            </div>
-            <div class="page-header-text">
-                <h1>Apply / Renew School ID</h1>
-                <p>Complete the form below to request a new student ID or renew your existing one</p>
-            </div>
-        </div>
             <!-- DIGITAL ID SECTION -->
             <?php if (!empty($student['digital_id_front']) || !empty($student['digital_id_back'])): ?>
                 <div class="app-card-enhanced">
@@ -145,7 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                         <!-- STEP 1: PHOTO UPLOAD -->
                         <div class="form-section-enhanced">
                             <div class="form-section-header">
-                                <i class="fas fa-camera"></i>
                                 <h3>Upload ID Photo</h3>
                             </div>
                             <p class="form-section-subtitle">A recent professional photo (3x4 or 4x6) in JPG, PNG format</p>
@@ -170,46 +159,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                         <!-- STEP 2: PERSONAL DETAILS -->
                         <div class="form-section-enhanced">
                             <div class="form-section-header">
-                                <i class="fas fa-user"></i>
                                 <h3>Verify Personal Details</h3>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group-enhanced">
-                                    <label><i class="fas fa-user-tie"></i> Full Name</label>
+                                    <label></i> Full Name</label>
                                     <input type="text" value="<?= htmlspecialchars($student['first_name'] . ' ' . $student['last_name']) ?>" readonly>
                                 </div>
                                 <div class="form-group-enhanced">
-                                    <label><i class="fas fa-id-badge"></i> Student ID</label>
+                                    <label></i> Student ID</label>
                                     <input type="text" value="<?= htmlspecialchars($student['student_id']) ?>" readonly>
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group-enhanced">
-                                    <label><i class="fas fa-envelope"></i> Email Address</label>
+                                    <label></i> Email Address</label>
                                     <input type="email" value="<?= htmlspecialchars($student['email']) ?>" readonly>
                                 </div>
                                 <div class="form-group-enhanced">
-                                    <label><i class="fas fa-phone"></i> Contact Number</label>
+                                    <label></i> Contact Number</label>
                                     <input type="tel" value="<?= htmlspecialchars($student['contact_number']) ?>" readonly>
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group-enhanced">
-                                    <label><i class="fas fa-book"></i> Course</label>
+                                    <label></i> Course</label>
                                     <input type="text" value="<?= htmlspecialchars($student['course']) ?>" readonly>
                                 </div>
                                 <div class="form-group-enhanced">
-                                    <label><i class="fas fa-layer-group"></i> Year Level</label>
+                                    <label></i> Year Level</label>
                                     <input type="text" value="<?= htmlspecialchars($student['year_level']) ?>" readonly>
                                 </div>
                             </div>
 
                             <div class="form-row full">
                                 <div class="form-group-enhanced">
-                                    <label for="requestType"><i class="fas fa-clipboard-list"></i> Request Type *</label>
+                                    <label for="requestType"></i> Request Type *</label>
                                     <select id="requestType" name="request_type" required onchange="toggleReasonField()">
                                         <option value="">-- Select Request Type --</option>
                                         <option value="new">New ID Application</option>
@@ -221,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
 
                             <div class="form-row full" id="reasonGroup" style="display: none;">
                                 <div class="form-group-enhanced">
-                                    <label for="reason"><i class="fas fa-pen"></i> Reason for Request *</label>
+                                    <label for="reason"></i> Reason for Request *</label>
                                     <textarea id="reason" name="reason" placeholder="Please provide details about your request..." rows="4"></textarea>
                                 </div>
                             </div>
@@ -236,7 +224,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                         <!-- STEP 3: CONFIRMATION -->
                         <div class="form-section-enhanced">
                             <div class="form-section-header">
-                                <i class="fas fa-check"></i>
                                 <h3>Confirm & Submit</h3>
                             </div>
 
@@ -250,7 +237,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                             <div class="confirmation-checkbox-enhanced">
                                 <input type="checkbox" id="confirmCheckbox" required>
                                 <label for="confirmCheckbox">
-                                    <i class="fas fa-check-square"></i>
                                     I confirm that all details are correct and I authorize submission of this application
                                 </label>
                             </div>
