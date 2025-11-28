@@ -136,6 +136,25 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             transition: all var(--transition-speed) ease;
         }
 
+        .sidebar-brand span {
+            flex: 1;
+        }
+
+        .sidebar-brand img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            opacity: 0.4;
+            filter: brightness(1.2);
+            transition: all var(--transition-speed) ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand:hover img {
+            opacity: 0.6;
+        }
+
         .sidebar-brand i {
             color: var(--accent-yellow);
             font-size: 1.5rem;
@@ -730,15 +749,15 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_profile.php' ? 'active' : '' ?>" href="student_profile.php">
                         <i class="fas fa-user"></i>
-                        <span>My Profile</span>
-                        <span class="tooltip-text">My Profile</span>
+                        <span>Profile</span>
+                        <span class="tooltip-text">Profile</span>
                     </a>
                 </div>
                 <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'student_id.php' ? 'active' : '' ?>" href="student_id.php">
                         <i class="fas fa-id-card"></i>
-                        <span>My ID</span>
-                        <span class="tooltip-text">My ID</span>
+                        <span>ID</span>
+                        <span class="tooltip-text">ID</span>
                     </a>
                 </div>
                 <div class="nav-item">
@@ -769,11 +788,11 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                         <i class="fas fa-bars"></i>
                     </button>
                     <div>
-                        <h1 class="header-title" id="pageTitle">Student Dashboard</h1>
+                        <h1 class="header-title" id="pageTitle">Home</h1>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb" id="breadcrumb">
                                 <li class="breadcrumb-item"><a href="student_home.php">Home</a></li>
-                                <li class="breadcrumb-item active" id="currentPageBreadcrumb">Dashboard</li>
+                                <li class="breadcrumb-item active" id="currentPageBreadcrumb">Home</li>
                             </ol>
                         </nav>
                     </div>
@@ -851,29 +870,25 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
 
                     // Update page title and breadcrumb based on current page
                     const pageTitles = {
-                        'admin_dashboard.php': {
-                            title: 'Dashboard Overview',
-                            breadcrumb: 'Dashboard'
+                        'student_home.php': {
+                            title: 'Home',
+                            breadcrumb: 'Home'
                         },
-                        'admin_students.php': {
-                            title: 'Student Management',
-                            breadcrumb: 'Students'
+                        'student_profile.php': {
+                            title: 'Profile',
+                            breadcrumb: 'Profile'
                         },
-                        'admin_id.php': {
-                            title: 'ID Card Management',
-                            breadcrumb: 'ID Management'
+                        'edit_profile.php': {
+                            title: 'Edit Profile',
+                            breadcrumb: 'Edit Profile'
                         },
-                        'admin_user.php': {
-                            title: 'User Management',
-                            breadcrumb: 'User Management'
+                        'student_id.php': {
+                            title: 'Identification Document',
+                            breadcrumb: 'ID Application'
                         },
-                        'admin_reports.php': {
-                            title: 'Reports & Analytics',
-                            breadcrumb: 'Reports'
-                        },
-                        'admin_logs.php': {
-                            title: 'System Logs',
-                            breadcrumb: 'System Logs'
+                        'student_help.php': {
+                            title: 'Support & Helpdesk',
+                            breadcrumb: 'Help & Support'
                         }
                     };
 

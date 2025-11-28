@@ -270,14 +270,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
             --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
             --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 12px 36px rgba(0, 0, 0, 0.2);
             --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         /* ID APPLICATION WRAPPER */
         .id-application-wrapper {
-            max-width: 1000px;
-            margin: 0 auto;
+            max-width: 1100px;
+            margin: 30px auto;
             padding: 30px 20px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* PAGE HEADER */
@@ -394,21 +407,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         .btn-complete-profile {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-dark) 100%);
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 14px 28px;
+            border-radius: 10px;
             text-decoration: none;
             font-weight: 700;
-            transition: var(--transition);
-            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.25), 0 2px 8px rgba(255, 152, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-complete-profile::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-complete-profile:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-complete-profile:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(255, 152, 0, 0.35), 0 4px 12px rgba(255, 152, 0, 0.2);
             color: white;
+        }
+
+        .btn-complete-profile:active {
+            transform: translateY(-2px);
+        }
+
+        .btn-complete-profile i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-complete-profile:hover i {
+            transform: scale(1.2) rotate(5deg);
         }
 
         /* ALERT MESSAGE */
@@ -553,20 +599,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
             color: white;
             border: none;
-            padding: 12px 28px;
-            border-radius: 8px;
+            padding: 14px 32px;
+            border-radius: 10px;
             font-weight: 700;
             cursor: pointer;
-            transition: var(--transition);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25), 0 2px 8px rgba(76, 175, 80, 0.15);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+
+        .upload-button-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .upload-button-enhanced:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .upload-button-enhanced:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(76, 175, 80, 0.35), 0 4px 12px rgba(76, 175, 80, 0.2);
+            background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+        }
+
+        .upload-button-enhanced:active {
+            transform: translateY(-2px);
+        }
+
+        .upload-button-enhanced i {
+            transition: transform 0.3s ease;
+        }
+
+        .upload-button-enhanced:hover i {
+            transform: scale(1.2) rotate(5deg);
         }
 
         #photoInput {
@@ -676,34 +756,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         .form-group-enhanced input,
         .form-group-enhanced select,
         .form-group-enhanced textarea {
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 0.95rem;
+            padding: 16px 18px;
+            border: 2px solid #e8e8e8;
+            border-radius: 10px;
+            font-size: 1rem;
             font-family: inherit;
-            background: #f8f9fa;
-            transition: var(--transition);
+            background: #fafafa;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             color: #333;
         }
 
         .form-group-enhanced input::placeholder,
         .form-group-enhanced textarea::placeholder {
             color: #999;
+            font-style: italic;
+        }
+
+        .form-group-enhanced input:hover,
+        .form-group-enhanced select:hover,
+        .form-group-enhanced textarea:hover {
+            border-color: var(--primary-light);
+            background: #fff;
         }
 
         .form-group-enhanced input:focus,
         .form-group-enhanced select:focus,
         .form-group-enhanced textarea:focus {
             outline: none;
-            border-color: var(--primary-light);
+            border-color: var(--primary-medium);
             background: white;
-            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1), 0 4px 12px rgba(76, 175, 80, 0.08);
+            transform: translateY(-2px);
         }
 
         .form-group-enhanced input[readonly] {
-            background: #f0f0f0;
-            color: #555;
+            background: linear-gradient(135deg, #f5f5f5 0%, #ebebeb 100%);
+            color: #666;
             cursor: not-allowed;
+            border-color: #ddd;
         }
 
         /* CONFIRMATION LIST */
@@ -801,51 +891,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         /* FORM ACTIONS */
         .form-actions-enhanced {
             display: flex;
-            gap: 15px;
-            margin-top: 40px;
+            gap: 20px;
+            margin-top: 45px;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn-submit-enhanced,
         .btn-cancel-enhanced {
-            padding: 14px 32px;
-            border-radius: 8px;
+            padding: 16px 36px;
+            border-radius: 12px;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             border: none;
             cursor: pointer;
-            transition: var(--transition);
-            letter-spacing: 0.3px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            letter-spacing: 0.5px;
+            min-width: 220px;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit-enhanced::before,
+        .btn-cancel-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-submit-enhanced:hover::before,
+        .btn-cancel-enhanced:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-submit-enhanced {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
             color: white;
-            box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
-            min-width: 200px;
-            justify-content: center;
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.25), 0 2px 8px rgba(46, 125, 50, 0.15);
         }
 
         .btn-submit-enhanced:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(46, 125, 50, 0.35), 0 4px 12px rgba(46, 125, 50, 0.2);
+            background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+        }
+
+        .btn-submit-enhanced:active {
+            transform: translateY(-2px);
+        }
+
+        .btn-submit-enhanced i,
+        .btn-cancel-enhanced i {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-submit-enhanced:hover i,
+        .btn-cancel-enhanced:hover i {
+            transform: scale(1.2) rotate(5deg);
         }
 
         .btn-cancel-enhanced {
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             color: var(--primary-dark);
-            border: 2px solid #ddd;
-            min-width: 200px;
-            justify-content: center;
+            border: 2px solid var(--primary-light);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .btn-cancel-enhanced:hover {
-            background: #eee;
-            border-color: var(--primary-dark);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+            border-color: var(--primary-medium);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.2);
+        }
+
+        .btn-cancel-enhanced:active {
             transform: translateY(-2px);
         }
 
@@ -854,109 +987,189 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
             color: white;
             border: none;
             border-radius: 50%;
-            font-size: 20px;
+            font-size: 22px;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
-            box-shadow: var(--shadow-lg);
-            transition: var(--transition);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25), 0 2px 8px rgba(76, 175, 80, 0.15);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 1000;
         }
 
         .back-to-top:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 32px rgba(27, 94, 32, 0.4);
+            transform: translateY(-6px) scale(1.1);
+            box-shadow: 0 12px 32px rgba(76, 175, 80, 0.35), 0 4px 12px rgba(76, 175, 80, 0.2);
+            background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+        }
+
+        .back-to-top:active {
+            transform: translateY(-4px) scale(1.05);
+        }
+
+        .back-to-top i {
+            transition: transform 0.3s ease;
+        }
+
+        .back-to-top:hover i {
+            transform: translateY(-2px);
         }
 
         /* RESPONSIVE DESIGN */
+        @media (max-width: 1024px) {
+            .id-application-wrapper {
+                padding: 25px 15px;
+                margin: 20px auto;
+            }
+
+            .app-card-body-enhanced {
+                padding: 30px;
+            }
+        }
+
         @media (max-width: 768px) {
             .id-application-wrapper {
-                padding: 15px;
+                padding: 20px 15px;
+                margin: 15px;
             }
 
             .page-header-enhanced {
                 flex-direction: column;
                 text-align: center;
-                padding: 25px;
+                padding: 30px;
             }
 
             .page-header-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 32px;
+                width: 65px;
+                height: 65px;
+                font-size: 34px;
             }
 
             .page-header-enhanced h1 {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
+            }
+
+            .app-card-body-enhanced {
+                padding: 25px;
+            }
+
+            .form-section-enhanced {
+                margin-bottom: 32px;
+                padding-bottom: 32px;
+            }
+
+            .photo-upload-container-enhanced {
+                padding: 35px 25px;
+            }
+
+            .form-actions-enhanced {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .btn-submit-enhanced,
+            .btn-cancel-enhanced {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .back-to-top {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .form-row {
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .id-application-wrapper {
+                padding: 15px 10px;
+                margin: 10px;
+            }
+
+            .page-header-enhanced {
+                padding: 25px 20px;
+            }
+
+            .page-header-enhanced h1 {
+                font-size: 1.5rem;
+            }
+
+            .page-header-enhanced p {
+                font-size: 0.95rem;
+            }
+
+            .page-header-icon {
+                width: 55px;
+                height: 55px;
+                font-size: 28px;
+            }
+
+            .app-card-header-enhanced {
+                padding: 20px 22px;
+                font-size: 16px;
             }
 
             .app-card-body-enhanced {
                 padding: 20px;
             }
 
+            .form-section-header {
+                font-size: 1.15rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
             .form-section-enhanced {
-                margin-bottom: 30px;
-                padding-bottom: 30px;
+                margin-bottom: 28px;
+                padding-bottom: 28px;
             }
 
             .photo-upload-container-enhanced {
                 padding: 30px 20px;
             }
 
-            .form-actions-enhanced {
-                flex-direction: column;
+            .upload-icon {
+                font-size: 40px;
             }
 
             .btn-submit-enhanced,
             .btn-cancel-enhanced {
-                width: 100%;
+                padding: 14px 28px;
+                font-size: 1rem;
             }
 
             .back-to-top {
-                bottom: 20px;
-                right: 20px;
-                width: 45px;
-                height: 45px;
+                bottom: 15px;
+                right: 15px;
+                width: 48px;
+                height: 48px;
                 font-size: 18px;
             }
-        }
 
-        @media (max-width: 480px) {
-            .page-header-enhanced {
-                padding: 20px;
+            .alert-warning-enhanced {
+                flex-direction: column;
+                text-align: center;
+                padding: 22px 20px;
             }
 
-            .page-header-enhanced h1 {
-                font-size: 1.3rem;
-            }
-
-            .page-header-enhanced p {
-                font-size: 0.9rem;
-            }
-
-            .app-card-body-enhanced {
-                padding: 15px;
-            }
-
-            .form-section-header {
-                font-size: 1.1rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .form-section-enhanced {
-                margin-bottom: 20px;
-                padding-bottom: 20px;
+            .btn-complete-profile {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>

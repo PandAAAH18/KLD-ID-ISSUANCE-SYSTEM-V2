@@ -151,18 +151,18 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                             </div>
                         <?php endif; ?>
                     </div>
-                </div>
 
-                <!-- ACTION BUTTONS -->
-                <div class="profile-actions-enhanced">
-                    <a href="edit_profile.php" class="btn-action btn-primary">
-                        <i class="fas fa-edit"></i>
-                        <span>Edit Profile</span>
-                    </a>
-                    <a href="student_home.php" class="btn-action btn-secondary">
-                        <i class="fas fa-home"></i>
-                        <span>Back to Home</span>
-                    </a>
+                    <!-- ACTION BUTTONS -->
+                    <div class="profile-actions-enhanced">
+                        <a href="edit_profile.php" class="btn-action btn-primary">
+                            <i class="fas fa-edit"></i>
+                            <span>Edit Profile</span>
+                        </a>
+                        <a href="student_home.php" class="btn-action btn-secondary">
+                            <i class="fas fa-home"></i>
+                            <span>Back to Home</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -566,55 +566,99 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
         /* ACTION BUTTONS */
         .profile-actions-enhanced {
             display: flex;
-            gap: 15px;
-            margin-top: 40px;
+            gap: 20px;
+            margin-top: 30px;
             padding-top: 30px;
-            border-top: 2px solid #e8e8e8;
+            border-top: 2px solid #e0e0e0;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn-action {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            padding: 14px 28px;
-            border-radius: 8px;
+            gap: 12px;
+            padding: 16px 32px;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
             border: none;
             cursor: pointer;
-            transition: var(--transition);
-            letter-spacing: 0.3px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            letter-spacing: 0.5px;
             flex: 1;
-            min-width: 200px;
-            max-width: 250px;
+            min-width: 220px;
+            max-width: 280px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-action::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-action:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-action i {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-action:hover i {
+            transform: scale(1.2) rotate(5deg);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
             color: white;
-            box-shadow: 0 4px 16px rgba(46, 125, 50, 0.3);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.25), 0 2px 8px rgba(46, 125, 50, 0.15);
+            border: 2px solid transparent;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(46, 125, 50, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(46, 125, 50, 0.35), 0 4px 12px rgba(46, 125, 50, 0.2);
             color: white;
+            background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.3);
         }
 
         .btn-secondary {
-            background: #f5f5f5;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             color: var(--primary-dark);
-            border: 2px solid #ddd;
+            border: 2px solid var(--primary-light);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .btn-secondary:hover {
-            background: rgba(76, 175, 80, 0.1);
-            border-color: var(--primary-light);
-            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+            border-color: var(--primary-medium);
+            transform: translateY(-4px);
             color: var(--primary-dark);
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.2);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         /* BACK TO TOP */

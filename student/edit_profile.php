@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_pwd = trim($_POST['new_password'] ?? '');
     $confirm_pwd = trim($_POST['confirm_password'] ?? '');
 
+    $passwordUpdated = false;
     if ($old_pwd !== '' || $new_pwd !== '' || $confirm_pwd !== '') {
         // If any password field is filled, all are required
         if (empty($old_pwd)) {
@@ -63,9 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$user || !password_verify($old_pwd, $user['password_hash'])) {
                 $error_msg = 'Current password is incorrect.';
             } else {
-                // Old password is correct, set new password
-                $data['password_hash'] = password_hash($new_pwd, PASSWORD_DEFAULT);
-                $msg = 'Password changed successfully! ';
+                // Mark that password should be updated after student data
+                $passwordUpdated = true;
+                $newPasswordHash = password_hash($new_pwd, PASSWORD_DEFAULT);
             }
         }
     }
@@ -135,25 +136,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($result['success']) {
                 $msg = $result['message'];
+                
+                /* Update password in users table if changed */
+                if ($passwordUpdated && isset($newPasswordHash)) {
+                    try {
+                        $db = $stuObj->getDb();
+                        $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE email = :email");
+                        $stmt->execute([
+                            ':hash' => $newPasswordHash,
+                            ':email' => $_SESSION['email']
+                        ]);
+                        $msg .= ' Password changed successfully!';
+                    } catch (Throwable $e) {
+                        error_log('Password update error: ' . $e->getMessage());
+                        $error_msg = 'Profile updated but password change failed. Please try again.';
+                    }
+                }
+                
                 /* re-read row */
                 $stu = $stuObj->findById($stu['id']);
             } else {
                 $error_msg = $result['message'];
                 $validation_errors = $result['errors'];
-            }
-
-            /* Update password in users table if changed */
-            if (isset($data['password_hash'])) {
-                try {
-                    $db = $stuObj->getDb();
-                    $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE email = :email");
-                    $stmt->execute([
-                        ':hash' => $data['password_hash'],
-                        ':email' => $_SESSION['email']
-                    ]);
-                } catch (Throwable $e) {
-                    error_log('Password update error: ' . $e->getMessage());
-                }
             }
         }
     }
@@ -163,31 +167,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- FORM CONTAINER -->
         <div class="form-container">
             <style>
+                :root {
+                    --primary-dark: #1b5e20;
+                    --primary-medium: #2e7d32;
+                    --primary-light: #4caf50;
+                    --accent-orange: #ff9800;
+                    --accent-orange-dark: #f57c00;
+                    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+                    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+                    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+                    --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                }
+
                 /* Enhanced Form Styling */
                 .form-container {
-                    max-width: 1000px;
-                    margin: 0 auto;
+                    max-width: 1100px;
+                    margin: 30px auto;
                     background: white;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+                    border-radius: 16px;
+                    box-shadow: var(--shadow-md);
                     overflow: hidden;
+                    animation: slideInUp 0.5s ease-out;
+                }
+
+                @keyframes slideInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
 
                 .form-body {
-                    padding: 40px;
+                    padding: 50px;
                 }
 
                 .form-section-title {
-                    font-size: 1.3rem;
+                    font-size: 1.4rem;
                     font-weight: 700;
-                    color: #1b5e20;
-                    margin-bottom: 24px;
-                    margin-top: 32px;
-                    padding-bottom: 12px;
-                    border-bottom: 3px solid #2e7d32;
+                    color: var(--primary-dark);
+                    margin-bottom: 28px;
+                    margin-top: 40px;
+                    padding-bottom: 14px;
+                    border-bottom: 3px solid var(--primary-light);
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 14px;
+                    position: relative;
+                    letter-spacing: 0.3px;
+                    animation: fadeInLeft 0.6s ease-out;
+                }
+
+                @keyframes fadeInLeft {
+                    from {
+                        opacity: 0;
+                        transform: translateX(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+
+                .form-section-title::before {
+                    content: '';
+                    position: absolute;
+                    bottom: -3px;
+                    left: 0;
+                    width: 80px;
+                    height: 3px;
+                    background: var(--accent-orange);
+                    transition: width 0.4s ease;
+                }
+
+                .form-section-title:hover::before {
+                    width: 120px;
                 }
 
                 .form-section-title:first-of-type {
@@ -195,15 +252,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 .form-section-title i {
-                    color: #2e7d32;
-                    font-size: 1.4rem;
+                    color: var(--accent-orange);
+                    font-size: 1.5rem;
+                    background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%);
+                    padding: 10px;
+                    border-radius: 10px;
+                    transition: transform 0.3s ease;
+                }
+
+                .form-section-title:hover i {
+                    transform: scale(1.1) rotate(5deg);
                 }
 
                 .form-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 24px;
-                    margin-bottom: 24px;
+                    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                    gap: 28px;
+                    margin-bottom: 28px;
                 }
 
                 .form-grid.full {
@@ -213,89 +278,167 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 .form-group {
                     display: flex;
                     flex-direction: column;
+                    animation: fadeIn 0.5s ease-out;
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
                 }
 
                 .form-group label {
-                    font-size: 0.95rem;
-                    font-weight: 600;
-                    color: #333;
-                    margin-bottom: 8px;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: var(--primary-dark);
+                    margin-bottom: 10px;
                     display: flex;
                     align-items: center;
-                    gap: 6px;
+                    gap: 8px;
+                    letter-spacing: 0.2px;
+                    text-transform: uppercase;
+                    font-size: 0.85rem;
                 }
 
                 .form-group.required label::after {
                     content: '*';
                     color: #dc3545;
                     font-weight: bold;
+                    font-size: 1.1rem;
                 }
 
                 .form-group input,
                 .form-group select,
                 .form-group textarea {
-                    padding: 12px 14px;
-                    border: 1.5px solid #e0e0e0;
-                    border-radius: 8px;
-                    font-size: 0.95rem;
+                    padding: 14px 16px;
+                    border: 2px solid #e8e8e8;
+                    border-radius: 10px;
+                    font-size: 1rem;
                     font-family: inherit;
-                    transition: all 0.3s ease;
+                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                     background-color: #fafafa;
+                    color: #333;
+                }
+
+                .form-group input:hover,
+                .form-group select:hover,
+                .form-group textarea:hover {
+                    border-color: var(--primary-light);
+                    background-color: #fff;
                 }
 
                 .form-group input:focus,
                 .form-group select:focus,
                 .form-group textarea:focus {
                     outline: none;
-                    border-color: #2e7d32;
+                    border-color: var(--primary-medium);
                     background-color: white;
-                    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+                    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1), 0 4px 12px rgba(46, 125, 50, 0.08);
+                    transform: translateY(-2px);
                 }
 
                 .form-group input::placeholder,
                 .form-group textarea::placeholder {
                     color: #999;
+                    font-style: italic;
                 }
 
                 .form-group textarea {
                     resize: vertical;
-                    min-height: 120px;
+                    min-height: 130px;
+                    line-height: 1.6;
                 }
 
                 /* Password Section */
                 .password-section {
-                    margin-top: 40px;
-                    padding-top: 32px;
-                    border-top: 1px solid #e0e0e0;
+                    margin-top: 45px;
+                    padding-top: 35px;
+                    border-top: 2px solid #e8e8e8;
                 }
 
                 .password-toggle-btn {
                     display: inline-flex;
                     align-items: center;
-                    gap: 10px;
-                    padding: 12px 20px;
-                    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+                    gap: 12px;
+                    padding: 16px 28px;
+                    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
                     color: white;
                     border: none;
-                    border-radius: 8px;
-                    font-size: 0.95rem;
-                    font-weight: 600;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    font-weight: 700;
                     cursor: pointer;
-                    transition: all 0.3s ease;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    box-shadow: 0 4px 16px rgba(46, 125, 50, 0.25);
+                    position: relative;
+                    overflow: hidden;
+                    letter-spacing: 0.3px;
+                }
+
+                .password-toggle-btn::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 0;
+                    height: 0;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: translate(-50%, -50%);
+                    transition: width 0.6s, height 0.6s;
+                }
+
+                .password-toggle-btn:hover::before {
+                    width: 300px;
+                    height: 300px;
                 }
 
                 .password-toggle-btn:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 24px rgba(46, 125, 50, 0.35);
+                    background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+                }
+
+                .password-toggle-btn:active {
                     transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+                }
+
+                .password-toggle-btn i {
+                    font-size: 1.2rem;
+                    transition: transform 0.3s ease;
+                }
+
+                .password-toggle-btn:hover i {
+                    transform: scale(1.2) rotate(5deg);
                 }
 
                 .password-box {
                     display: none;
-                    margin-top: 24px;
-                    padding: 24px;
-                    background: #f5f5f5;
-                    border-radius: 8px;
-                    border-left: 4px solid #ffd600;
+                    margin-top: 28px;
+                    padding: 30px;
+                    background: linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%);
+                    border-radius: 12px;
+                    border: 2px solid var(--accent-orange);
+                    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.1);
+                    animation: slideDown 0.4s ease-out;
+                }
+
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        max-height: 0;
+                        padding: 0 30px;
+                    }
+                    to {
+                        opacity: 1;
+                        max-height: 500px;
+                        padding: 30px;
+                    }
                 }
 
                 .password-box.active {
@@ -377,26 +520,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     word-break: break-all;
                 }
 
+                .file-status-box {
+                    padding: 16px;
+                    background: #fafafa;
+                    border: 1px solid #e0e0e0;
+                    border-radius: 8px;
+                }
+
+                .temp-preview {
+                    margin-top: 12px;
+                    padding: 12px;
+                    background: #e8f5e9;
+                    border-radius: 8px;
+                    border: 2px dashed #4caf50;
+                    animation: fadeIn 0.3s ease;
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .temp-preview img {
+                    max-width: 100%;
+                    max-height: 200px;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+
                 .btn-replace {
-                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-dark) 100%);
                     color: white;
                     border: none;
-                    padding: 10px 16px;
-                    border-radius: 6px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
+                    padding: 12px 20px;
+                    border-radius: 10px;
+                    font-size: 0.9rem;
+                    font-weight: 700;
                     cursor: pointer;
-                    transition: all 0.3s ease;
-                    margin-top: 12px;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    margin-top: 14px;
+                    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25);
+                    position: relative;
+                    overflow: hidden;
+                    letter-spacing: 0.3px;
+                }
+
+                .btn-replace::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 0;
+                    height: 0;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: translate(-50%, -50%);
+                    transition: width 0.6s, height 0.6s;
+                }
+
+                .btn-replace:hover::before {
+                    width: 300px;
+                    height: 300px;
                 }
 
                 .btn-replace:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+                }
+
+                .btn-replace:active {
+                    transform: translateY(-1px);
+                }
+
+                .btn-replace i {
+                    transition: transform 0.3s ease;
+                }
+
+                .btn-replace:hover i {
+                    transform: rotate(180deg);
                 }
 
                 .file-input-wrapper {
                     margin-top: 12px;
+                    padding: 12px;
+                    background: #f8f9fa;
+                    border: 2px dashed #4caf50;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
                 }
 
                 .file-input-wrapper input[type="file"] {
@@ -406,64 +625,126 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     border: 1px solid #ddd;
                     border-radius: 6px;
                     cursor: pointer;
+                    background: white;
+                }
+
+                .file-input-wrapper input[type="file"]:hover {
+                    border-color: #4caf50;
                 }
 
                 .file-hint {
                     font-size: 0.8rem;
-                    color: #999;
+                    color: #666;
                     margin-top: 8px;
                     font-style: italic;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .file-hint::before {
+                    content: 'ℹ️';
+                    font-style: normal;
                 }
 
                 /* Action Buttons */
                 .form-actions {
                     display: flex;
-                    gap: 16px;
-                    margin-top: 40px;
-                    padding-top: 32px;
-                    border-top: 1px solid #e0e0e0;
+                    gap: 20px;
+                    margin-top: 45px;
+                    padding-top: 35px;
+                    border-top: 2px solid #e8e8e8;
                     flex-wrap: wrap;
+                    justify-content: center;
                 }
 
                 .btn-primary,
                 .btn-secondary {
-                    padding: 14px 28px;
+                    padding: 16px 36px;
                     border: none;
-                    border-radius: 8px;
-                    font-size: 0.95rem;
-                    font-weight: 600;
+                    border-radius: 12px;
+                    font-size: 1.05rem;
+                    font-weight: 700;
                     cursor: pointer;
-                    transition: all 0.3s ease;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                     text-decoration: none;
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 10px;
+                    gap: 12px;
+                    min-width: 200px;
+                    position: relative;
+                    overflow: hidden;
+                    letter-spacing: 0.5px;
+                }
+
+                .btn-primary::before,
+                .btn-secondary::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 0;
+                    height: 0;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.2);
+                    transform: translate(-50%, -50%);
+                    transition: width 0.6s, height 0.6s;
+                }
+
+                .btn-primary:hover::before,
+                .btn-secondary:hover::before {
+                    width: 300px;
+                    height: 300px;
                 }
 
                 .btn-primary {
-                    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+                    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
                     color: white;
+                    box-shadow: 0 6px 20px rgba(46, 125, 50, 0.25), 0 2px 8px rgba(46, 125, 50, 0.15);
                 }
 
                 .btn-primary:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 6px 20px rgba(46, 125, 50, 0.3);
+                    transform: translateY(-4px);
+                    box-shadow: 0 12px 32px rgba(46, 125, 50, 0.35), 0 4px 12px rgba(46, 125, 50, 0.2);
+                    background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+                    color: white;
                 }
 
                 .btn-primary:active {
-                    transform: translateY(-1px);
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(46, 125, 50, 0.3);
+                }
+
+                .btn-primary i,
+                .btn-secondary i {
+                    font-size: 1.2rem;
+                    transition: transform 0.3s ease;
+                }
+
+                .btn-primary:hover i,
+                .btn-secondary:hover i {
+                    transform: scale(1.2) rotate(5deg);
                 }
 
                 .btn-secondary {
-                    background: #f0f0f0;
-                    color: #333;
-                    border: 2px solid #e0e0e0;
+                    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+                    color: var(--primary-dark);
+                    border: 2px solid var(--primary-light);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
                 }
 
                 .btn-secondary:hover {
-                    background: #e0e0e0;
-                    border-color: #999;
+                    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+                    border-color: var(--primary-medium);
+                    transform: translateY(-4px);
+                    color: var(--primary-dark);
+                    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.2);
+                }
+
+                .btn-secondary:active {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                 }
 
                 /* Back to Top Button */
@@ -493,28 +774,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 /* Responsive Design */
-                @media (max-width: 768px) {
+                @media (max-width: 1024px) {
                     .form-body {
-                        padding: 24px;
+                        padding: 35px;
+                    }
+
+                    .form-grid {
+                        gap: 24px;
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    .form-container {
+                        margin: 20px auto;
+                        border-radius: 12px;
+                    }
+
+                    .form-body {
+                        padding: 28px;
                     }
 
                     .form-grid {
                         grid-template-columns: 1fr;
-                        gap: 18px;
+                        gap: 20px;
                     }
 
                     .form-section-title {
-                        font-size: 1.1rem;
-                        margin-bottom: 18px;
+                        font-size: 1.2rem;
+                        margin-bottom: 20px;
+                        margin-top: 32px;
+                    }
+
+                    .form-section-title i {
+                        font-size: 1.3rem;
                     }
 
                     .form-actions {
                         flex-direction: column;
+                        gap: 16px;
                     }
 
                     .btn-primary,
                     .btn-secondary {
                         width: 100%;
+                        max-width: 100%;
                     }
 
                     .file-upload-grid {
@@ -522,43 +825,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     .back-to-top {
-                        width: 45px;
-                        height: 45px;
+                        width: 48px;
+                        height: 48px;
                         bottom: 20px;
                         right: 20px;
-                        font-size: 1.2rem;
+                        font-size: 1.3rem;
+                    }
+
+                    .password-toggle-btn {
+                        width: 100%;
+                        justify-content: center;
                     }
                 }
 
                 @media (max-width: 480px) {
+                    .form-container {
+                        margin: 15px;
+                        border-radius: 10px;
+                    }
+
                     .form-body {
-                        padding: 16px;
+                        padding: 20px;
                     }
 
                     .form-grid {
-                        gap: 14px;
+                        gap: 16px;
                     }
 
                     .form-group input,
                     .form-group select,
                     .form-group textarea {
-                        padding: 10px 12px;
-                        font-size: 0.9rem;
+                        padding: 12px 14px;
+                        font-size: 0.95rem;
                     }
 
                     .form-section-title {
-                        font-size: 1rem;
-                        margin: 24px 0 16px 0;
+                        font-size: 1.1rem;
+                        margin: 28px 0 18px 0;
+                        gap: 10px;
+                    }
+
+                    .form-section-title i {
+                        font-size: 1.2rem;
+                        padding: 8px;
                     }
 
                     .password-box {
-                        padding: 16px;
+                        padding: 20px;
+                    }
+
+                    .password-toggle-btn {
+                        padding: 14px 24px;
+                        font-size: 0.95rem;
                     }
 
                     .btn-primary,
                     .btn-secondary {
-                        padding: 12px 20px;
-                        font-size: 0.9rem;
+                        padding: 14px 28px;
+                        font-size: 1rem;
+                    }
+
+                    .btn-replace {
+                        width: 100%;
+                        justify-content: center;
+                    }
+
+                    .back-to-top {
+                        width: 45px;
+                        height: 45px;
+                        bottom: 15px;
+                        right: 15px;
+                        font-size: 1.2rem;
                     }
                 }
 
@@ -566,11 +903,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 .form-group input:invalid:not(:placeholder-shown),
                 .form-group select:invalid {
                     border-color: #dc3545;
+                    background-color: #fff5f5;
                 }
 
                 .form-group input:valid:not(:placeholder-shown),
                 .form-group select:valid {
-                    border-color: #4caf50;
+                    border-color: var(--primary-light);
+                    background-color: #f1f8f4;
                 }
 
                 /* Loading State */
@@ -578,6 +917,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     opacity: 0.6;
                     cursor: not-allowed;
                     transform: none;
+                    box-shadow: none;
+                }
+
+                .btn-primary:disabled:hover {
+                    transform: none;
+                    box-shadow: none;
                 }
 
                 /* Sidebar Toggle Button Styling */
@@ -754,6 +1099,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- PASSWORD SECTION -->
                     <div class="password-section">
                         <button type="button" class="password-toggle-btn" onclick="togglePasswordSection()" id="togglePwdBtn">
+                            <i class="fas fa-lock"></i>
                             <span>Change Password</span>
                         </button>
                         <div id="pwdBox" class="password-box">
@@ -788,7 +1134,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <div class="file-status-indicator">File Uploaded</div>
                                         <img src="../uploads/student_photos/<?= htmlspecialchars($stu['photo']) ?>" alt="Current Photo" class="file-preview-image">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['photo']) ?></p>
-                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">
+                                            <i class="fas fa-sync-alt"></i> Replace File
+                                        </button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
                                             <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
                                             <div class="file-hint">JPG, PNG (Max 5MB)</div>
@@ -809,7 +1157,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <div class="file-status-indicator">File Uploaded</div>
                                         <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Current Signature" class="file-preview-image signature-preview">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['signature']) ?></p>
-                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">
+                                            <i class="fas fa-sync-alt"></i> Replace File
+                                        </button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
                                             <input type="file" name="signature" accept=".jpg,.jpeg,.png">
                                             <div class="file-hint">JPG, PNG (Max 5MB)</div>
@@ -839,7 +1189,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </div>
                                         <?php endif; ?>
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['cor']) ?></p>
-                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">
+                                            <i class="fas fa-sync-alt"></i> Replace File
+                                        </button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
                                             <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
                                             <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
@@ -875,9 +1227,163 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </main>
     </div>
 
+    <!-- Back to Top Button -->
+    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()" title="Back to top">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // ▬▬▬▬ GLOBAL FUNCTIONS ACCESSIBLE FROM ONCLICK ▬▬▬▬
+        
+        // Toggle file input for replacement
+        function toggleFileInput(button) {
+            const fileInputWrapper = button.nextElementSibling;
+            
+            if (!fileInputWrapper || !fileInputWrapper.classList.contains('file-input-wrapper')) {
+                console.error('File input wrapper not found', button, fileInputWrapper);
+                return;
+            }
+            
+            const computedStyle = window.getComputedStyle(fileInputWrapper);
+            const isHidden = computedStyle.display === 'none';
+            
+            if (isHidden) {
+                fileInputWrapper.style.display = 'block';
+                button.innerHTML = '<i class="fas fa-times"></i> Cancel';
+                button.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+                button.style.color = 'white';
+            } else {
+                fileInputWrapper.style.display = 'none';
+                button.innerHTML = '<i class="fas fa-sync-alt"></i> Replace File';
+                button.style.background = '';
+                button.style.color = '';
+                
+                const fileInput = fileInputWrapper.querySelector('input[type="file"]');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+                
+                const tempPreview = fileInputWrapper.querySelector('.temp-preview');
+                if (tempPreview) {
+                    tempPreview.remove();
+                }
+            }
+        }
+
+        // Scroll to top
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Toggle password section
+        function togglePasswordSection() {
+            const pwdBox = document.getElementById('pwdBox');
+            const toggleBtn = document.getElementById('togglePwdBtn');
+            pwdBox.classList.toggle('active');
+            
+            if (pwdBox.classList.contains('active')) {
+                toggleBtn.innerHTML = '<i class="fas fa-lock-open"></i><span>Cancel Password Change</span>';
+            } else {
+                toggleBtn.innerHTML = '<i class="fas fa-lock"></i><span>Change Password</span>';
+                document.getElementById('old_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+            }
+        }
+
+        // Handle form submit
+        function handleSubmit(event) {
+            event.preventDefault();
+            const errors = validateForm();
+
+            if (errors.length > 0) {
+                errors.forEach((error, index) => {
+                    setTimeout(() => {
+                        showNotification(error, 'warning');
+                    }, index * 500);
+                });
+                return false;
+            }
+
+            Swal.fire({
+                title: 'Success',
+                html: 'Form data is complete. Saving...',
+                icon: 'success',
+                confirmButtonColor: '#4caf50',
+                confirmButtonText: 'OK',
+                draggable: true,
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    modal.style.borderRadius = '12px';
+                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    event.target.closest('form').submit();
+                }
+            });
+        }
+
+        // Form validation
+        function validateForm() {
+            const firstName = document.querySelector('input[name="first_name"]').value.trim();
+            const lastName = document.querySelector('input[name="last_name"]').value.trim();
+            const contactNumber = document.querySelector('input[name="contact_number"]').value.trim();
+            const course = document.querySelector('select[name="course"]').value.trim();
+            const yearLevel = document.querySelector('select[name="year_level"]').value.trim();
+
+            const errors = [];
+
+            if (!firstName) errors.push('First name is required');
+            if (!lastName) errors.push('Last name is required');
+            if (!contactNumber) {
+                errors.push('Contact number is required');
+            } else if (!/^[0-9\s\-\+\(\)]{10,}$/.test(contactNumber)) {
+                errors.push('Contact number must be valid (at least 10 digits)');
+            }
+            if (!course) errors.push('Course selection is required');
+            if (!yearLevel) errors.push('Year level selection is required');
+
+            return errors;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const iconMap = {
+                'success': 'success',
+                'warning': 'warning',
+                'error': 'error',
+                'info': 'info'
+            };
+
+            const colorMap = {
+                'success': '#4caf50',
+                'warning': '#ff9800',
+                'error': '#f44336',
+                'info': '#2196f3'
+            };
+
+            Swal.fire({
+                title: type.charAt(0).toUpperCase() + type.slice(1),
+                html: message,
+                icon: iconMap[type] || 'info',
+                confirmButtonColor: colorMap[type] || '#2196f3',
+                confirmButtonText: 'OK',
+                draggable: true,
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    modal.style.borderRadius = '12px';
+                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
+                }
+            });
+        }
+
+        // ▬▬▬▬ DOM READY EVENT LISTENERS ▬▬▬▬
         // Ensure DOM is ready before attaching event listeners
         document.addEventListener('DOMContentLoaded', function() {
             // Mobile sidebar toggle
@@ -983,159 +1489,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 
     <script>
-        // ▬▬▬▬ DRAGGABLE MODAL NOTIFICATION SYSTEM ▬▬▬▬
-        function showNotification(message, type = 'info') {
-            const iconMap = {
-                'success': 'success',
-                'warning': 'warning',
-                'error': 'error',
-                'info': 'info'
-            };
-
-            const colorMap = {
-                'success': '#4caf50',
-                'warning': '#ff9800',
-                'error': '#f44336',
-                'info': '#2196f3'
-            };
-
-            Swal.fire({
-                title: type.charAt(0).toUpperCase() + type.slice(1),
-                html: message,
-                icon: iconMap[type] || 'info',
-                confirmButtonColor: colorMap[type] || '#2196f3',
-                confirmButtonText: 'OK',
-                draggable: true,
-                allowOutsideClick: false,
-                didOpen: (modal) => {
-                    modal.style.borderRadius = '12px';
-                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
-                }
-            });
-        }
-
-        // ▬▬▬▬ FORM VALIDATION ▬▬▬▬
-        function validateForm() {
-            const firstName = document.querySelector('input[name="first_name"]').value.trim();
-            const lastName = document.querySelector('input[name="last_name"]').value.trim();
-            const contactNumber = document.querySelector('input[name="contact_number"]').value.trim();
-            const course = document.querySelector('select[name="course"]').value.trim();
-            const yearLevel = document.querySelector('select[name="year_level"]').value.trim();
-
-            const errors = [];
-
-            if (!firstName) {
-                errors.push('First name is required');
-            }
-
-            if (!lastName) {
-                errors.push('Last name is required');
-            }
-
-            if (!contactNumber) {
-                errors.push('Contact number is required');
-            } else if (!/^[0-9\s\-\+\(\)]{10,}$/.test(contactNumber)) {
-                errors.push('Contact number must be valid (at least 10 digits)');
-            }
-
-            if (!course) {
-                errors.push('Course selection is required');
-            }
-
-            if (!yearLevel) {
-                errors.push('Year level selection is required');
-            }
-
-            return errors;
-        }
-
-        // ▬▬▬▬ FORM SUBMIT HANDLER ▬▬▬▬
-        function handleSubmit(event) {
-            event.preventDefault();
-            const errors = validateForm();
-
-            if (errors.length > 0) {
-                // Show error notifications for each missing field
-                errors.forEach((error, index) => {
-                    setTimeout(() => {
-                        showNotification(error, 'warning');
-                    }, index * 500);
-                });
-
-                return false;
-            }
-
-            // If validation passes, show success message and submit form after user confirms
-            Swal.fire({
-                title: 'Success',
-                html: 'Form data is complete. Saving...',
-                icon: 'success',
-                confirmButtonColor: '#4caf50',
-                confirmButtonText: 'OK',
-                draggable: true,
-                allowOutsideClick: false,
-                didOpen: (modal) => {
-                    modal.style.borderRadius = '12px';
-                    modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
-                }
-            }).then((result) => {
-                // Submit form only after user clicks OK
-                if (result.isConfirmed) {
-                    event.target.closest('form').submit();
-                }
-            });
-        }
-
-        // ▬▬▬▬ PASSWORD TOGGLE ▬▬▬▬
-        function togglePasswordSection() {
-            const pwdBox = document.getElementById('pwdBox');
-            const toggleBtn = document.getElementById('togglePwdBtn');
-            pwdBox.classList.toggle('active');
-            
-            if (pwdBox.classList.contains('active')) {
-                toggleBtn.innerHTML = '<i class="fas fa-lock-open"></i><span>Cancel Password Change</span>';
-            } else {
-                toggleBtn.innerHTML = '<i class="fas fa-lock"></i><span>Change Password</span>';
-                // Clear password fields
-                document.getElementById('old_password').value = '';
-                document.getElementById('new_password').value = '';
-                document.getElementById('confirm_password').value = '';
-            }
-        }
-
-        // ▬▬▬▬ BACK-TO-TOP FUNCTIONALITY ▬▬▬▬
+        // ▬▬▬▬ BACK-TO-TOP SCROLL DETECTION ▬▬▬▬
         window.addEventListener('scroll', function() {
             const backToTopBtn = document.getElementById('backToTopBtn');
-            if (window.scrollY > 300) {
-                backToTopBtn.style.display = 'flex';
-            } else {
-                backToTopBtn.style.display = 'none';
+            if (backToTopBtn) {
+                if (window.scrollY > 300) {
+                    backToTopBtn.style.display = 'flex';
+                } else {
+                    backToTopBtn.style.display = 'none';
+                }
             }
         });
 
-        function scrollToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
+        // ▬▬▬▬ FILE PREVIEW FUNCTIONALITY ▬▬▬▬
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Convert to MB
+                        const fileName = file.name;
+                        
+                        // Show file selection notification
+                        showNotification(`Selected: ${fileName} (${fileSize} MB)`, 'info');
+                        
+                        // Preview image if it's an image file
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                // Find the preview image in the same file-status-box
+                                const fileStatusBox = input.closest('.form-group').querySelector('.file-preview-image');
+                                if (fileStatusBox) {
+                                    // Create a temporary preview
+                                    const tempPreview = document.createElement('div');
+                                    tempPreview.style.cssText = 'margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 6px; border: 2px dashed #4caf50;';
+                                    tempPreview.innerHTML = `
+                                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #2e7d32; font-size: 0.85rem;">
+                                            <i class="fas fa-eye"></i> Preview:
+                                        </p>
+                                        <img src="${event.target.result}" style="max-width: 100%; max-height: 200px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Preview">
+                                    `;
+                                    
+                                    // Remove any existing preview
+                                    const existingPreview = input.parentElement.querySelector('.temp-preview');
+                                    if (existingPreview) {
+                                        existingPreview.remove();
+                                    }
+                                    
+                                    tempPreview.className = 'temp-preview';
+                                    input.parentElement.appendChild(tempPreview);
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                });
             });
-        }
-
-        // ▬▬▬▬ TOGGLE FILE INPUT FOR REPLACEMENT ▬▬▬▬
-        function toggleFileInput(button) {
-            event.preventDefault();
-            const fileInputWrapper = button.nextElementSibling;
-            if (fileInputWrapper.style.display === 'none') {
-                fileInputWrapper.style.display = 'block';
-                button.textContent = '✕ Cancel';
-                button.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
-            } else {
-                fileInputWrapper.style.display = 'none';
-                button.textContent = 'Replace File';
-                button.style.background = '';
-                // Clear the file input
-                fileInputWrapper.querySelector('input[type="file"]').value = '';
-            }
-        }
+        });
 
         // Update page title based on current page
         const pageTitles = {

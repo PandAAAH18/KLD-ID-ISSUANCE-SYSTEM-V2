@@ -124,38 +124,80 @@ $faqs = [
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 12px 36px rgba(0, 0, 0, 0.2);
     --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .help-wrapper {
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 30px auto;
     padding: 0;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* PAGE HEADER */
 .help-header {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 100%);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-medium) 50%, var(--primary-light) 100%);
     color: white;
-    padding: 30px 45px;
+    padding: 45px 50px;
     margin-bottom: 50px;
-    border-radius: 16px;
+    border-radius: 18px;
     box-shadow: var(--shadow-lg);
-    animation: slideInDown 0.5s ease-out;
+    animation: slideInDown 0.6s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.help-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: rotateGlow 20s linear infinite;
+}
+
+@keyframes rotateGlow {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.help-header-content {
+    position: relative;
+    z-index: 1;
 }
 
 .help-header-content h1 {
     margin: 0 0 15px 0;
-    font-size: 2.8rem;
+    font-size: 3rem;
     font-weight: 800;
     letter-spacing: 0.5px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .help-header-content p {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     opacity: 0.95;
     font-weight: 500;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 @keyframes slideInDown {
@@ -193,27 +235,58 @@ $faqs = [
 
 .contact-card {
     background: white;
-    padding: 35px 30px;
-    border-radius: 14px;
+    padding: 40px 35px;
+    border-radius: 16px;
     box-shadow: var(--shadow-md);
-    transition: var(--transition);
-    border-top: 5px solid var(--primary-light);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-top: 6px solid var(--primary-light);
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.contact-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(255, 152, 0, 0.05) 100%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.contact-card:hover::before {
+    opacity: 1;
 }
 
 .contact-card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-5px);
+    box-shadow: var(--shadow-xl);
+    transform: translateY(-8px) scale(1.02);
+    border-top-color: var(--accent-orange);
 }
 
 .contact-icon {
-    font-size: 3.5rem;
-    margin-bottom: 20px;
-    transition: var(--transition);
+    font-size: 4rem;
+    margin-bottom: 25px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    z-index: 1;
 }
 
 .contact-card:hover .contact-icon {
-    transform: scale(1.15);
+    transform: scale(1.2) rotate(5deg);
+    animation: iconPulse 0.6s ease-out;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1.2) rotate(5deg);
+    }
+    50% {
+        transform: scale(1.3) rotate(5deg);
+    }
 }
 
 .contact-card h3 {
@@ -367,38 +440,83 @@ $faqs = [
 
 .btn-submit,
 .btn-reset {
-    padding: 14px 32px;
-    border-radius: 8px;
+    padding: 16px 36px;
+    border-radius: 12px;
     border: none;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.05rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-submit::before,
+.btn-reset::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-submit:hover::before,
+.btn-reset:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .btn-submit {
     background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
     color: white;
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25), 0 2px 8px rgba(76, 175, 80, 0.15);
 }
 
 .btn-submit:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(76, 175, 80, 0.35), 0 4px 12px rgba(76, 175, 80, 0.2);
+    background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+}
+
+.btn-submit:active {
+    transform: translateY(-2px);
+}
+
+.btn-submit i,
+.btn-reset i {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-submit:hover i,
+.btn-reset:hover i {
+    transform: scale(1.2) rotate(5deg);
 }
 
 .btn-reset {
-    background: #f5f5f5;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     color: var(--primary-dark);
-    border: 2px solid #ddd;
+    border: 2px solid var(--primary-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .btn-reset:hover {
-    background: #eee;
-    border-color: var(--primary-dark);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+    border-color: var(--primary-medium);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(76, 175, 80, 0.2);
+}
+
+.btn-reset:active {
     transform: translateY(-2px);
 }
 
@@ -460,17 +578,24 @@ $faqs = [
 
 /* GUIDELINE CARDS */
 .guideline-card {
-    background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
-    border-radius: 12px;
+    background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+    border-radius: 14px;
     border: 2px solid #e8e8e8;
     overflow: hidden;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--shadow-sm);
 }
 
 .guideline-card:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+
+.guideline-card.expanded {
     border-color: var(--accent-orange);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-xl);
 }
 
 .guideline-card-wide {
@@ -478,17 +603,21 @@ $faqs = [
 }
 
 .guideline-header {
-    padding: 25px;
+    padding: 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
     background: white;
-    transition: var(--transition);
+    transition: all 0.4s ease;
 }
 
 .guideline-card:hover .guideline-header {
-    background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(255, 152, 0, 0.05) 100%);
+}
+
+.guideline-card.expanded .guideline-header {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.08) 0%, rgba(76, 175, 80, 0.08) 100%);
 }
 
 .guideline-header > div {
@@ -681,69 +810,113 @@ $faqs = [
 
 /* SEARCH CONTAINER */
 .search-container {
-    margin-bottom: 30px;
-    animation: fadeIn 0.5s ease-out;
+    margin-bottom: 35px;
+    animation: fadeIn 0.6s ease-out;
 }
 
 .search-box {
     position: relative;
-    max-width: 500px;
+    max-width: 550px;
 }
 
 .search-icon {
     position: absolute;
-    left: 16px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    color: var(--primary-light);
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus ~ .search-icon {
+    color: var(--primary-medium);
+    transform: translateY(-50%) scale(1.1);
 }
 
 .search-box input {
     width: 100%;
-    padding: 14px 16px 14px 50px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: var(--transition);
+    padding: 16px 18px 16px 55px;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.search-box input:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-md);
 }
 
 .search-box input:focus {
     outline: none;
-    border-color: var(--primary-light);
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    border-color: var(--primary-medium);
+    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1), var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 /* FAQ FILTERS */
 .faq-filters {
     display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
+    gap: 12px;
+    margin-bottom: 35px;
     flex-wrap: wrap;
-    animation: fadeIn 0.5s ease-out;
+    animation: fadeIn 0.6s ease-out;
 }
 
 .filter-btn {
-    padding: 10px 20px;
-    border: 2px solid #ddd;
-    border-radius: 20px;
+    padding: 12px 24px;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
     background: white;
     color: #666;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    letter-spacing: 0.3px;
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(76, 175, 80, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.filter-btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .filter-btn:hover {
-    border-color: var(--accent-orange);
-    color: var(--accent-orange);
+    border-color: var(--primary-light);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
 }
 
 .filter-btn.active {
     background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
     border-color: var(--primary-light);
     color: white;
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.3);
+    transform: translateY(-2px);
+}
+
+.filter-btn.active:hover {
+    background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
 }
 
 /* FAQ LIST */
@@ -834,42 +1007,60 @@ $faqs = [
 }
 
 /* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+    .help-wrapper {
+        margin: 20px auto;
+    }
+
     .help-header {
-        padding: 40px 25px;
-        margin-bottom: 40px;
-        border-radius: 12px;
+        padding: 40px 35px;
+    }
+
+    .help-header-content h1 {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .help-wrapper {
+        margin: 15px;
+    }
+
+    .help-header {
+        padding: 35px 30px;
+        margin-bottom: 35px;
+        border-radius: 14px;
     }
     
     .help-header-content h1 {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
     
     .help-header-content p {
-        font-size: 1rem;
+        font-size: 1.05rem;
     }
     
     .section-title {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
         margin-bottom: 25px;
     }
     
     .contact-cards {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 20px;
     }
     
     .ticket-body {
-        padding: 25px;
+        padding: 30px;
     }
     
     .guidelines-body {
-        padding: 25px;
+        padding: 30px;
     }
     
     .guidelines-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 20px;
     }
     
     .guideline-card-wide {
@@ -886,57 +1077,72 @@ $faqs = [
     }
     
     .faq-filters {
-        gap: 8px;
+        gap: 10px;
     }
     
     .filter-btn {
-        padding: 8px 16px;
-        font-size: 0.85rem;
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
+
+    .btn-submit,
+    .btn-reset {
+        padding: 14px 30px;
     }
 }
 
 @media (max-width: 480px) {
     .help-wrapper {
         padding: 0;
+        margin: 10px;
     }
     
     .help-header {
-        padding: 30px 20px;
+        padding: 30px 25px;
         margin-bottom: 30px;
+        border-radius: 12px;
     }
     
     .help-header-content h1 {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+    }
+
+    .help-header-content p {
+        font-size: 1rem;
     }
     
     .section-title {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
+        padding: 1px 15px;
     }
     
     .ticket-body,
     .guidelines-body {
-        padding: 20px;
+        padding: 25px;
     }
     
     .form-row {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 18px;
     }
     
     .ticket-actions {
         flex-direction: column;
+        gap: 12px;
     }
     
     .btn-submit,
     .btn-reset {
         width: 100%;
         justify-content: center;
+        padding: 14px 24px;
     }
     
     .guideline-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
+        padding: 22px;
     }
     
     .guideline-header > div {
@@ -945,7 +1151,20 @@ $faqs = [
     }
     
     .contact-card {
-        padding: 25px 20px;
+        padding: 30px 25px;
+    }
+
+    .contact-icon {
+        font-size: 3.5rem;
+    }
+
+    .search-box {
+        max-width: 100%;
+    }
+
+    .filter-btn {
+        padding: 9px 16px;
+        font-size: 0.85rem;
     }
 }
 </style>
@@ -1260,13 +1479,13 @@ $faqs = [
         right: 30px;
         background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
         color: white;
-        padding: 14px 16px;
+        padding: 16px 18px;
         border-radius: 50%;
         cursor: pointer;
-        font-size: 1.2rem;
-        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        font-size: 1.3rem;
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.25), 0 2px 8px rgba(76, 175, 80, 0.15);
         opacity: 0;
-        transition: var(--transition);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 999;
         border: none;
         display: flex;
@@ -1279,11 +1498,20 @@ $faqs = [
     }
 
     .back-to-top:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        transform: translateY(-6px) scale(1.1);
+        box-shadow: 0 12px 32px rgba(76, 175, 80, 0.35), 0 4px 12px rgba(76, 175, 80, 0.2);
+        background: linear-gradient(135deg, var(--primary-medium) 0%, var(--primary-dark) 100%);
     }
 
     .back-to-top:active {
+        transform: translateY(-4px) scale(1.05);
+    }
+
+    .back-to-top i {
+        transition: transform 0.3s ease;
+    }
+
+    .back-to-top:hover i {
         transform: translateY(-2px);
     }
 
@@ -1291,8 +1519,8 @@ $faqs = [
         .back-to-top {
             bottom: 20px;
             right: 20px;
-            padding: 12px 14px;
-            font-size: 1rem;
+            padding: 14px 16px;
+            font-size: 1.1rem;
         }
     }
     </style>

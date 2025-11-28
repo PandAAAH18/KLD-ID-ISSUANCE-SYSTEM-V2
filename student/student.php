@@ -278,7 +278,6 @@ public function saveUploadedFile(array $file, string $subFolder): string
             $allowed = [
                 'first_name',
                 'last_name',
-                'middle_name',
                 'year_level',
                 'course',
                 'contact_number',
@@ -290,9 +289,7 @@ public function saveUploadedFile(array $file, string $subFolder): string
                 'emergency_contact_name',
                 'emergency_contact',
                 'cor',
-                'signature',
-                'password_hash',
-                'updated_at'
+                'signature'
             ];
 
             // Filter invalid columns and trim values
@@ -319,9 +316,6 @@ public function saveUploadedFile(array $file, string $subFolder): string
                     'errors' => []
                 ];
             }
-
-            // Always set updated_at to current timestamp
-            $clean['updated_at'] = date('Y-m-d H:i:s');
 
             // Build SET clause
             $set = [];
