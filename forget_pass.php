@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="card login-card shadow-lg animate-fade-in">
                     <div class="card-header text-center py-3 school-header position-relative">
                         <div class="logo-container mb-2">
-                            <div class="logo-circle"><i class="fas fa-graduation-cap logo-icon"></i></div>
+                            <img src="assets/images/kldlogo.png" alt="KLD School Logo" class="logo-image">
                         </div>
                         <h3 class="mb-0 fw-bold">KLD School Portal</h3>
                         <p class="mb-0 text-muted">Secure access to school services</p>
@@ -124,8 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .container.position-relative{z-index:3}
         .login-card{border-radius:14px;background:rgba(255,255,255,0.98);backdrop-filter:blur(8px)}
         .school-header{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0}
-        .logo-circle{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;border:2px solid rgba(255,215,0,0.15)}
-        .logo-icon{color:#ffd700;font-size:1.35rem}
+        .logo-image{width:64px;height:64px;border-radius:50%;margin:0 auto 8px;border:2px solid rgba(255,215,0,0.15);object-fit:cover;background:rgba(255,255,255,0.1);padding:4px}
         .animate-fade-in{animation:fadeInUp .6s ease-out}
         @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         .school-input{border-radius:10px;padding:1rem}

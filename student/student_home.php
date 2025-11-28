@@ -43,6 +43,7 @@ $qrcode = "../uploads/sample_qr.png";
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,72 +52,69 @@ $qrcode = "../uploads/sample_qr.png";
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-    <body class="admin-body">
-        <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
-        <div class="admin-main" id="adminMain">
-            <div class="portrait-id-container">
-                <div class="portrait-id-card">
-                    <div class="portrait-side portrait-front" style="position: relative; background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: white; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; height: 100%; box-sizing: border-box;">
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
-                            <div class="photo-container">
-                                <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
-                            </div>
-                            <div class="student-info">
-                                <p class="student-name"><?php echo $studentName; ?></p>
-                                <p class="student-course"><?php echo $course; ?></p>
-                                <p class="student-id-number"><?php echo $studentID; ?></p>
-                            </div>
+<body class="admin-body">
+    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
+    <div class="admin-main" id="adminMain">
+        <div class="portrait-id-container">
+            <div class="portrait-id-card">
+                <div class="portrait-side portrait-front" style="background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: inherit; background-repeat: round;">
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
+                        <div class="photo-container">
+                            <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
                         </div>
-                        <div class="signature-section">
-                            <?php if ($signature): ?>
-                                <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
-                            <?php else: ?>
-                                <div class="signature-placeholder"></div>
-                            <?php endif; ?>
+                        <div class="student-info">
+                            <p class="student-name"><?php echo $studentName; ?></p>
+                            <p class="student-course"><?php echo $course; ?></p>
+                            <p class="student-id-number"><?php echo $studentID; ?></p>
                         </div>
                     </div>
-                    <div class="portrait-side portrait-back" style="padding: 0 !important; background: transparent !important;">
-                        <img src="../assets/images/id_back.png" alt="ID Back" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit;">
+                    <div class="signature-section">
+                        <?php if ($signature): ?>
+                            <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
+                        <?php else: ?>
+                            <div class="signature-placeholder"></div>
+                        <?php endif; ?>
                     </div>
                 </div>
-            </div>
-
-            <div class="welcome-box">
-                <img src="<?php echo $avatar; ?>" alt="Avatar">
-                <div class="welcome-content-wrapper">
-                    <div class="welcome-info">
-                        <h2>
-                            Welcome, <?php echo $studentName; ?>
-                            <span class="status-badge enrolled">Enrolled</span>
-                        </h2>
-                        <p><strong>ID:</strong> <?php echo $studentID; ?></p>
-                        <p><strong>Course:</strong> <?php echo $course; ?></p>
-                        <p><strong>Year & Section:</strong> <?php echo $yearSection; ?></p>
-                        <p><strong>Contact Number:</strong> <?php echo $contact_number; ?></p>
-                        <p><strong>Address:</strong> <?php echo $address; ?></p>
-                    </div>
-                    <div class="welcome-nav">
-                        <a href="student_profile.php">My Profile</a>
-                        <a href="student_id.php">My ID</a>
-                        <a href="edit_profile.php">Edit Profile</a>
-                    </div>
+                <div class="portrait-side portrait-back" style="background-image: url('../assets/images/id_back.png'); background-size: contain; background-position: inherit; background-repeat: round; padding: 0;">
                 </div>
             </div>
+        </div>
 
-            <div class="func-table-container">
-                <h3>Quick Access</h3>
-                
-                <div class="id-status-tracker">
-                    <h3>ID Application Status Tracker</h3>
-                    <div class="status-grid">
-                        <div class="status-item">
-                            <div class="status-label">Application Status</div>
-                            <div class="status-value status-badge status-<?php echo strtolower(str_replace(' ', '-', $idStatus)); ?>">
-                                <?php echo htmlspecialchars($idStatus); ?>
-                            </div>
+        <div class="welcome-box">
+            <img src="<?php echo $avatar; ?>" alt="Avatar">
+            <div class="welcome-content-wrapper">
+                <div class="welcome-info">
+                    <h2>
+                        Welcome, <?php echo $studentName; ?>
+                        <span class="status-badge enrolled">Enrolled</span>
+                    </h2>
+                    <p><strong>ID:</strong> <?php echo $studentID; ?></p>
+                    <p><strong>Course:</strong> <?php echo $course; ?></p>
+                    <p><strong>Year & Section:</strong> <?php echo $yearSection; ?></p>
+                    <p><strong>Contact Number:</strong> <?php echo $contact_number; ?></p>
+                    <p><strong>Address:</strong> <?php echo $address; ?></p>
+                </div>
+                <div class="welcome-nav">
+                    <a href="edit_profile.php">Edit Profile</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="func-table-container">
+            <h3>Quick Access</h3>
+
+            <div class="id-status-tracker">
+                <h3>ID Application Status Tracker</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-label">Application Status</div>
+                        <div class="status-value status-badge status-<?php echo strtolower(str_replace(' ', '-', $idStatus)); ?>">
+                            <?php echo htmlspecialchars($idStatus); ?>
                         </div>
-                        <div class="status-item">
-                            <div class="status-label">Date Submitted</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">Date Submitted</div>
                         <div class="status-value"><?php echo $idSubmitDate; ?></div>
                     </div>
                     <div class="status-item">
@@ -176,7 +174,7 @@ $qrcode = "../uploads/sample_qr.png";
                     </div>
                     <div class="history-empty-state">
                         <div class="history-empty-state-content">
-                            <span class="history-empty-state-icon">👋</span>
+                            <span class="history-empty-state-icon"></span>
                             <h4>History Hidden</h4>
                             <p>Your history records are hidden but still saved in the database.</p>
                         </div>
@@ -187,43 +185,44 @@ $qrcode = "../uploads/sample_qr.png";
                 </div>
             </div>
         </div>
-    </body>
+</body>
+
 </html>
 
 <script>
-        function toggleHistorySection(headerElement) {
-            const section = headerElement.closest('.id-history-header') ? headerElement.closest('.id-history-header').closest('.id-history-section') : headerElement.closest('.id-history-section');
-            section.classList.toggle('collapsed');
-        }
+    function toggleHistorySection(headerElement) {
+        const section = headerElement.closest('.id-history-header') ? headerElement.closest('.id-history-header').closest('.id-history-section') : headerElement.closest('.id-history-section');
+        section.classList.toggle('collapsed');
+    }
 
-        function cleanHistoryDisplay(event) {
-            event.stopPropagation();
-            const historySection = event.target.closest('.id-history-section');
-            const tableContent = historySection.querySelector('.history-table-content');
-            const emptyState = historySection.querySelector('.history-empty-state');
-            tableContent.style.animation = 'fadeOut 0.3s ease-out forwards';
-            setTimeout(() => {
-                tableContent.style.display = 'none';
-                emptyState.classList.add('active');
-                emptyState.style.animation = 'fadeIn 0.3s ease-out';
-            }, 300);
-        }
+    function cleanHistoryDisplay(event) {
+        event.stopPropagation();
+        const historySection = event.target.closest('.id-history-section');
+        const tableContent = historySection.querySelector('.history-table-content');
+        const emptyState = historySection.querySelector('.history-empty-state');
+        tableContent.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => {
+            tableContent.style.display = 'none';
+            emptyState.classList.add('active');
+            emptyState.style.animation = 'fadeIn 0.3s ease-out';
+        }, 300);
+    }
 
-        function restoreHistoryDisplay(event) {
-            event.stopPropagation();
-            const historySection = event.target.closest('.id-history-section');
-            const tableContent = historySection.querySelector('.history-table-content');
-            const emptyState = historySection.querySelector('.history-empty-state');
-            emptyState.style.animation = 'fadeOut 0.3s ease-out forwards';
-            setTimeout(() => {
-                emptyState.classList.remove('active');
-                tableContent.style.display = 'block';
-                tableContent.style.animation = 'fadeIn 0.3s ease-out';
-            }, 300);
-        }
+    function restoreHistoryDisplay(event) {
+        event.stopPropagation();
+        const historySection = event.target.closest('.id-history-section');
+        const tableContent = historySection.querySelector('.history-table-content');
+        const emptyState = historySection.querySelector('.history-empty-state');
+        emptyState.style.animation = 'fadeOut 0.3s ease-out forwards';
+        setTimeout(() => {
+            emptyState.classList.remove('active');
+            tableContent.style.display = 'block';
+            tableContent.style.animation = 'fadeIn 0.3s ease-out';
+        }, 300);
+    }
 
-        const style = document.createElement('style');
-        style.textContent = `
+    const style = document.createElement('style');
+    style.textContent = `
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -233,32 +232,35 @@ $qrcode = "../uploads/sample_qr.png";
             to { opacity: 0; }
         }
     `;
-        document.head.appendChild(style);
+    document.head.appendChild(style);
 
-        const backToTopBtn = document.getElementById('backToTopBtn');
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 300) {
-                backToTopBtn.style.display = 'flex';
-            } else {
-                backToTopBtn.style.display = 'none';
-            }
+    const backToTopBtn = document.getElementById('backToTopBtn');
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 300) {
+            backToTopBtn.style.display = 'flex';
+        } else {
+            backToTopBtn.style.display = 'none';
+        }
+    });
+
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
         });
+    }
 
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+    document.querySelector('.portrait-id-card').addEventListener('click', function() {
+        this.classList.toggle('flipped');
+    });
 
-        document.querySelector('.portrait-id-card').addEventListener('click', function() {
-            this.classList.toggle('flipped');
-        });
+    function downloadVisualID(e) {
+        e.stopPropagation();
+        alert('Visual ID download feature coming soon!');
+    }
 
-        function downloadVisualID(e) {
-            e.stopPropagation();
-            alert('Visual ID download feature coming soon!');
-        }
-
-        function scanQRCode(e) {
-            e.stopPropagation();
-            alert('QR Code scanner feature coming soon!');
-        }
-    </script>
+    function scanQRCode(e) {
+        e.stopPropagation();
+        alert('QR Code scanner feature coming soon!');
+    }
+</script>
