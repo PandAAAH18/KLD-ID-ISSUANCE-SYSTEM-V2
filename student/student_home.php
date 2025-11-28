@@ -29,15 +29,37 @@ $idUpdateDate = $idRequest ? date('M d, Y h:i A', strtotime($idRequest['updated_
 $idHistory = (new Student())->getIdRequestHistory((int)$_SESSION['student_id']);
 
 // Prepare data
-$studentName = htmlspecialchars($student['first_name'] . ' ' . $student['last_name']);
+$studentName = htmlspecialchars(($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? ''));
 $studentID = htmlspecialchars($student['student_id'] ?? 'N/A');
-$course = htmlspecialchars($student['course']);
-$yearSection = htmlspecialchars($student['year_level']);
-$contact_number = htmlspecialchars($student['contact_number']);
-$address = htmlspecialchars($student['address']);
+$course = htmlspecialchars($student['course'] ?? 'Not Specified');
+$yearSection = htmlspecialchars($student['year_level'] ?? 'Not Specified');
+$contact_number = htmlspecialchars($student['contact_number'] ?? 'Not Provided');
+$address = htmlspecialchars($student['address'] ?? 'Not Provided');
 $emergency_contact_name = htmlspecialchars($student['emergency_contact_name'] ?? 'Not Provided');
 $emergency_contact = htmlspecialchars($student['emergency_contact'] ?? 'Not Provided');
-$avatar = $student['photo'] ? '../uploads/student_photos/' . htmlspecialchars($student['photo']) : '../uploads/default_avatar.png';
+
+// Avatar handling with better fallback
+$avatar = null;
+$avatar_initials = '';
+$use_initials = false;
+
+if ($student['photo']) {
+    $avatar_path = '../uploads/student_photos/' . htmlspecialchars($student['photo']);
+    if (file_exists($avatar_path)) {
+        $avatar = $avatar_path;
+    }
+}
+
+if (!$avatar) {
+    $use_initials = true;
+    $first_initial = strtoupper(substr($student['first_name'] ?? '', 0, 1));
+    $last_initial = strtoupper(substr($student['last_name'] ?? '', 0, 1));
+    $avatar_initials = $first_initial . $last_initial;
+    if (empty($avatar_initials)) {
+        $avatar_initials = 'ST'; // Default for "Student"
+    }
+}
+
 $signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspecialchars($student['signature']) : null;
 $qrcode = "../uploads/sample_qr.png";
 ?>
@@ -50,6 +72,53 @@ $qrcode = "../uploads/sample_qr.png";
     <title>Student Home</title>
     <link href="../assets/css/student.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .avatar-placeholder {
+            background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+            color: #757575;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-placeholder::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(224,224,224,0.8), rgba(189,189,189,0.8));
+            z-index: 1;
+        }
+        .avatar-placeholder i {
+            position: relative;
+            z-index: 2;
+            font-size: 2em;
+            opacity: 0.8;
+        }
+        .student-photo.avatar-placeholder {
+            width: 80px;
+            height: 80px;
+        }
+        .student-photo.avatar-placeholder i {
+            font-size: 2.5em;
+        }
+        .welcome-avatar.avatar-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .welcome-box:hover .welcome-avatar.avatar-placeholder {
+            transform: scale(1.05);
+            border-color: #bdbdbd;
+        }
+    </style>
 </head>
 
 <body class="admin-body">
@@ -60,7 +129,13 @@ $qrcode = "../uploads/sample_qr.png";
                 <div class="portrait-side portrait-front" style="background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: inherit; background-repeat: round;">
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
                         <div class="photo-container">
-                            <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
+                            <?php if ($use_initials): ?>
+                                <div class="student-photo avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            <?php else: ?>
+                                <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
+                            <?php endif; ?>
                         </div>
                         <div class="student-info">
                             <p class="student-name"><?php echo $studentName; ?></p>
@@ -82,7 +157,13 @@ $qrcode = "../uploads/sample_qr.png";
         </div>
 
         <div class="welcome-box">
-            <img src="<?php echo $avatar; ?>" alt="Avatar">
+            <?php if ($use_initials): ?>
+                <div class="welcome-avatar avatar-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
+            <?php else: ?>
+                <img src="<?php echo $avatar; ?>" alt="Avatar">
+            <?php endif; ?>
             <div class="welcome-content-wrapper">
                 <div class="welcome-info">
                     <h2>
@@ -135,11 +216,7 @@ $qrcode = "../uploads/sample_qr.png";
                         <h3>Past ID History</h3>
                         <span class="history-toggle">▼</span>
                     </div>
-                    <div class="id-history-header-right">
-                        <button class="clean-history-btn" onclick="cleanHistoryDisplay(event)" title="Hide history records temporarily">
-                            Hide
-                        </button>
-                    </div>
+
                 </div>
                 <div class="history-content">
                     <div class="history-table-content">

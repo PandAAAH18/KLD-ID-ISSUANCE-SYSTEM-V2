@@ -238,13 +238,34 @@ public function saveUploadedFile(array $file, string $subFolder): string
     if (!in_array($ext, $allow, true)) throw new RuntimeException('Invalid file type.');
 
     $dir  = __DIR__."/../uploads/$subFolder/";
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
+    if (!is_dir($dir)) {
+        if (!mkdir($dir, 0755, true)) {
+            throw new RuntimeException('Failed to create upload directory: ' . $dir);
+        }
+    }
+    
+    // Check if directory is writable
+    if (!is_writable($dir)) {
+        throw new RuntimeException('Upload directory is not writable: ' . $dir);
+    }
 
     $name = uniqid().'_'.time().'.'.$ext;
     $path = $dir.$name;
+    
+    // Debug logging
+    error_log("Attempting to move file from: {$file['tmp_name']} to: $path");
+    error_log("File exists in tmp: " . (file_exists($file['tmp_name']) ? 'YES' : 'NO'));
+    error_log("Directory writable: " . (is_writable($dir) ? 'YES' : 'NO'));
 
-    if (!move_uploaded_file($file['tmp_name'], $path))
-        throw new RuntimeException('Failed to move file.');
+    if (!move_uploaded_file($file['tmp_name'], $path)) {
+        $error = error_get_last();
+        throw new RuntimeException('Failed to move file. Error: ' . ($error['message'] ?? 'Unknown error'));
+    }
+    
+    // Verify file was actually created
+    if (!file_exists($path)) {
+        throw new RuntimeException('File upload completed but file not found at destination.');
+    }
 
     return $name;   // store only the filename
 }

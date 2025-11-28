@@ -18,8 +18,29 @@ if (!$stu) {
 }
 
 /* ---- Prepare data ---- */
-$avatarPath = $stu['photo'] ? '../uploads/student_photos/' . htmlspecialchars($stu['photo']) : '../uploads/default_avatar.png';
-$fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
+// Avatar handling with better fallback
+$avatar = null;
+$avatar_initials = '';
+$use_initials = false;
+
+if ($stu['photo']) {
+    $avatar_path = '../uploads/student_photos/' . htmlspecialchars($stu['photo']);
+    if (file_exists($avatar_path)) {
+        $avatar = $avatar_path;
+    }
+}
+
+if (!$avatar) {
+    $use_initials = true;
+    $first_initial = strtoupper(substr($stu['first_name'] ?? '', 0, 1));
+    $last_initial = strtoupper(substr($stu['last_name'] ?? '', 0, 1));
+    $avatar_initials = $first_initial . $last_initial;
+    if (empty($avatar_initials)) {
+        $avatar_initials = 'ST'; // Default for "Student"
+    }
+}
+
+$fullName   = htmlspecialchars(($stu['first_name'] ?? '') . ' ' . ($stu['last_name'] ?? ''));
 ?>
 
 <!-- PAGE CONTENT STARTS HERE -->
@@ -44,12 +65,18 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                     <!-- Photo Section -->
                     <div class="profile-photo-section-enhanced">
                         <div class="profile-photo-wrapper">
-                            <img src="<?= $avatarPath ?>" alt="Profile Photo" class="profile-photo-enhanced">
+                            <?php if ($use_initials): ?>
+                                <div class="profile-photo-enhanced avatar-placeholder">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            <?php else: ?>
+                                <img src="<?= $avatar ?>" alt="Profile Photo" class="profile-photo-enhanced">
+                            <?php endif; ?>
                             <div class="profile-photo-overlay"></div>
                         </div>
                         <div class="profile-info-primary">
                             <div class="profile-name-enhanced"><?= $fullName ?></div>
-                            <div class="profile-student-id-enhanced"><i class="fas fa-qrcode"></i> <?= htmlspecialchars($stu['student_id']) ?></div>
+                            <div class="profile-student-id-enhanced"><i class="fas fa-qrcode"></i> <?= htmlspecialchars($stu['student_id'] ?? 'N/A') ?></div>
                         </div>
                     </div>
 
@@ -62,11 +89,11 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                         <div class="info-grid-enhanced">
                             <div class="info-item-enhanced">
                                 <div class="info-label-enhanced"></i> Course</div>
-                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['course']) ?></div>
+                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['course'] ?? 'Not Specified') ?></div>
                             </div>
                             <div class="info-item-enhanced">
                                 <div class="info-label-enhanced"></i> Year Level</div>
-                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['year_level']) ?></div>
+                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['year_level'] ?? 'Not Specified') ?></div>
                             </div>
                         </div>
                     </div>
@@ -100,11 +127,11 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                         <div class="info-grid-enhanced">
                             <div class="info-item-enhanced full-width">
                                 <div class="info-label-enhanced"></i> Email</div>
-                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['email']) ?></div>
+                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['email'] ?? 'Not Provided') ?></div>
                             </div>
                             <div class="info-item-enhanced full-width">
                                 <div class="info-label-enhanced"></i> Contact Number</div>
-                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['contact_number']) ?></div>
+                                <div class="info-value-enhanced"><?= htmlspecialchars($stu['contact_number'] ?? 'Not Provided') ?></div>
                             </div>
                             <div class="info-item-enhanced full-width">
                                 <div class="info-label-enhanced"></i> Address</div>
@@ -137,7 +164,7 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
                         </div>
                         <?php if (!empty($stu['signature'])): ?>
                             <div class="signature-container-enhanced">
-                                <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Student Signature" class="signature-image-enhanced">
+                                <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature'] ?? '') ?>" alt="Student Signature" class="signature-image-enhanced">
                                 <div class="signature-status">
                                     <span>Signature on file</span>
                                 </div>
@@ -353,6 +380,21 @@ $fullName   = htmlspecialchars($stu['first_name'] . ' ' . $stu['last_name']);
             border: 4px solid var(--primary-light);
             box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
             transition: var(--transition);
+        }
+
+        .profile-photo-enhanced.avatar-placeholder {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-light);
+            font-size: 60px;
+            border: 4px solid var(--primary-light);
+        }
+
+        .profile-photo-enhanced.avatar-placeholder:hover {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-medium) 100%);
+            color: white;
         }
 
         .profile-photo-enhanced:hover {

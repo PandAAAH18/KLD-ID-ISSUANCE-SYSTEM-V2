@@ -95,12 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                             <div class="mb-3">
                                 <label for="password" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control school-input" id="password" name="password" placeholder="Enter your password" required>
-                                    <button class="btn btn-outline-secondary toggle-password-btn" type="button" id="togglePassword">
-                                        <i class="fas fa-eye" id="eyeIcon"></i>
-                                    </button>
-                                </div>
+                                <input type="password" class="form-control school-input" id="password" name="password" placeholder="Enter your password" required>
                                 <div class="text-end mt-2">
                                     <a href="forget_pass.php" class="forgot-password-link">
                                         <i class="fas fa-key me-1"></i>Forgot Password?

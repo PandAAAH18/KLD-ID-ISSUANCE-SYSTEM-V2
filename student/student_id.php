@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                 $type,
                 $reason
             );
-            $msg = '✓ Request submitted successfully! You will be notified once processed.';
+            $msg = 'Request submitted successfully! You will be notified once processed.';
             $msgType = 'success';
         }
     }
@@ -197,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
 
                             <div class="form-row full">
                                 <div class="form-group-enhanced">
-                                    <label for="requestType"></i> Request Type *</label>
+                                    <label for="requestType">Request Type <span style="color: red; font-weight: bold;">*</span></label>
                                     <select id="requestType" name="request_type" required onchange="toggleReasonField()">
                                         <option value="">-- Select Request Type --</option>
                                         <option value="new">New ID Application</option>
@@ -214,11 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                                 </div>
                             </div>
 
-                            <div class="photo-preview-section-enhanced">
-                                <div class="photo-preview-label-enhanced">Current Profile Photo (Used on ID)</div>
-                                <img src="<?= htmlspecialchars('../uploads/student_photos/' . $student['photo']) ?>" alt="Profile Photo" class="photo-preview-current-enhanced">
-                                <div class="current-photo-note-enhanced">This will be used on your ID unless you upload a new photo above</div>
-                            </div>
+
                         </div>
 
                         <!-- STEP 3: CONFIRMATION -->
@@ -272,6 +268,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
             --shadow-xl: 0 12px 36px rgba(0, 0, 0, 0.2);
             --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .admin-content {
+            padding: 0px;
+            background: #f8f9fa;
+            min-height: calc(100vh - var(--header-height));
         }
 
         /* ID APPLICATION WRAPPER */
@@ -684,39 +686,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
         .photo-preview-enhanced:hover {
             transform: scale(1.02);
             box-shadow: var(--shadow-md);
-        }
-
-        .photo-preview-section-enhanced {
-            margin-top: 30px;
-            padding: 25px;
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.05) 0%, rgba(255, 152, 0, 0.02) 100%);
-            border: 2px solid var(--accent-orange);
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .photo-preview-current-enhanced {
-            width: 150px;
-            height: 150px;
-            border-radius: 10px;
-            border: 3px solid var(--primary-light);
-            object-fit: cover;
-            margin: 15px auto;
-            display: block;
-            transition: var(--transition);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
-        }
-
-        .photo-preview-current-enhanced:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
-        }
-
-        .current-photo-note-enhanced {
-            color: #666;
-            font-size: 0.9rem;
-            margin-top: 12px;
-            line-height: 1.5;
         }
 
         /* FORM ROW */

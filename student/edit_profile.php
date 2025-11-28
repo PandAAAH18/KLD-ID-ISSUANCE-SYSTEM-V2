@@ -51,17 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $passwordUpdated = false;
     if ($old_pwd !== '' || $new_pwd !== '' || $confirm_pwd !== '') {
         // If any password field is filled, all are required
-        if (empty($old_pwd)) {
-            $error_msg = 'Please enter your current password.';
-        } elseif (empty($new_pwd)) {
-            $error_msg = 'Please enter a new password.';
-        } elseif (empty($confirm_pwd)) {
-            $error_msg = 'Please confirm your new password.';
-        } elseif ($new_pwd !== $confirm_pwd) {
-            $error_msg = 'New password and confirmation do not match.';
-        } elseif (strlen($new_pwd) < 8) {
-            $error_msg = 'New password must be at least 8 characters long.';
-        } else {
+        if (!empty($old_pwd) || !empty($new_pwd) || !empty($confirm_pwd)) {
+            // Only validate password if user is trying to change it
+            if (empty($old_pwd)) {
+                $error_msg = 'Please enter your current password to change it.';
+            } elseif (empty($new_pwd)) {
+                $error_msg = 'Please enter a new password.';
+            } elseif (empty($confirm_pwd)) {
+                $error_msg = 'Please confirm your new password.';
+            } elseif ($new_pwd !== $confirm_pwd) {
+                $error_msg = 'New password and confirmation do not match.';
+            } elseif (strlen($new_pwd) < 6) {
+                $error_msg = 'New password must be at least 6 characters long.';
+            }
+        }
+        
+        if (empty($error_msg) && (!empty($old_pwd) || !empty($new_pwd) || !empty($confirm_pwd))) {
             // Verify old password
             $user = $stuObj->findByEmail($_SESSION['email']);
             if (!$user || !password_verify($old_pwd, $user['password_hash'])) {
@@ -80,52 +85,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fileUploadErrors = [];
 
         if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            error_log('Processing profile photo upload: ' . print_r($_FILES['profile_photo'], true));
             $validation = $stuObj->validateFile($_FILES['profile_photo'], [
-                'max_size' => 5242880, // 5MB
+                'max_size' => 2097152, // 2MB (adjusted to match PHP limit)
                 'mime_types' => ['image/jpeg', 'image/png'],
                 'extensions' => ['jpg', 'jpeg', 'png']
             ]);
             if (!$validation['valid']) {
                 $fileUploadErrors['profile_photo'] = $validation['errors'];
+                error_log('Profile photo validation failed: ' . print_r($validation['errors'], true));
             } else {
                 try {
                     $data['photo'] = $stuObj->saveUploadedFile($_FILES['profile_photo'], 'student_photos');
+                    error_log('Profile photo uploaded successfully: ' . $data['photo']);
                 } catch (Throwable $e) {
                     $fileUploadErrors['profile_photo'] = [$e->getMessage()];
+                    error_log('Profile photo upload error: ' . $e->getMessage());
                 }
             }
         }
 
         if (isset($_FILES['signature']) && $_FILES['signature']['error'] !== UPLOAD_ERR_NO_FILE) {
+            error_log('Processing signature upload: ' . print_r($_FILES['signature'], true));
             $validation = $stuObj->validateFile($_FILES['signature'], [
-                'max_size' => 5242880, // 5MB
+                'max_size' => 2097152, // 2MB (adjusted to match PHP limit)
                 'mime_types' => ['image/jpeg', 'image/png'],
                 'extensions' => ['jpg', 'jpeg', 'png']
             ]);
             if (!$validation['valid']) {
                 $fileUploadErrors['signature'] = $validation['errors'];
+                error_log('Signature validation failed: ' . print_r($validation['errors'], true));
             } else {
                 try {
                     $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
+                    error_log('Signature uploaded successfully: ' . $data['signature']);
                 } catch (Throwable $e) {
                     $fileUploadErrors['signature'] = [$e->getMessage()];
+                    error_log('Signature upload error: ' . $e->getMessage());
                 }
             }
         }
 
         if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            error_log('Processing COR upload: ' . print_r($_FILES['cor_photo'], true));
             $validation = $stuObj->validateFile($_FILES['cor_photo'], [
-                'max_size' => 10485760, // 10MB
+                'max_size' => 2097152, // 2MB (adjusted to match PHP limit)
                 'mime_types' => ['image/jpeg', 'image/png', 'application/pdf'],
                 'extensions' => ['jpg', 'jpeg', 'png', 'pdf']
             ]);
             if (!$validation['valid']) {
                 $fileUploadErrors['cor_photo'] = $validation['errors'];
+                error_log('COR validation failed: ' . print_r($validation['errors'], true));
             } else {
                 try {
                     $data['cor'] = $stuObj->saveUploadedFile($_FILES['cor_photo'], 'student_cor');
+                    error_log('COR uploaded successfully: ' . $data['cor']);
                 } catch (Throwable $e) {
                     $fileUploadErrors['cor_photo'] = [$e->getMessage()];
+                    error_log('COR upload error: ' . $e->getMessage());
                 }
             }
         }
@@ -133,6 +150,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($fileUploadErrors)) {
             $error_msg = 'File upload error(s) occurred. Please check your files and try again.';
             $validation_errors = $fileUploadErrors;
+            // Debug: Log file upload errors
+            error_log('File upload errors: ' . print_r($fileUploadErrors, true));
         } else {
             // Update student profile
             $result = $stuObj->updateStudent($stu['id'], $data);
@@ -910,7 +929,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 /* Validation States */
                 .form-group input:invalid:not(:placeholder-shown),
                 .form-group select:invalid {
-                    border-color: #dc3545;
+                    border-color: var(--primary-light);
                     background-color: #fff5f5;
                 }
 
