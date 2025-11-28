@@ -2,43 +2,20 @@
 require_once 'includes/config.php';
 require_once 'includes/user.php';
 
+$message = '';
+$error = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $userObj = new User();
-    $user = $userObj->findByEmail($_POST['email']);
-
-    if ($user && password_verify($_POST['password'], $user['password_hash'])) {
-        $_SESSION['user_id']   = $user['user_id'];
-        $_SESSION['email']     = $user['email'];
-        $_SESSION['user_type'] = $user['role'];          // admin | student | teacher
-
-        if ($user['role'] === 'student') {
-            /* ----------  NEW: make sure student row exists  ---------- */
-            $pdo = $userObj->getDb();          // or however you expose the PDO object
-            $stmt = $pdo->prepare(
-                'INSERT IGNORE INTO student (email) VALUES (:email)'
-            );
-            $stmt->execute([':email' => $user['email']]);
-            /* --------------------------------------------------------- */
-
-            $student = $userObj->findStudentbyEmail($user['email']);
-            $_SESSION['student_id'] = $student['id'];
-
-            // make sure the profile is complete
-            if (empty($student['course'])) {
-                header('Location: includes/complete_profile.php');
-                exit();
-            }
-        }
-
-        // everyone else (or student with complete profile)
-        $goto = $user['role'] === 'admin'
-              ? 'admin/admin_dashboard.php'
-              : 'student/student_home.php';
-        header("Location: $goto");
-        exit();
+    $student_number = $_POST['student_number'] ?? '';
+    $date_of_birth = $_POST['date_of_birth'] ?? '';
+    
+    if (empty($student_number) || empty($date_of_birth)) {
+        $error = 'Please fill in all required fields.';
+    } else {
+        // Here you would normally verify the student number and date of birth
+        // For now, we'll simulate a successful verification
+        $message = 'Please check your registered email address (palcecathlyn20@gmail.com) to change your password';
     }
-
-    $error = 'Invalid email or password.';
 }
 ?>
 <!doctype html>
@@ -46,14 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="KLD School ID Issuance System - Secure Login">
-    <title>Login | KLD School Portal</title>
+    <meta name="description" content="KLD School - Forgot Password Verification">
+    <title>Forgot Password | KLD School Portal</title>
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    
     <!-- Local Bootstrap CSS -->
     <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    
     <!-- Custom CSS -->
     <link href="assets/css/login.css" rel="stylesheet">
+    
     <!-- Preload background image -->
     <link rel="preload" href="assets/images/building.jpg" as="image">
 </head>
@@ -64,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="particle"></div>
         <div class="particle"></div>
     </div>
+    
     <div class="container position-relative">
         <div class="row justify-content-center align-items-center min-vh-100">
             <div class="col-md-6 col-lg-4">
@@ -78,49 +63,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     
                     <div class="card-body p-4">
-                        <!-- Error Message -->
-                        <?php if (isset($error)): ?>
-                            <div class="alert alert-warning school-alert" role="alert">
-                                <?php echo $error; ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- Login Form -->
-                        <form method="post" class="login-form">
+                        <!-- Forgot Password Form -->
+                        <form id="forgot-password-form" class="login-form">
                             <div class="form-floating mb-3">
-                                <input type="email" class="form-control school-input" id="email" name="email" placeholder="name@example.com" required>
-                                <label for="email"><i class="fas fa-envelope me-2"></i>Email address</label>
+                                <input type="text" class="form-control school-input" id="student_number" name="student_number" placeholder="Student Number" required>
+                                <label for="student_number"><i class="fas fa-id-card me-2"></i>Student Number</label>
                                 <div class="input-decoration" aria-hidden="true"></div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="password" class="form-label"><i class="fas fa-lock me-2"></i>Password</label>
-                                <div class="input-group">
-                                    <input type="password" class="form-control school-input" id="password" name="password" placeholder="Enter your password" required>
-                                    <button class="btn btn-outline-secondary toggle-password-btn" type="button" id="togglePassword">
-                                        <i class="fas fa-eye" id="eyeIcon"></i>
-                                    </button>
-                                </div>
-                                <div class="text-end mt-2">
-                                    <a href="forget_pass.php" class="forgot-password-link">
-                                        <i class="fas fa-key me-1"></i>Forgot Password?
-                                    </a>
-                                </div>
+                                <label for="date_of_birth" class="form-label"><i class="fas fa-calendar me-2"></i>Date of Birth</label>
+                                <input type="date" class="form-control school-input" id="date_of_birth" name="date_of_birth" required>
                             </div>
 
                             <div class="d-grid mb-3">
-                                <button type="submit" class="btn school-btn btn-enhanced">
-                                    <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                                <button type="button" id="verify-btn" class="btn school-btn btn-enhanced">
+                                    <i class="fas fa-key me-2"></i> Reset Password
                                     <span class="btn-ripple" aria-hidden="true"></span>
                                 </button>
                             </div>
                         </form>
 
                         <div class="text-center">
-                            <div class="divider mb-3"><span>New to KLD?</span></div>
+                            <div class="divider mb-3"><span>Remember your password?</span></div>
                             <p class="mb-3">
-                                <a href="includes/register.php" class="school-link btn-link-enhanced">
-                                    <i class="fas fa-user-plus me-2"></i>Create an account
+                                <a href="index.php" class="school-link btn-link-enhanced">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Back to Sign In
                                 </a>
                             </p>
                             <div class="security-notice mt-2">
@@ -138,6 +106,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <!-- Custom JS -->
     <script src="assets/js/login.js"></script>
+    
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 
     <!-- Inline enhanced styles + scripts for better UX (kept local for easy edits) -->
     <style>
@@ -158,10 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .animate-fade-in{animation:fadeInUp .6s ease-out}
         @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         .school-input{border-radius:10px;padding:1rem}
-        .toggle-password-btn{border-color:rgba(46,125,50,0.3)!important;color:#6c757d!important}
-        .toggle-password-btn:hover{background:var(--primary-green)!important;color:white!important;border-color:var(--primary-green)!important}
-        .forgot-password-link{color:var(--primary-green);text-decoration:none;font-size:0.9rem;font-weight:500;transition:all 0.3s ease}
-        .forgot-password-link:hover{color:var(--primary-dark);text-decoration:underline;transform:translateX(2px)}
         .btn-enhanced{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:10px;padding:0.9rem 1rem;border:none}
         .btn-enhanced:active .btn-ripple{transform:scale(1);opacity:0}
         .divider{position:relative;text-align:center}
@@ -172,27 +139,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 
     <script>
-        // Simple and reliable password toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const toggleBtn = document.getElementById('togglePassword');
-            const passwordField = document.getElementById('password');
-            const eyeIcon = document.getElementById('eyeIcon');
-            
-            if (toggleBtn && passwordField && eyeIcon) {
-                toggleBtn.addEventListener('click', function() {
-                    if (passwordField.type === 'password') {
-                        passwordField.type = 'text';
-                        eyeIcon.classList.remove('fa-eye');
-                        eyeIcon.classList.add('fa-eye-slash');
-                    } else {
-                        passwordField.type = 'password';
-                        eyeIcon.classList.remove('fa-eye-slash');
-                        eyeIcon.classList.add('fa-eye');
-                    }
-                });
-            }
-        });
-
         // Simple ripple effect on button press - waits for DOM ready
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.btn-enhanced').forEach(btn => {
@@ -208,6 +154,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ripple.style.opacity = '0';
                         }, 300);
                     }
+                });
+            });
+            
+            // Verify button click handler with SweetAlert
+            document.getElementById('verify-btn').addEventListener('click', function() {
+                const studentNumber = document.getElementById('student_number').value.trim();
+                const dateOfBirth = document.getElementById('date_of_birth').value;
+                
+                // Check if fields are filled
+                if (!studentNumber || !dateOfBirth) {
+                    Swal.fire({
+                        title: "Missing Information!",
+                        text: "Please fill in all required fields.",
+                        icon: "info",
+                        confirmButtonColor: "#3085d6",
+                        confirmButtonText: "OK"
+                    });
+                    return;
+                }
+                
+                // Show success confirmation
+                Swal.fire({
+                    title: "Success!",
+                    text: "Password reset link has been sent to your registered email address.",
+                    icon: "success",
+                    confirmButtonColor: "#2e7d32",
+                    confirmButtonText: "OK"
                 });
             });
         });
