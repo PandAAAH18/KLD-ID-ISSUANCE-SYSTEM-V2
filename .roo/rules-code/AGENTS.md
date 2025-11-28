@@ -1,0 +1,6 @@
+# Project Coding Rules (Non-Obvious Only)
+- All classes extend [`includes/User.php`](includes/User.php) (auto-inits PDO in constructor)
+- ID generation requires `FOR UPDATE` lock on `issued_ids`; incremental `YYYY`+6-digit pad from `MAX(id_number)` suffix [`admin/admin.php`](admin/admin.php:131)
+- Uploads use `uniqid() . '_' . time() . '.' . $ext`; manual `mkdir(0755,true)`; MIME validation inconsistent across files (e.g. [`student/student.php`](student/student.php:238) vs managers)
+- Bulk ID gen uses DB transactions + file cleanup/rollback on fail [`admin/admin.php`](admin/admin.php:342+)
+- Student row `INSERT IGNORE` auto-created on first student login [`index.php`](index.php:18)

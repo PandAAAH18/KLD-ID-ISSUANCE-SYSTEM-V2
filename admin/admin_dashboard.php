@@ -20,124 +20,79 @@ require_once 'admin_header.php';
 ?>
 
                 <!-- Dashboard Header -->
-                <div class="mb-4">
-                    <h2 class="mb-2">Welcome back, <?= htmlspecialchars($_SESSION['email'] ?? 'Admin') ?>!</h2>
-                    <p class="text-muted">Here's an overview of your system statistics</p>
+                <div class="page-header">
+                    <h2>Welcome back, <?= htmlspecialchars($_SESSION['email'] ?? 'Admin') ?>!</h2>
+                    <p>Here's an overview of your system statistics</p>
                 </div>
 
                 <!-- Key Statistics Cards -->
-                <div class="row mb-4">
+                <div class="stats-dashboard">
                     <!-- Students Card -->
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card stat-card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted small mb-1">
-                                            <i class="fas fa-users"></i> Total Students
-                                        </p>
-                                        <h3 class="mb-0 fw-bold"><?= number_format($stats['total_students']) ?></h3>
-                                    </div>
-                                    <div class="stat-icon bg-primary bg-opacity-10 rounded-3">
-                                        <i class="fas fa-users fa-2x text-primary"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-top border-opacity-10">
-                                <a href="admin_students.php" class="text-decoration-none small text-primary">
-                                    View all students <i class="fas fa-arrow-right"></i>
-                                </a>
-                            </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?= number_format($stats['total_students']) ?></div>
+                        <div class="stat-label">
+                            <i class="fas fa-users"></i> Total Students
+                        </div>
+                        <div class="stat-footer">
+                            <a href="admin_students.php" class="btn-admin btn-secondary btn-small">
+                                View all <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
 
                     <!-- Users Card -->
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card stat-card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted small mb-1">
-                                            <i class="fas fa-user-tie"></i> Total Users
-                                        </p>
-                                        <h3 class="mb-0 fw-bold"><?= number_format($stats['total_users']) ?></h3>
-                                    </div>
-                                    <div class="stat-icon bg-info bg-opacity-10 rounded-3">
-                                        <i class="fas fa-user-tie fa-2x text-info"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-top border-opacity-10">
-                                <a href="admin_user.php" class="text-decoration-none small text-info">
-                                    Manage users <i class="fas fa-arrow-right"></i>
-                                </a>
-                            </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?= number_format($stats['total_users']) ?></div>
+                        <div class="stat-label">
+                            <i class="fas fa-user-tie"></i> Total Users
+                        </div>
+                        <div class="stat-footer">
+                            <a href="admin_user.php" class="btn-admin btn-secondary btn-small">
+                                Manage users <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
 
                     <!-- IDs Generated Card -->
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card stat-card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted small mb-1">
-                                            <i class="fas fa-id-card"></i> IDs Generated
-                                        </p>
-                                        <h3 class="mb-0 fw-bold"><?= number_format($stats['total_ids_generated']) ?></h3>
-                                    </div>
-                                    <div class="stat-icon bg-success bg-opacity-10 rounded-3">
-                                        <i class="fas fa-id-card fa-2x text-success"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-top border-opacity-10">
-                                <a href="admin_id.php" class="text-decoration-none small text-success">
-                                    View IDs <i class="fas fa-arrow-right"></i>
-                                </a>
-                            </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><?= number_format($stats['total_ids_generated']) ?></div>
+                        <div class="stat-label">
+                            <i class="fas fa-id-card"></i> IDs Generated
+                        </div>
+                        <div class="stat-footer">
+                            <a href="admin_id.php" class="btn-admin btn-secondary btn-small">
+                                View IDs <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
 
                     <!-- Pending Requests Card -->
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card stat-card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted small mb-1">
-                                            <i class="fas fa-file-invoice"></i> Pending Requests
-                                        </p>
-                                        <h3 class="mb-0 fw-bold text-warning"><?= number_format($stats['pending_id_requests']) ?></h3>
-                                    </div>
-                                    <div class="stat-icon bg-warning bg-opacity-10 rounded-3">
-                                        <i class="fas fa-file-invoice fa-2x text-warning"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-top border-opacity-10">
-                                <a href="admin_id.php" class="text-decoration-none small text-warning">
-                                    Review requests <i class="fas fa-arrow-right"></i>
-                                </a>
-                            </div>
+                    <div class="stat-card">
+                        <div class="stat-number text-warning"><?= number_format($stats['pending_id_requests']) ?></div>
+                        <div class="stat-label">
+                            <i class="fas fa-file-invoice"></i> Pending Requests
+                        </div>
+                        <div class="stat-footer">
+                            <a href="admin_id.php" class="btn-admin btn-secondary btn-small">
+                                Review requests <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Overview Section -->
-                <div class="row mb-4">
-                    <!-- ID Generation Overview -->
-                    <div class="col-lg-6 mb-3">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-light border-0 py-3">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-chart-pie text-primary"></i> ID Generation Status
-                                </h5>
-                            </div>
-                            <div class="card-body">
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <span><i class="fas fa-chart-pie"></i> System Overview</span>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="filter-form">
+                            <!-- ID Generation Overview -->
+                            <div class="action-section">
+                                <h3><i class="fas fa-chart-pie"></i> ID Generation Status</h3>
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-hover mb-0">
-                                        <thead class="table-light">
+                                    <table class="admin-table">
+                                        <thead>
                                             <tr>
                                                 <th>Status</th>
                                                 <th class="text-end">Count</th>
@@ -150,23 +105,23 @@ require_once 'admin_header.php';
                                             foreach ($idGenStats as $status): 
                                                 $percentage = $totalIds > 0 ? ($status['count'] / $totalIds * 100) : 0;
                                                 $badgeClass = match($status['status']) {
-                                                    'pending' => 'bg-warning',
-                                                    'generated' => 'bg-info',
-                                                    'printed' => 'bg-primary',
-                                                    'delivered' => 'bg-success',
-                                                    default => 'bg-secondary'
+                                                    'pending' => 'status-pending',
+                                                    'generated' => 'status-generated',
+                                                    'printed' => 'status-completed',
+                                                    'delivered' => 'status-verified',
+                                                    default => 'status-inactive'
                                                 };
                                             ?>
                                             <tr>
                                                 <td>
-                                                    <span class="badge <?= $badgeClass ?>">
+                                                    <span class="status-badge <?= $badgeClass ?>">
                                                         <?= ucfirst($status['status']) ?>
                                                     </span>
                                                 </td>
                                                 <td class="text-end">
                                                     <strong><?= number_format($status['count']) ?></strong>
                                                 </td>
-                                                <td class="text-end text-muted">
+                                                <td class="text-end">
                                                     <?= round($percentage, 1) ?>%
                                                 </td>
                                             </tr>
@@ -175,21 +130,13 @@ require_once 'admin_header.php';
                                     </table>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Top Courses -->
-                    <div class="col-lg-6 mb-3">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-light border-0 py-3">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-book text-info"></i> Top Courses by Enrollment
-                                </h5>
-                            </div>
-                            <div class="card-body">
+                            <!-- Top Courses -->
+                            <div class="action-section">
+                                <h3><i class="fas fa-book"></i> Top Courses by Enrollment</h3>
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-hover mb-0">
-                                        <thead class="table-light">
+                                    <table class="admin-table">
+                                        <thead>
                                             <tr>
                                                 <th>Course</th>
                                                 <th class="text-end">Students</th>
@@ -206,11 +153,11 @@ require_once 'admin_header.php';
                                             <tr>
                                                 <td><?= htmlspecialchars($course['course'] ?? 'N/A') ?></td>
                                                 <td class="text-end">
-                                                    <span class="badge bg-primary"><?= number_format($course['count']) ?></span>
+                                                    <span class="status-badge status-active"><?= number_format($course['count']) ?></span>
                                                 </td>
                                                 <td class="text-end">
-                                                    <div class="progress" style="height: 20px; width: 100px;">
-                                                        <div class="progress-bar" style="width: <?= $percentage ?>%"></div>
+                                                    <div class="progress-bar-container" style="width: 100px; display: inline-block;">
+                                                        <div class="progress-bar" style="width: <?= $percentage ?>%; height: 8px; background: linear-gradient(135deg, var(--school-green) 0%, var(--school-green-dark) 100%); border-radius: 4px;"></div>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -224,24 +171,25 @@ require_once 'admin_header.php';
                 </div>
 
                 <!-- Recent Activities and Quick Actions -->
-                <div class="row">
-                    <!-- Recent Activities -->
-                    <div class="col-lg-8 mb-3">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-light border-0 py-3">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-history text-success"></i> Recent Activities
-                                    </h5>
-                                    <a href="admin_logs.php" class="btn btn-sm btn-outline-primary">
-                                        View All Logs
-                                    </a>
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <span><i class="fas fa-history"></i> Recent Activities & Quick Actions</span>
+                    </div>
+                    <div class="admin-card-body">
+                        <div class="filter-form">
+                            <!-- Recent Activities -->
+                            <div class="action-section">
+                                <div class="header-actions">
+                                    <h3><i class="fas fa-history"></i> Recent Activities</h3>
+                                    <div class="action-buttons">
+                                        <a href="admin_logs.php" class="btn-admin btn-view">
+                                            View All Logs
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-hover mb-0">
-                                        <thead class="table-light">
+                                    <table class="admin-table">
+                                        <thead>
                                             <tr>
                                                 <th>Action</th>
                                                 <th>Table</th>
@@ -256,47 +204,45 @@ require_once 'admin_header.php';
                                                     <td>
                                                         <?php 
                                                         $actionBadge = match($activity['action']) {
-                                                            'insert' => 'bg-success',
-                                                            'update' => 'bg-info',
-                                                            'delete' => 'bg-danger',
-                                                            default => 'bg-secondary'
+                                                            'insert' => 'status-approved',
+                                                            'update' => 'status-generated',
+                                                            'delete' => 'status-rejected',
+                                                            default => 'status-inactive'
                                                         };
                                                         ?>
-                                                        <span class="badge <?= $actionBadge ?>">
+                                                        <span class="status-badge <?= $actionBadge ?>">
                                                             <?= ucfirst($activity['action']) ?>
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <code class="text-muted small">
-                                                            <?= htmlspecialchars($activity['table_name']) ?>
-                                                        </code>
+                                                        <code><?= htmlspecialchars($activity['table_name']) ?></code>
                                                     </td>
                                                     <td><?= htmlspecialchars($activity['admin_name'] ?? 'System') ?></td>
                                                     <td>
-                                                        <small class="text-muted">
-                                                            <?php 
-                                                            $time = strtotime($activity['created_at']);
-                                                            $now = time();
-                                                            $diff = $now - $time;
-                                                            
-                                                            if ($diff < 60) {
-                                                                echo "Just now";
-                                                            } elseif ($diff < 3600) {
-                                                                echo floor($diff / 60) . " min ago";
-                                                            } elseif ($diff < 86400) {
-                                                                echo floor($diff / 3600) . " hrs ago";
-                                                            } else {
-                                                                echo floor($diff / 86400) . " days ago";
-                                                            }
-                                                            ?>
-                                                        </small>
+                                                        <?php 
+                                                        $time = strtotime($activity['created_at']);
+                                                        $now = time();
+                                                        $diff = $now - $time;
+                                                        
+                                                        if ($diff < 60) {
+                                                            echo "Just now";
+                                                        } elseif ($diff < 3600) {
+                                                            echo floor($diff / 60) . " min ago";
+                                                        } elseif ($diff < 86400) {
+                                                            echo floor($diff / 3600) . " hrs ago";
+                                                        } else {
+                                                            echo floor($diff / 86400) . " days ago";
+                                                        }
+                                                        ?>
                                                     </td>
                                                 </tr>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
                                                 <tr>
-                                                    <td colspan="4" class="text-center text-muted py-4">
-                                                        No recent activities
+                                                    <td colspan="4" class="empty-state">
+                                                        <i class="fas fa-inbox"></i>
+                                                        <h4>No recent activities</h4>
+                                                        <p>System activities will appear here</p>
                                                     </td>
                                                 </tr>
                                             <?php endif; ?>
@@ -304,43 +250,33 @@ require_once 'admin_header.php';
                                     </table>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Quick Actions -->
-                    <div class="col-lg-4 mb-3">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header bg-light border-0 py-3">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-bolt text-warning"></i> Quick Actions
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <a href="admin_students.php" class="btn btn-outline-primary btn-sm">
+                            <!-- Quick Actions -->
+                            <div class="action-section">
+                                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                                <div class="action-buttons" style="display: grid; gap: 10px;">
+                                    <a href="admin_students.php" class="btn-admin btn-primary">
                                         <i class="fas fa-user-plus"></i> Manage Students
                                     </a>
-                                    <a href="admin_user.php" class="btn btn-outline-info btn-sm">
+                                    <a href="admin_user.php" class="btn-admin btn-primary">
                                         <i class="fas fa-users-cog"></i> Manage Users
                                     </a>
-                                    <a href="admin_id.php" class="btn btn-outline-success btn-sm">
+                                    <a href="admin_id.php" class="btn-admin btn-primary">
                                         <i class="fas fa-id-card-alt"></i> ID Management
                                     </a>
-                                    <a href="admin_reports.php" class="btn btn-outline-warning btn-sm">
+                                    <a href="admin_reports.php" class="btn-admin btn-primary">
                                         <i class="fas fa-chart-bar"></i> View Reports
                                     </a>
-                                    <a href="admin_logs.php" class="btn btn-outline-secondary btn-sm">
+                                    <a href="admin_logs.php" class="btn-admin btn-primary">
                                         <i class="fas fa-clipboard-list"></i> View Logs
                                     </a>
                                 </div>
 
-                                <hr class="my-3">
-
-                                <div class="alert alert-info alert-sm" role="alert">
-                                    <small>
-                                        <i class="fas fa-info-circle"></i> 
+                                <div class="alert-banner alert-info" style="margin-top: 20px;">
+                                    <i class="fas fa-info-circle"></i>
+                                    <div>
                                         <strong>Pro Tip:</strong> Regularly review pending ID requests to keep operations running smoothly.
-                                    </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -354,40 +290,49 @@ require_once 'admin_header.php';
     <!-- Custom Dashboard Styles -->
     <style>
         .stat-card {
-            transition: all 0.3s ease;
-            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12) !important;
+        .stat-card .stat-number.text-warning {
+            color: var(--school-yellow) !important;
         }
 
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
+        .stat-footer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--school-gray);
+        }
+
+        .stat-footer .btn-admin {
+            width: 100%;
             justify-content: center;
-            border-radius: 10px;
         }
 
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 123, 255, 0.05);
-        }
-
-        .alert-sm {
-            padding: 0.75rem;
-            margin-bottom: 0;
-        }
-
-        .progress {
-            background-color: #e9ecef;
+        .progress-bar-container {
+            background-color: var(--school-gray);
             border-radius: 4px;
+            overflow: hidden;
         }
 
-        .card {
-            border-radius: 12px;
+        .alert-info {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-left: 5px solid #2196F3;
+            color: #1565C0;
+        }
+
+        /* Ensure proper spacing for the new layout */
+        .admin-card-body .filter-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 1024px) {
+            .admin-card-body .filter-form {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
         }
     </style>
 
@@ -414,17 +359,6 @@ require_once 'admin_header.php';
             // Optional: Add auto-refresh functionality here
             console.log('Dashboard stats are up to date');
         }, 60000);
-
-        // Mobile sidebar toggle
-        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.toggle('mobile-open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-        });
-
-        document.getElementById('sidebarOverlay').addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.remove('mobile-open');
-            this.classList.remove('active');
-        });
 
         // Update page title based on current page
         const pageTitles = {

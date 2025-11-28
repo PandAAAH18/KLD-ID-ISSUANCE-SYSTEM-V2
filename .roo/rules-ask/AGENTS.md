@@ -1,0 +1,5 @@
+# Project Documentation Rules (Non-Obvious Only)
+- admin/classes/: OOP managers (StudentManager etc.); FileUploader/Validators empty (placeholders)
+- Core ID logic in [`admin/admin.php`](admin/admin.php) (not separate service)
+- Student row auto-created on first login via `INSERT IGNORE` [`index.php`](index.php:18)
+- No formal docs/tests; patterns from code (e.g. custom ID flow: requests->approve->generate w/QR/PDF)

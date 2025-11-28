@@ -278,7 +278,6 @@ public function saveUploadedFile(array $file, string $subFolder): string
             $allowed = [
                 'first_name',
                 'last_name',
-                'middle_name',
                 'year_level',
                 'course',
                 'contact_number',
@@ -290,9 +289,7 @@ public function saveUploadedFile(array $file, string $subFolder): string
                 'emergency_contact_name',
                 'emergency_contact',
                 'cor',
-                'signature',
-                'password_hash',
-                'updated_at'
+                'signature'
             ];
 
             // Filter invalid columns and trim values
@@ -303,7 +300,7 @@ public function saveUploadedFile(array $file, string $subFolder): string
                     if (is_string($val)) {
                         $val = trim($val);
                         // Don't store empty strings, convert to null instead
-                        if ($val === '' && $col !== 'password_hash') {
+                        if ($val === '') {
                             $val = null;
                         }
                     }
@@ -319,9 +316,6 @@ public function saveUploadedFile(array $file, string $subFolder): string
                     'errors' => []
                 ];
             }
-
-            // Always set updated_at to current timestamp
-            $clean['updated_at'] = date('Y-m-d H:i:s');
 
             // Build SET clause
             $set = [];
@@ -350,10 +344,11 @@ public function saveUploadedFile(array $file, string $subFolder): string
         } catch (Throwable $e) {
             $db->rollBack();
             error_log(__METHOD__ . ' : ' . $e->getMessage());
+            error_log(__METHOD__ . ' Stack: ' . $e->getTraceAsString());
             return [
                 'success' => false,
-                'message' => 'Failed to update student profile',
-                'errors' => ['database' => 'Database error occurred']
+                'message' => 'Failed to update student profile: ' . $e->getMessage(),
+                'errors' => ['database' => $e->getMessage()]
             ];
         }
     }

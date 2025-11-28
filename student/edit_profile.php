@@ -22,6 +22,7 @@ if (!$stu) {
 $msg = '';
 $error_msg = '';
 $validation_errors = [];
+$newPasswordHash = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -39,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'emergency_contact'       => trim($_POST['emergency_contact'] ?? ''),
         'address'                 => trim($_POST['address']      ?? ''),
     ];
+
+    error_log('Edit Profile POST Data: ' . json_encode($data));
 
     /* password change handling */
     $old_pwd = trim($_POST['old_password'] ?? '');
@@ -63,8 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$user || !password_verify($old_pwd, $user['password_hash'])) {
                 $error_msg = 'Current password is incorrect.';
             } else {
-                // Old password is correct, set new password
-                $data['password_hash'] = password_hash($new_pwd, PASSWORD_DEFAULT);
+                // Old password is correct, store the new password hash for later update to users table
+                $newPasswordHash = password_hash($new_pwd, PASSWORD_DEFAULT);
                 $msg = 'Password changed successfully! ';
             }
         }
@@ -138,17 +141,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 /* re-read row */
                 $stu = $stuObj->findById($stu['id']);
             } else {
+                error_log('Edit Profile Error: ' . json_encode($result));
                 $error_msg = $result['message'];
-                $validation_errors = $result['errors'];
+                $validation_errors = $result['errors'] ?? [];
             }
 
-            /* Update password in users table if changed */
-            if (isset($data['password_hash'])) {
+            /* Update password in users table if a new password was set */
+            if ($newPasswordHash !== null) {
                 try {
                     $db = $stuObj->getDb();
                     $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE email = :email");
                     $stmt->execute([
-                        ':hash' => $data['password_hash'],
+                        ':hash' => $newPasswordHash,
                         ':email' => $_SESSION['email']
                     ]);
                 } catch (Throwable $e) {
@@ -378,16 +382,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 .btn-replace {
-                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-                    color: white;
-                    border: none;
-                    padding: 10px 16px;
-                    border-radius: 6px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    margin-top: 12px;
+                    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
+                    color: white !important;
+                    border: none !important;
+                    padding: 10px 16px !important;
+                    border-radius: 6px !important;
+                    font-size: 0.85rem !important;
+                    font-weight: 600 !important;
+                    cursor: pointer !important;
+                    transition: all 0.3s ease !important;
+                    margin-top: 12px !important;
+                    display: inline-block !important;
+                    position: relative !important;
+                    z-index: 20 !important;
+                    pointer-events: auto !important;
                 }
 
                 .btn-replace:hover {
@@ -397,6 +405,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 .file-input-wrapper {
                     margin-top: 12px;
+                    position: relative;
+                    z-index: 10;
                 }
 
                 .file-input-wrapper input[type="file"] {
@@ -723,10 +733,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label>Year Level</label>
                             <select name="year_level" required>
                                 <option value="">-- Select --</option>
-                                <option value="1st Year" <?= isset($stu['year_level']) && $stu['year_level'] === '1st Year' ? 'selected' : '' ?>>1st Year</option>
-                                <option value="2nd Year" <?= isset($stu['year_level']) && $stu['year_level'] === '2nd Year' ? 'selected' : '' ?>>2nd Year</option>
-                                <option value="3rd Year" <?= isset($stu['year_level']) && $stu['year_level'] === '3rd Year' ? 'selected' : '' ?>>3rd Year</option>
-                                <option value="4th Year" <?= isset($stu['year_level']) && $stu['year_level'] === '4th Year' ? 'selected' : '' ?>>4th Year</option>
+                                <?php
+                                    $yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+                                    $currentYear = $stu['year_level'] ?? '';
+                                    // Normalize stored value to match one of the options
+                                    $normalizedYear = $currentYear;
+                                    if ($currentYear === '1') $normalizedYear = '1st Year';
+                                    elseif ($currentYear === '2') $normalizedYear = '2nd Year';
+                                    elseif ($currentYear === '3') $normalizedYear = '3rd Year';
+                                    elseif ($currentYear === '4') $normalizedYear = '4th Year';
+                                    
+                                    foreach ($yearLevels as $yl):
+                                        $sel = ($normalizedYear === $yl) ? 'selected' : '';
+                                        echo '<option value="' . htmlspecialchars($yl) . '" ' . $sel . '>' . htmlspecialchars($yl) . '</option>';
+                                    endforeach;
+                                ?>
                             </select>
                         </div>
                     </div>
@@ -788,7 +809,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <div class="file-status-indicator">File Uploaded</div>
                                         <img src="../uploads/student_photos/<?= htmlspecialchars($stu['photo']) ?>" alt="Current Photo" class="file-preview-image">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['photo']) ?></p>
-                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <button type="button" class="btn-replace" style="pointer-events: auto; cursor: pointer;">Replace File</button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
                                             <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
                                             <div class="file-hint">JPG, PNG (Max 5MB)</div>
@@ -809,7 +830,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <div class="file-status-indicator">File Uploaded</div>
                                         <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Current Signature" class="file-preview-image signature-preview">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['signature']) ?></p>
-                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <button type="button" class="btn-replace" style="pointer-events: auto; cursor: pointer;">Replace File</button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
                                             <input type="file" name="signature" accept=".jpg,.jpeg,.png">
                                             <div class="file-hint">JPG, PNG (Max 5MB)</div>
@@ -839,7 +860,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </div>
                                         <?php endif; ?>
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['cor']) ?></p>
-                                        <button type="button" class="btn-replace" onclick="toggleFileInput(this)">Replace File</button>
+                                        <button type="button" class="btn-replace" style="pointer-events: auto; cursor: pointer;">Replace File</button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
                                             <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
                                             <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
@@ -1120,41 +1141,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         }
 
+        // Initialize Replace File buttons when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DEBUG: Replace scripts loading (DOMContentLoaded #2)...');
+            // Find all Replace File buttons and attach event listeners
+            const replaceButtons = document.querySelectorAll('.btn-replace');
+            console.log('DEBUG: Found ' + replaceButtons.length + ' replace buttons');
+            
+            replaceButtons.forEach((button, index) => {
+                console.log('DEBUG: Attaching listener to button #' + index + ': ' + button.outerHTML.substring(0,50) + '...');
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('DEBUG: Button #' + index + ' clicked!');
+                    toggleFileInput(this);
+                });
+            });
+        });
+
         // ▬▬▬▬ TOGGLE FILE INPUT FOR REPLACEMENT ▬▬▬▬
         function toggleFileInput(button) {
-            event.preventDefault();
-            const fileInputWrapper = button.nextElementSibling;
-            if (fileInputWrapper.style.display === 'none') {
+            console.log('DEBUG: toggleFileInput called for button:', button.textContent.trim());
+            
+            // The file-input-wrapper should be right after the button or nearby in the same box
+            let fileInputWrapper = null;
+            
+            // First try: get the next sibling
+            let sibling = button.nextElementSibling;
+            while (sibling) {
+                if (sibling.classList.contains('file-input-wrapper')) {
+                    fileInputWrapper = sibling;
+                    console.log('DEBUG: ✓ Found wrapper as next sibling');
+                    break;
+                }
+                sibling = sibling.nextElementSibling;
+            }
+            
+            // Second try: look in parent
+            if (!fileInputWrapper && button.parentElement) {
+                fileInputWrapper = button.parentElement.querySelector('.file-input-wrapper');
+                if (fileInputWrapper) {
+                    console.log('DEBUG: ✓ Found wrapper in parent element');
+                } else {
+                    console.log('DEBUG: No wrapper in parent');
+                }
+            }
+            
+            // Third try: look in closest form-group
+            if (!fileInputWrapper) {
+                const formGroup = button.closest('.form-group');
+                if (formGroup) {
+                    fileInputWrapper = formGroup.querySelector('.file-input-wrapper');
+                    if (fileInputWrapper) {
+                        console.log('DEBUG: ✓ Found wrapper in form-group');
+                    } else {
+                        console.log('DEBUG: No wrapper in form-group');
+                    }
+                } else {
+                    console.log('DEBUG: No form-group ancestor');
+                }
+            }
+            
+            if (!fileInputWrapper) {
+                console.error('DEBUG: ✗ Could not find file input wrapper!');
+                console.log('DEBUG: Button HTML:', button.outerHTML);
+                console.log('DEBUG: Button parent HTML:', button.parentElement ? button.parentElement.outerHTML.substring(0,200)+'...' : 'No parent');
+                console.log('DEBUG: Button closest form-group:', button.closest('.form-group')?.outerHTML.substring(0,200)+'...');
+                return;
+            }
+            
+            // Toggle visibility
+            const isCurrentlyHidden = fileInputWrapper.style.display === 'none' || fileInputWrapper.style.display === '';
+            console.log('DEBUG: Is currently hidden:', isCurrentlyHidden);
+            
+            if (isCurrentlyHidden) {
                 fileInputWrapper.style.display = 'block';
                 button.textContent = '✕ Cancel';
                 button.style.background = 'linear-gradient(135deg, #f44336 0%, #d32f2f 100%)';
+                console.log('DEBUG: ✓ File input shown');
             } else {
                 fileInputWrapper.style.display = 'none';
                 button.textContent = 'Replace File';
                 button.style.background = '';
-                // Clear the file input
-                fileInputWrapper.querySelector('input[type="file"]').value = '';
+                const fileInput = fileInputWrapper.querySelector('input[type="file"]');
+                if (fileInput) {
+                    fileInput.value = '';
+                    console.log('DEBUG: ✓ File input cleared');
+                }
+                console.log('DEBUG: ✓ File input hidden');
             }
         }
 
+        console.log('DEBUG: Pre-pageTitles scripts executed');
         // Update page title based on current page
-        const pageTitles = {
+        const pageTitlesData = {
             'edit_profile.php': {
                 title: 'Edit Profile',
                 breadcrumb: 'Edit Profile'
             }
         };
 
-        const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
-        if (pageTitles[currentPage]) {
-            document.getElementById('pageTitle').textContent = pageTitles[currentPage].title;
-            document.getElementById('currentPageBreadcrumb').textContent = pageTitles[currentPage].breadcrumb;
+        const editCurrentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
+        if (pageTitlesData[editCurrentPage]) {
+            const pageTitleEl = document.getElementById('pageTitle');
+            const breadcrumbEl = document.getElementById('currentPageBreadcrumb');
+            if (pageTitleEl) pageTitleEl.textContent = pageTitlesData[editCurrentPage].title;
+            if (breadcrumbEl) breadcrumbEl.textContent = pageTitlesData[editCurrentPage].breadcrumb;
         }
+        console.log('DEBUG: pageTitles block executed successfully');
     </script>
-
-            </div>
-        </main>
-    </div>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
 </body>
