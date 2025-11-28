@@ -56,18 +56,16 @@ $qrcode = "../uploads/sample_qr.png";
         <div class="admin-main" id="adminMain">
             <div class="portrait-id-container">
                 <div class="portrait-id-card">
-                    <div class="portrait-side portrait-front">
-                        <div class="emblem-background"></div>
-                        <div class="id-header">
-                            <h2>KOLEHIYO NG LUNGSOD NG DASMARIÑAS</h2>
-                        </div>
-                        <div class="photo-container">
-                            <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
-                        </div>
-                        <div class="student-info">
-                            <p class="student-name"><?php echo $studentName; ?></p>
-                            <p class="student-course"><?php echo $course; ?></p>
-                            <p class="student-id-number"><?php echo $studentID; ?></p>
+                    <div class="portrait-side portrait-front" style="position: relative; background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: white; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 20px 15px; height: 100%; box-sizing: border-box;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
+                            <div class="photo-container">
+                                <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
+                            </div>
+                            <div class="student-info">
+                                <p class="student-name"><?php echo $studentName; ?></p>
+                                <p class="student-course"><?php echo $course; ?></p>
+                                <p class="student-id-number"><?php echo $studentID; ?></p>
+                            </div>
                         </div>
                         <div class="signature-section">
                             <?php if ($signature): ?>
@@ -75,36 +73,10 @@ $qrcode = "../uploads/sample_qr.png";
                             <?php else: ?>
                                 <div class="signature-placeholder"></div>
                             <?php endif; ?>
-                            <p class="signature-label">SIGNATURE OF CARDHOLDER</p>
                         </div>
                     </div>
-                    <div class="portrait-side portrait-back">
-                        <div class="id-header">
-                            <h2>KOLEHIYO NG LUNGSOD NG DASMARIÑAS</h2>
-                        </div>
-                        <div class="emergency-section">
-                            <p class="emergency-title">In case of emergency, please contact:</p>
-                            <p class="emergency-name"><?php echo $emergency_contact_name; ?></p>
-                            <p class="emergency-contact"><?php echo $emergency_contact; ?></p>
-                        </div>
-                        <div class="bottom-section">
-                            <div class="registrar-section">
-                                <div class="signature-placeholder"></div>
-                                <p class="registrar-label">Leo Guisseppe N. Dinglasan<br>REGISTRAR</p>
-                            </div>
-                            <div class="qr-section">
-                                <img src="<?php echo $qrcode; ?>" alt="QR Code" class="qr-code">
-                            </div>
-                        </div>
-                        <p class="id-disclaimer">This card is the property of KOLEHIYO NG LUNGSOD NG DASMARIÑAS. In case of loss, please return to the Registrar's Office.</p>
-                        <div class="id-actions">
-                            <button onclick="downloadVisualID(event)" class="id-btn download-btn">
-                                Download Visual ID
-                            </button>
-                            <button onclick="scanQRCode(event)" class="id-btn scan-btn">
-                                Scan QR Code
-                            </button>
-                        </div>
+                    <div class="portrait-side portrait-back" style="padding: 0 !important; background: transparent !important;">
+                        <img src="../assets/images/id_back.png" alt="ID Back" style="width: 100%; height: 100%; object-fit: contain; border-radius: inherit;">
                     </div>
                 </div>
             </div>
@@ -160,7 +132,7 @@ $qrcode = "../uploads/sample_qr.png";
 
             <!-- Past ID History -->
             <div class="id-history-section">
-                <div class="id-history-header">
+                <div>
                     <div class="id-history-header-left" onclick="toggleHistorySection(this)">
                         <h3>Past ID History</h3>
                         <span class="history-toggle">▼</span>

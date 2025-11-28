@@ -531,7 +531,7 @@ $faqs = [
 
 .ticket-actions .btn-submit,
 .ticket-actions .btn-reset {
-    width: 210px; /* fixed desktop width */
+    width: 230px; /* fixed desktop width */
     min-height: 48px;
     box-sizing: border-box;
 }

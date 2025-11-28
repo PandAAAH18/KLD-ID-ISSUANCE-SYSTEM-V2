@@ -22,6 +22,7 @@ if (!$stu) {
 $msg = '';
 $error_msg = '';
 $validation_errors = [];
+$newPasswordHash = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -39,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'emergency_contact'       => trim($_POST['emergency_contact'] ?? ''),
         'address'                 => trim($_POST['address']      ?? ''),
     ];
+
+    error_log('Edit Profile POST Data: ' . json_encode($data));
 
     /* password change handling */
     $old_pwd = trim($_POST['old_password'] ?? '');
@@ -156,8 +159,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 /* re-read row */
                 $stu = $stuObj->findById($stu['id']);
             } else {
+                error_log('Edit Profile Error: ' . json_encode($result));
                 $error_msg = $result['message'];
-                $validation_errors = $result['errors'];
+                $validation_errors = $result['errors'] ?? [];
             }
         }
     }
@@ -572,6 +576,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     position: relative;
                     overflow: hidden;
                     letter-spacing: 0.3px;
+                    z-index: 20;
+                    pointer-events: auto;
                 }
 
                 .btn-replace::before {
@@ -616,6 +622,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     border: 2px dashed #4caf50;
                     border-radius: 8px;
                     transition: all 0.3s ease;
+                    position: relative;
+                    z-index: 10;
                 }
 
                 .file-input-wrapper input[type="file"] {
@@ -1068,10 +1076,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label>Year Level</label>
                             <select name="year_level" required>
                                 <option value="">-- Select --</option>
-                                <option value="1st Year" <?= isset($stu['year_level']) && $stu['year_level'] === '1st Year' ? 'selected' : '' ?>>1st Year</option>
-                                <option value="2nd Year" <?= isset($stu['year_level']) && $stu['year_level'] === '2nd Year' ? 'selected' : '' ?>>2nd Year</option>
-                                <option value="3rd Year" <?= isset($stu['year_level']) && $stu['year_level'] === '3rd Year' ? 'selected' : '' ?>>3rd Year</option>
-                                <option value="4th Year" <?= isset($stu['year_level']) && $stu['year_level'] === '4th Year' ? 'selected' : '' ?>>4th Year</option>
+                                <?php
+                                    $yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+                                    $currentYear = $stu['year_level'] ?? '';
+                                    // Normalize stored value to match one of the options
+                                    $normalizedYear = $currentYear;
+                                    if ($currentYear === '1') $normalizedYear = '1st Year';
+                                    elseif ($currentYear === '2') $normalizedYear = '2nd Year';
+                                    elseif ($currentYear === '3') $normalizedYear = '3rd Year';
+                                    elseif ($currentYear === '4') $normalizedYear = '4th Year';
+                                    
+                                    foreach ($yearLevels as $yl):
+                                        $sel = ($normalizedYear === $yl) ? 'selected' : '';
+                                        echo '<option value="' . htmlspecialchars($yl) . '" ' . $sel . '>' . htmlspecialchars($yl) . '</option>';
+                                    endforeach;
+                                ?>
                             </select>
                         </div>
                     </div>
@@ -1548,25 +1567,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 });
             });
         });
-
         // Update page title based on current page
-        const pageTitles = {
+        const pageTitlesData = {
             'edit_profile.php': {
                 title: 'Edit Profile',
                 breadcrumb: 'Edit Profile'
             }
         };
 
-        const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
-        if (pageTitles[currentPage]) {
-            document.getElementById('pageTitle').textContent = pageTitles[currentPage].title;
-            document.getElementById('currentPageBreadcrumb').textContent = pageTitles[currentPage].breadcrumb;
+        const editCurrentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
+        if (pageTitlesData[editCurrentPage]) {
+            const pageTitleEl = document.getElementById('pageTitle');
+            const breadcrumbEl = document.getElementById('currentPageBreadcrumb');
+            if (pageTitleEl) pageTitleEl.textContent = pageTitlesData[editCurrentPage].title;
+            if (breadcrumbEl) breadcrumbEl.textContent = pageTitlesData[editCurrentPage].breadcrumb;
         }
     </script>
-
-            </div>
-        </main>
-    </div>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>
 </body>

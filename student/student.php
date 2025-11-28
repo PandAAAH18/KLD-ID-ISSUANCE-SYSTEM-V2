@@ -300,7 +300,7 @@ public function saveUploadedFile(array $file, string $subFolder): string
                     if (is_string($val)) {
                         $val = trim($val);
                         // Don't store empty strings, convert to null instead
-                        if ($val === '' && $col !== 'password_hash') {
+                        if ($val === '') {
                             $val = null;
                         }
                     }
@@ -344,10 +344,11 @@ public function saveUploadedFile(array $file, string $subFolder): string
         } catch (Throwable $e) {
             $db->rollBack();
             error_log(__METHOD__ . ' : ' . $e->getMessage());
+            error_log(__METHOD__ . ' Stack: ' . $e->getTraceAsString());
             return [
                 'success' => false,
-                'message' => 'Failed to update student profile',
-                'errors' => ['database' => 'Database error occurred']
+                'message' => 'Failed to update student profile: ' . $e->getMessage(),
+                'errors' => ['database' => $e->getMessage()]
             ];
         }
     }

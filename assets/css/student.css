@@ -1526,15 +1526,20 @@ body {
 
 /*-- ▬▬▬▬ DIGITAL ID (PORTRAIT VERSION) ▬▬▬▬ */
 .portrait-id-container {
-    width: 95%;
-    margin: 95px auto;
+    width: clamp(250px, 95vw, 450px);
+    margin: 20px auto;
     perspective: 1000px;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .portrait-id-card {
     position: relative;
     margin: auto;
+    width: 100%;
+    aspect-ratio: 3 / 4;
     transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform-style: preserve-3d;
     cursor: pointer;
@@ -1545,13 +1550,15 @@ body {
 }
 
 .portrait-side {
-    width: 450px;
-    height: 600px;
-    border-radius: 14px;
+    width: 100%;
+    height: 100%;
+    border-radius: clamp(10px, 4vw, 14px);
     position: absolute;
+    top: 0;
+    left: 0;
     backface-visibility: hidden;
     overflow: hidden;
-    box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.18);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.15);
     background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
     display: flex;
     flex-direction: column;
@@ -1560,7 +1567,7 @@ body {
 /* ▬▬▬▬ PORTRAIT FRONT ▬▬▬▬ */
 .portrait-front {
     background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-    padding: 20px 15px;
+    padding: clamp(15px, 5vw, 25px) clamp(10px, 3vw, 20px);
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1583,11 +1590,11 @@ body {
 .id-header {
     background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
     color: white;
-    padding: 12px 15px;
+    padding: clamp(8px, 2.5vw, 15px);
     text-align: center;
-    border-radius: 8px;
-    margin: -20px -15px 15px -15px;
-    box-shadow: 0px 4px 12px rgba(27, 94, 32, 0.2);
+    border-radius: clamp(5px, 2vw, 8px);
+    margin: calc(clamp(15px, 5vw, 25px) * -1) calc(clamp(10px, 3vw, 20px) * -1) clamp(10px, 3vw, 15px) calc(clamp(10px, 3vw, 20px) * -1);
+    box-shadow: 0px 4px 10px rgba(27, 94, 32, 0.2);
     position: relative;
     z-index: 1;
     flex-shrink: 0;
@@ -1595,7 +1602,7 @@ body {
 
 .id-header h2 {
     margin: 0;
-    font-size: 13px;
+    font-size: clamp(10px, 3vw, 16px);
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -1607,56 +1614,60 @@ body {
     z-index: 1;
     display: flex;
     justify-content: center;
-    margin: 15px 0;
-    flex-shrink: 0;
+    margin: clamp(6px, 2vw, 12px) 0;
 }
 
 .student-photo {
-    width: 160px;
-    height: 200px;
-    border: 3px solid #1b5e20;
-    border-radius: 8px;
+    max-width: 100%;
+    width: clamp(50px, 20vw, 100px);
+    aspect-ratio: 4 / 5;
+    height: auto;
     object-fit: cover;
+    border: 1px solid #1b5e20;
+    border-radius: 4px;
     background: white;
-    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin: 0 auto;
 }
 
 .student-info {
     position: relative;
     z-index: 1;
     text-align: center;
-    margin: 12px 0;
-    flex-shrink: 0;
+    margin: clamp(2px, 0.8vw, 6px) 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: clamp(0.5px, 0.3vw, 2px);
+    align-items: center;
+    width: 100%;
 }
 
 .student-name {
     margin: 0;
-    font-size: 14px;
+    font-size: clamp(11px, 2.8vw, 16px);
     font-weight: 800;
     color: #1b5e20;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
     line-height: 1.2;
     text-transform: uppercase;
 }
 
 .student-course {
     margin: 0;
-    font-size: 11px;
+    font-size: clamp(8px, 1.8vw, 11px);
     font-weight: 600;
     color: #666;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.1px;
     line-height: 1.3;
 }
 
 .student-id-number {
     margin: 0;
-    font-size: 16px;
+    font-size: clamp(13px, 3.5vw, 18px);
     font-weight: 900;
     color: #1b5e20;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .signature-section {
@@ -1664,41 +1675,69 @@ body {
     z-index: 1;
     text-align: center;
     margin-top: auto;
-    padding-top: 12px;
+    padding-top: clamp(3px, 0.8vw, 5px);
     flex-shrink: 0;
+    width: 100%;
 }
 
 .signature-placeholder {
-    width: 150px;
-    height: 40px;
-    border-top: 2px solid #333;
-    margin: 0 auto 5px;
+    width: min(40vw, 160px);
+    height: clamp(15px, 4vw, 25px);
+    border-top: 1px solid #333;
+    margin: 0 auto clamp(3px, 1vw, 5px);
 }
 
 .id-signature-image {
-    max-width: 150px;
-    max-height: 40px;
-    margin: 0 auto 5px;
+    max-width: clamp(120px, 40vw, 200px);
+    max-height: clamp(20px, 6vw, 40px);
+    margin: 0 auto clamp(3px, 1vw, 5px);
     display: block;
     object-fit: contain;
-    filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .signature-label {
     margin: 0;
-    font-size: 9px;
+    font-size: clamp(7px, 2.5vw, 10px);
     font-weight: 700;
     color: #555;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.1px;
     text-transform: uppercase;
 }
+
+.student-card-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    gap: 4px;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.student-content-block {
+    /* Use flex to align content vertically */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
+    flex: 1; /* Allows this block to take up all remaining vertical space */
+    /* Use clamp for the top margin, replacing the inline margin-top: 35px */
+    margin-top: clamp(10px, 3vw, 35px); 
+    width: 100%;
+}
+
 
 /* ▬▬▬▬ PORTRAIT BACK ▬▬▬▬ */
 .portrait-back {
     transform: rotateY(180deg);
     background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-    padding: 30px 25px;
+    padding: clamp(15px, 4vw, 25px) clamp(10px, 3vw, 20px);
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
 }
 
 .emergency-section {
@@ -1849,11 +1888,6 @@ body {
         font-size: 14px;
     }
 
-    .student-photo {
-        width: 160px;
-        height: 200px;
-    }
-
     .student-name {
         font-size: 14px;
     }
@@ -1898,10 +1932,6 @@ body {
         font-size: 12px;
     }
 
-    .student-photo {
-        width: 130px;
-        height: 160px;
-    }
 
     .student-name {
         font-size: 13px;
@@ -2040,7 +2070,7 @@ body {
     width: 100%;
     margin: 20px 0;
     position: relative;
-    z-index: 1;
+    z-index: 10;
     min-height: 0;
     background: transparent;
     box-sizing: border-box;
