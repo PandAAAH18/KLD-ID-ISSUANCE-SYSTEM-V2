@@ -287,6 +287,40 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
             </div>
         </div>
 
+        <!-- Quick Actions Section -->
+        <div class="action-section">
+            <h3><i class="fas fa-plus-circle"></i> Quick Actions</h3>
+            <p>Add new students or import multiple records via CSV</p>
+            
+            <div class="form-row">
+                <!-- Add Student Form -->
+                <form method="POST" class="form-group" style="flex: 2;">
+                    <div class="form-row">
+                        <input type="text" name="first_name" class="form-input" placeholder="First Name" required>
+                        <input type="text" name="last_name" class="form-input" placeholder="Last Name" required>
+                        <input type="email" name="email" class="form-input" placeholder="Email Address" required>
+                        <button type="submit" name="add_student" class="btn btn-primary" style="height: 46px;">
+                            <i class="fas fa-user-plus"></i> Add Student
+                        </button>
+                    </div>
+                </form>
+
+                <!-- CSV Import Form -->
+                <form method="POST" enctype="multipart/form-data" class="form-group" style="flex: 1;">
+                    <div class="form-row">
+                        <input type="file" name="csv_file" class="form-input" accept=".csv" required 
+                               style="border: 2px dashed var(--school-gray); padding: 10px;">
+                        <button type="submit" name="import_students" class="btn btn-secondary" style="height: 46px;">
+                            <i class="fas fa-file-import"></i> Import CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> CSV format: email, student_id, first_name, last_name
+            </p>
+        </div>
+
         <!-- Search and Filter Section -->
         <div class="admin-card">
             <div class="admin-card-header">
@@ -305,6 +339,8 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                         <i class="fas fa-times"></i> Clear
                     </a>
                 </form>
+
+                
 
                 <!-- Filter Form -->
                 <form method="GET" class="filter-form">
@@ -358,40 +394,6 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                     </div>
                 </form>
             </div>
-        </div>
-
-        <!-- Quick Actions Section -->
-        <div class="action-section">
-            <h3><i class="fas fa-plus-circle"></i> Quick Actions</h3>
-            <p>Add new students or import multiple records via CSV</p>
-            
-            <div class="form-row">
-                <!-- Add Student Form -->
-                <form method="POST" class="form-group" style="flex: 2;">
-                    <div class="form-row">
-                        <input type="text" name="first_name" class="form-input" placeholder="First Name" required>
-                        <input type="text" name="last_name" class="form-input" placeholder="Last Name" required>
-                        <input type="email" name="email" class="form-input" placeholder="Email Address" required>
-                        <button type="submit" name="add_student" class="btn btn-primary" style="height: 46px;">
-                            <i class="fas fa-user-plus"></i> Add Student
-                        </button>
-                    </div>
-                </form>
-
-                <!-- CSV Import Form -->
-                <form method="POST" enctype="multipart/form-data" class="form-group" style="flex: 1;">
-                    <div class="form-row">
-                        <input type="file" name="csv_file" class="form-input" accept=".csv" required 
-                               style="border: 2px dashed var(--school-gray); padding: 10px;">
-                        <button type="submit" name="import_students" class="btn btn-secondary" style="height: 46px;">
-                            <i class="fas fa-file-import"></i> Import CSV
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">
-                <i class="fas fa-info-circle"></i> CSV format: email, student_id, first_name, last_name
-            </p>
         </div>
 
         <!-- Students List -->
