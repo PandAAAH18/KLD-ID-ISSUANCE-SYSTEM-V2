@@ -42,31 +42,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     error_log('Edit Profile POST Data: ' . json_encode($data));
+    error_log('Edit Profile FILES: ' . json_encode($_FILES));
 
     /* password change handling */
     $old_pwd = trim($_POST['old_password'] ?? '');
     $new_pwd = trim($_POST['new_password'] ?? '');
     $confirm_pwd = trim($_POST['confirm_password'] ?? '');
 
+    // Debug: Log password field values
+    error_log("Password fields - Old: '" . $old_pwd . "' (len=" . strlen($old_pwd) . "), New: '" . $new_pwd . "' (len=" . strlen($new_pwd) . "), Confirm: '" . $confirm_pwd . "' (len=" . strlen($confirm_pwd) . ")");
+
     $passwordUpdated = false;
-    if ($old_pwd !== '' || $new_pwd !== '' || $confirm_pwd !== '') {
+    // Only validate password if user is trying to change it (any field is not empty)
+    if (!empty($old_pwd) || !empty($new_pwd) || !empty($confirm_pwd)) {
+        error_log('Password change detected - validating...');
         // If any password field is filled, all are required
-        if (!empty($old_pwd) || !empty($new_pwd) || !empty($confirm_pwd)) {
-            // Only validate password if user is trying to change it
-            if (empty($old_pwd)) {
-                $error_msg = 'Please enter your current password to change it.';
-            } elseif (empty($new_pwd)) {
-                $error_msg = 'Please enter a new password.';
-            } elseif (empty($confirm_pwd)) {
-                $error_msg = 'Please confirm your new password.';
-            } elseif ($new_pwd !== $confirm_pwd) {
-                $error_msg = 'New password and confirmation do not match.';
-            } elseif (strlen($new_pwd) < 6) {
-                $error_msg = 'New password must be at least 6 characters long.';
-            }
+        if (empty($old_pwd)) {
+            $error_msg = 'Please enter your current password to change it.';
+        } elseif (empty($new_pwd)) {
+            $error_msg = 'Please enter a new password.';
+        } elseif (empty($confirm_pwd)) {
+            $error_msg = 'Please confirm your new password.';
+        } elseif ($new_pwd !== $confirm_pwd) {
+            $error_msg = 'New password and confirmation do not match.';
+        } elseif (strlen($new_pwd) < 6) {
+            $error_msg = 'New password must be at least 6 characters long.';
         }
         
-        if (empty($error_msg) && (!empty($old_pwd) || !empty($new_pwd) || !empty($confirm_pwd))) {
+        if (empty($error_msg)) {
             // Verify old password
             $user = $stuObj->findByEmail($_SESSION['email']);
             if (!$user || !password_verify($old_pwd, $user['password_hash'])) {
@@ -77,6 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $newPasswordHash = password_hash($new_pwd, PASSWORD_DEFAULT);
             }
         }
+    } else {
+        error_log('No password change - all fields empty');
     }
 
     /* Only proceed if no password errors */
@@ -84,10 +89,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         /* Validate file uploads before processing */
         $fileUploadErrors = [];
 
-        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+        // Profile Photo Upload
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
             error_log('Processing profile photo upload: ' . print_r($_FILES['profile_photo'], true));
             $validation = $stuObj->validateFile($_FILES['profile_photo'], [
-                'max_size' => 2097152, // 2MB (adjusted to match PHP limit)
+                'max_size' => 5242880, // 5MB
                 'mime_types' => ['image/jpeg', 'image/png'],
                 'extensions' => ['jpg', 'jpeg', 'png']
             ]);
@@ -103,12 +109,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log('Profile photo upload error: ' . $e->getMessage());
                 }
             }
+        } elseif (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileUploadErrors['profile_photo'] = ['Upload error occurred'];
+            error_log('Profile photo upload error code: ' . $_FILES['profile_photo']['error']);
         }
 
-        if (isset($_FILES['signature']) && $_FILES['signature']['error'] !== UPLOAD_ERR_NO_FILE) {
+        // Signature Upload
+        if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK) {
             error_log('Processing signature upload: ' . print_r($_FILES['signature'], true));
             $validation = $stuObj->validateFile($_FILES['signature'], [
-                'max_size' => 2097152, // 2MB (adjusted to match PHP limit)
+                'max_size' => 5242880, // 5MB
                 'mime_types' => ['image/jpeg', 'image/png'],
                 'extensions' => ['jpg', 'jpeg', 'png']
             ]);
@@ -124,12 +134,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log('Signature upload error: ' . $e->getMessage());
                 }
             }
+        } elseif (isset($_FILES['signature']) && $_FILES['signature']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileUploadErrors['signature'] = ['Upload error occurred'];
+            error_log('Signature upload error code: ' . $_FILES['signature']['error']);
         }
 
-        if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+        // Certificate of Registration (COR) Upload
+        if (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] === UPLOAD_ERR_OK) {
             error_log('Processing COR upload: ' . print_r($_FILES['cor_photo'], true));
             $validation = $stuObj->validateFile($_FILES['cor_photo'], [
-                'max_size' => 2097152, // 2MB (adjusted to match PHP limit)
+                'max_size' => 10485760, // 10MB
                 'mime_types' => ['image/jpeg', 'image/png', 'application/pdf'],
                 'extensions' => ['jpg', 'jpeg', 'png', 'pdf']
             ]);
@@ -145,6 +159,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log('COR upload error: ' . $e->getMessage());
                 }
             }
+        } elseif (isset($_FILES['cor_photo']) && $_FILES['cor_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $fileUploadErrors['cor_photo'] = ['Upload error occurred'];
+            error_log('COR upload error code: ' . $_FILES['cor_photo']['error']);
         }
 
         if (!empty($fileUploadErrors)) {
@@ -1144,18 +1161,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="form-grid">
                                 <div class="form-group required">
                                     <label>Current Password</label>
-                                    <input type="password" name="old_password" id="old_password" placeholder="Enter your current password">
+                                    <input type="password" name="old_password" id="old_password" placeholder="Enter your current password" disabled>
                                 </div>
                             </div>
 
                             <div class="form-grid">
                                 <div class="form-group required">
                                     <label>New Password</label>
-                                    <input type="password" name="new_password" id="new_password" placeholder="Minimum 8 characters">
+                                    <input type="password" name="new_password" id="new_password" placeholder="Minimum 8 characters" disabled>
                                 </div>
                                 <div class="form-group required">
                                     <label>Confirm New Password</label>
-                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter new password">
+                                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter new password" disabled>
                                 </div>
                             </div>
                         </div>
@@ -1176,13 +1193,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <i class="fas fa-sync-alt"></i> Replace File
                                         </button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
-                                            <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
+                                            <input type="file" name="profile_photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
                                             <div class="file-hint">JPG, PNG (Max 5MB)</div>
                                         </div>
                                     </div>
                                 <?php else: ?>
                                     <div class="file-input-wrapper">
-                                        <input type="file" name="profile_photo" accept=".jpg,.jpeg,.png">
+                                        <input type="file" name="profile_photo" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
                                         <div class="file-hint">JPG, PNG (Max 5MB)</div>
                                     </div>
                                 <?php endif; ?>
@@ -1199,13 +1216,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <i class="fas fa-sync-alt"></i> Replace File
                                         </button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
-                                            <input type="file" name="signature" accept=".jpg,.jpeg,.png">
+                                            <input type="file" name="signature" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
                                             <div class="file-hint">JPG, PNG (Max 5MB)</div>
                                         </div>
                                     </div>
                                 <?php else: ?>
                                     <div class="file-input-wrapper">
-                                        <input type="file" name="signature" accept=".jpg,.jpeg,.png">
+                                        <input type="file" name="signature" accept="image/jpeg,image/png,.jpg,.jpeg,.png">
                                         <div class="file-hint">JPG, PNG (Max 5MB)</div>
                                     </div>
                                 <?php endif; ?>
@@ -1231,13 +1248,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <i class="fas fa-sync-alt"></i> Replace File
                                         </button>
                                         <div class="file-input-wrapper" style="display: none; margin-top: 10px;">
-                                            <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
+                                            <input type="file" name="cor_photo" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf">
                                             <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
                                         </div>
                                     </div>
                                 <?php else: ?>
                                     <div class="file-input-wrapper">
-                                        <input type="file" name="cor_photo" accept=".jpg,.jpeg,.png,.pdf">
+                                        <input type="file" name="cor_photo" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf">
                                         <div class="file-hint">JPG, PNG, PDF (Max 10MB)</div>
                                     </div>
                                 <?php endif; ?>
@@ -1322,15 +1339,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         function togglePasswordSection() {
             const pwdBox = document.getElementById('pwdBox');
             const toggleBtn = document.getElementById('togglePwdBtn');
+            const oldPwd = document.getElementById('old_password');
+            const newPwd = document.getElementById('new_password');
+            const confirmPwd = document.getElementById('confirm_password');
+            
             pwdBox.classList.toggle('active');
             
             if (pwdBox.classList.contains('active')) {
                 toggleBtn.innerHTML = '<i class="fas fa-lock-open"></i><span>Cancel Password Change</span>';
+                // Enable password fields when section is open
+                oldPwd.disabled = false;
+                newPwd.disabled = false;
+                confirmPwd.disabled = false;
             } else {
                 toggleBtn.innerHTML = '<i class="fas fa-lock"></i><span>Change Password</span>';
-                document.getElementById('old_password').value = '';
-                document.getElementById('new_password').value = '';
-                document.getElementById('confirm_password').value = '';
+                // Clear and disable password fields when section is closed
+                oldPwd.value = '';
+                newPwd.value = '';
+                confirmPwd.value = '';
+                oldPwd.disabled = true;
+                newPwd.disabled = true;
+                confirmPwd.disabled = true;
             }
         }
 
@@ -1348,20 +1377,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return false;
             }
 
+            // Check if any files are selected
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            let filesSelected = 0;
+            fileInputs.forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    filesSelected++;
+                }
+            });
+
+            let message = 'Saving your profile changes...';
+            if (filesSelected > 0) {
+                message = `Uploading ${filesSelected} file(s) and saving your profile changes...`;
+            }
+
             Swal.fire({
-                title: 'Success',
-                html: 'Form data is complete. Saving...',
-                icon: 'success',
+                title: 'Confirm Save',
+                html: message,
+                icon: 'question',
+                showCancelButton: true,
                 confirmButtonColor: '#4caf50',
-                confirmButtonText: 'OK',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, save changes!',
+                cancelButtonText: 'Cancel',
                 draggable: true,
-                allowOutsideClick: false,
                 didOpen: (modal) => {
                     modal.style.borderRadius = '12px';
                     modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Processing...',
+                        html: 'Please wait while we save your changes.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
                     event.target.closest('form').submit();
                 }
             });
@@ -1550,35 +1605,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Convert to MB
                         const fileName = file.name;
                         
-                        // Show file selection notification
-                        showNotification(`Selected: ${fileName} (${fileSize} MB)`, 'info');
+                        // Show file selection notification with instructions
+                        Swal.fire({
+                            title: 'File Selected!',
+                            html: `
+                                <div style="text-align: left;">
+                                    <p><strong>File:</strong> ${fileName}</p>
+                                    <p><strong>Size:</strong> ${fileSize} MB</p>
+                                    <hr style="margin: 15px 0;">
+                                    <p style="color: #ff9800; font-weight: bold;">
+                                        <i class="fas fa-info-circle"></i> Don't forget to click "Save Changes" button below to upload this file!
+                                    </p>
+                                </div>
+                            `,
+                            icon: 'info',
+                            confirmButtonColor: '#4caf50',
+                            confirmButtonText: 'Got it!',
+                            timer: 5000,
+                            timerProgressBar: true,
+                            didOpen: (modal) => {
+                                modal.style.borderRadius = '12px';
+                                modal.style.boxShadow = '0px 8px 32px rgba(0, 0, 0, 0.2)';
+                            }
+                        });
                         
                         // Preview image if it's an image file
                         if (file.type.startsWith('image/')) {
                             const reader = new FileReader();
                             reader.onload = function(event) {
-                                // Find the preview image in the same file-status-box
-                                const fileStatusBox = input.closest('.form-group').querySelector('.file-preview-image');
-                                if (fileStatusBox) {
-                                    // Create a temporary preview
-                                    const tempPreview = document.createElement('div');
-                                    tempPreview.style.cssText = 'margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 6px; border: 2px dashed #4caf50;';
-                                    tempPreview.innerHTML = `
-                                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #2e7d32; font-size: 0.85rem;">
-                                            <i class="fas fa-eye"></i> Preview:
-                                        </p>
-                                        <img src="${event.target.result}" style="max-width: 100%; max-height: 200px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Preview">
-                                    `;
-                                    
-                                    // Remove any existing preview
-                                    const existingPreview = input.parentElement.querySelector('.temp-preview');
-                                    if (existingPreview) {
-                                        existingPreview.remove();
-                                    }
-                                    
-                                    tempPreview.className = 'temp-preview';
-                                    input.parentElement.appendChild(tempPreview);
+                                // Create a temporary preview
+                                const tempPreview = document.createElement('div');
+                                tempPreview.style.cssText = 'margin-top: 10px; padding: 10px; background: #e8f5e9; border-radius: 6px; border: 2px dashed #4caf50;';
+                                tempPreview.innerHTML = `
+                                    <p style="margin: 0 0 8px 0; font-weight: 600; color: #2e7d32; font-size: 0.85rem;">
+                                        <i class="fas fa-eye"></i> New Preview (will upload when you save):
+                                    </p>
+                                    <img src="${event.target.result}" style="max-width: 100%; max-height: 200px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Preview">
+                                `;
+                                
+                                // Remove any existing preview in the file-input-wrapper
+                                const existingPreview = input.closest('.file-input-wrapper').querySelector('.temp-preview');
+                                if (existingPreview) {
+                                    existingPreview.remove();
                                 }
+                                
+                                tempPreview.className = 'temp-preview';
+                                input.closest('.file-input-wrapper').appendChild(tempPreview);
                             };
                             reader.readAsDataURL(file);
                         }

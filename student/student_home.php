@@ -63,205 +63,205 @@ if (!$avatar) {
 $signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspecialchars($student['signature']) : null;
 $qrcode = "../uploads/sample_qr.png";
 ?>
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Home</title>
-    <link href="../assets/css/student.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .avatar-placeholder {
-            background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
-            color: #757575;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            border: 2px solid #e0e0e0;
-            position: relative;
-            overflow: hidden;
-        }
-        .avatar-placeholder::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(224,224,224,0.8), rgba(189,189,189,0.8));
-            z-index: 1;
-        }
-        .avatar-placeholder i {
-            position: relative;
-            z-index: 2;
-            font-size: 2em;
-            opacity: 0.8;
-        }
-        .student-photo.avatar-placeholder {
-            width: 80px;
-            height: 80px;
-        }
-        .student-photo.avatar-placeholder i {
-            font-size: 2.5em;
-        }
-        .welcome-avatar.avatar-placeholder {
-            width: 80px;
-            height: 80px;
-            border: 3px solid #e0e0e0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-        .welcome-box:hover .welcome-avatar.avatar-placeholder {
-            transform: scale(1.05);
-            border-color: #bdbdbd;
-        }
-    </style>
-</head>
+<!-- PAGE CONTENT STARTS HERE -->
 
-<body class="admin-body">
-    <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()">↑</button>
-    <div class="admin-main" id="adminMain">
-        <div class="portrait-id-container">
-            <div class="portrait-id-card">
-                <div class="portrait-side portrait-front" style="background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: inherit; background-repeat: round;">
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
-                        <div class="photo-container">
-                            <?php if ($use_initials): ?>
-                                <div class="student-photo avatar-placeholder">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                            <?php else: ?>
-                                <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
-                            <?php endif; ?>
-                        </div>
-                        <div class="student-info">
-                            <p class="student-name"><?php echo $studentName; ?></p>
-                            <p class="student-course"><?php echo $course; ?></p>
-                            <p class="student-id-number"><?php echo $studentID; ?></p>
-                        </div>
-                    </div>
-                    <div class="signature-section">
-                        <?php if ($signature): ?>
-                            <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
+<link href="../assets/css/student.css" rel="stylesheet">
+<style>
+    .avatar-placeholder {
+        background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+        color: #757575;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 2px solid #e0e0e0;
+        position: relative;
+        overflow: hidden;
+    }
+    .avatar-placeholder::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(224,224,224,0.8), rgba(189,189,189,0.8));
+        z-index: 1;
+    }
+    .avatar-placeholder i {
+        position: relative;
+        z-index: 2;
+        font-size: 2em;
+        opacity: 0.8;
+    }
+    .student-photo.avatar-placeholder {
+        width: 80px;
+        height: 80px;
+    }
+    .student-photo.avatar-placeholder i {
+        font-size: 2.5em;
+    }
+    .welcome-avatar.avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border: 3px solid #e0e0e0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .welcome-box:hover .welcome-avatar.avatar-placeholder {
+        transform: scale(1.05);
+        border-color: #bdbdbd;
+    }
+</style>
+
+<!-- BACK-TO-TOP BUTTON -->
+<button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()" title="Back to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<div class="portrait-id-container">
+        <div class="portrait-id-card">
+            <div class="portrait-side portrait-front" style="background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: inherit; background-repeat: round;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
+                    <div class="photo-container">
+                        <?php if ($use_initials): ?>
+                            <div class="student-photo avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
                         <?php else: ?>
-                            <div class="signature-placeholder"></div>
+                            <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
                         <?php endif; ?>
                     </div>
+                    <div class="student-info">
+                        <p class="student-name"><?php echo $studentName; ?></p>
+                        <p class="student-course"><?php echo $course; ?></p>
+                        <p class="student-id-number"><?php echo $studentID; ?></p>
+                    </div>
                 </div>
-                <div class="portrait-side portrait-back" style="background-image: url('../assets/images/id_back.png'); background-size: contain; background-position: inherit; background-repeat: round; padding: 0;">
+                <div class="signature-section">
+                    <?php if ($signature): ?>
+                        <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
+                    <?php else: ?>
+                        <div class="signature-placeholder"></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="portrait-side portrait-back" style="background-image: url('../assets/images/id_back.png'); background-size: contain; background-position: inherit; background-repeat: round; padding: 0;">
+            </div>
+        </div>
+    </div>
+
+    <div class="welcome-box">
+        <?php if ($use_initials): ?>
+            <div class="welcome-avatar avatar-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+        <?php else: ?>
+            <img src="<?php echo $avatar; ?>" alt="Avatar">
+        <?php endif; ?>
+        <div class="welcome-content-wrapper">
+            <div class="welcome-info">
+                <h2>
+                    Welcome, <?php echo $studentName; ?>
+                    <span class="status-badge enrolled">Enrolled</span>
+                </h2>
+                <p><strong>ID:</strong> <?php echo $studentID; ?></p>
+                <p><strong>Course:</strong> <?php echo $course; ?></p>
+                <p><strong>Year & Section:</strong> <?php echo $yearSection; ?></p>
+                <p><strong>Contact Number:</strong> <?php echo $contact_number; ?></p>
+                <p><strong>Address:</strong> <?php echo $address; ?></p>
+            </div>
+            <div class="welcome-nav">
+                <a href="edit_profile.php">Edit Profile</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="func-table-container">
+        <h3>Quick Access</h3>
+
+        <div class="id-status-tracker">
+            <h3>ID Application Status Tracker</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">Application Status</div>
+                    <div class="status-value status-badge status-<?php echo strtolower(str_replace(' ', '-', $idStatus)); ?>">
+                        <?php echo htmlspecialchars($idStatus); ?>
+                    </div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Date Submitted</div>
+                    <div class="status-value"><?php echo $idSubmitDate; ?></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Latest Update</div>
+                    <div class="status-value"><?php echo $idUpdateDate; ?></div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Request Type</div>
+                    <div class="status-value"><?php echo $idRequest ? htmlspecialchars($idRequest['request_type']) : 'N/A'; ?></div>
                 </div>
             </div>
         </div>
 
-        <div class="welcome-box">
-            <?php if ($use_initials): ?>
-                <div class="welcome-avatar avatar-placeholder">
-                    <i class="fas fa-user"></i>
+        <!-- Past ID History -->
+        <div class="id-history-section">
+            <div>
+                <div class="id-history-header-left" onclick="toggleHistorySection(this)">
+                    <h3>Past ID History</h3>
+                    <span class="history-toggle">▼</span>
                 </div>
-            <?php else: ?>
-                <img src="<?php echo $avatar; ?>" alt="Avatar">
-            <?php endif; ?>
-            <div class="welcome-content-wrapper">
-                <div class="welcome-info">
-                    <h2>
-                        Welcome, <?php echo $studentName; ?>
-                        <span class="status-badge enrolled">Enrolled</span>
-                    </h2>
-                    <p><strong>ID:</strong> <?php echo $studentID; ?></p>
-                    <p><strong>Course:</strong> <?php echo $course; ?></p>
-                    <p><strong>Year & Section:</strong> <?php echo $yearSection; ?></p>
-                    <p><strong>Contact Number:</strong> <?php echo $contact_number; ?></p>
-                    <p><strong>Address:</strong> <?php echo $address; ?></p>
-                </div>
-                <div class="welcome-nav">
-                    <a href="edit_profile.php">Edit Profile</a>
-                </div>
+
             </div>
-        </div>
-
-        <div class="func-table-container">
-            <h3>Quick Access</h3>
-
-            <div class="id-status-tracker">
-                <h3>ID Application Status Tracker</h3>
-                <div class="status-grid">
-                    <div class="status-item">
-                        <div class="status-label">Application Status</div>
-                        <div class="status-value status-badge status-<?php echo strtolower(str_replace(' ', '-', $idStatus)); ?>">
-                            <?php echo htmlspecialchars($idStatus); ?>
-                        </div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Date Submitted</div>
-                        <div class="status-value"><?php echo $idSubmitDate; ?></div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Latest Update</div>
-                        <div class="status-value"><?php echo $idUpdateDate; ?></div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-label">Request Type</div>
-                        <div class="status-value"><?php echo $idRequest ? htmlspecialchars($idRequest['request_type']) : 'N/A'; ?></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Past ID History -->
-            <div class="id-history-section">
-                <div>
-                    <div class="id-history-header-left" onclick="toggleHistorySection(this)">
-                        <h3>Past ID History</h3>
-                        <span class="history-toggle">▼</span>
-                    </div>
-
-                </div>
-                <div class="history-content">
-                    <div class="history-table-content">
-                        <?php if (count($idHistory) > 0): ?>
-                            <div class="history-table-wrapper">
-                                <table class="history-table">
-                                    <thead>
+            <div class="history-content">
+                <div class="history-table-content">
+                    <?php if (count($idHistory) > 0): ?>
+                        <div class="history-table-wrapper">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Request Date</th>
+                                        <th>Request Type</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($idHistory as $record): ?>
                                         <tr>
-                                            <th>Request Date</th>
-                                            <th>Request Type</th>
-                                            <th>Reason</th>
-                                            <th>Status</th>
+                                            <td><?php echo date('M d, Y h:i A', strtotime($record['created_at'])); ?></td>
+                                            <td><span class="type-badge type-<?php echo strtolower(str_replace(' ', '-', $record['request_type'])); ?>"><?php echo htmlspecialchars($record['request_type']); ?></span></td>
+                                            <td><?php echo htmlspecialchars($record['reason']); ?></td>
+                                            <td><span class="status-badge-small status-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>"><?php echo htmlspecialchars($record['status']); ?></span></td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($idHistory as $record): ?>
-                                            <tr>
-                                                <td><?php echo date('M d, Y h:i A', strtotime($record['created_at'])); ?></td>
-                                                <td><span class="type-badge type-<?php echo strtolower(str_replace(' ', '-', $record['request_type'])); ?>"><?php echo htmlspecialchars($record['request_type']); ?></span></td>
-                                                <td><?php echo htmlspecialchars($record['reason']); ?></td>
-                                                <td><span class="status-badge-small status-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>"><?php echo htmlspecialchars($record['status']); ?></span></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <div class="empty-history">
-                                <p>No past ID requests found.</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="history-empty-state">
-                        <div class="history-empty-state-content">
-                            <span class="history-empty-state-icon"></span>
-                            <h4>History Hidden</h4>
-                            <p>Your history records are hidden but still saved in the database.</p>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
-                        <button class="restore-history-btn" onclick="restoreHistoryDisplay(event)">
-                            Restore
-                        </button>
+                    <?php else: ?>
+                        <div class="empty-history">
+                            <p>No past ID requests found.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="history-empty-state">
+                    <div class="history-empty-state-content">
+                        <span class="history-empty-state-icon"></span>
+                        <h4>History Hidden</h4>
+                        <p>Your history records are hidden but still saved in the database.</p>
                     </div>
+                    <button class="restore-history-btn" onclick="restoreHistoryDisplay(event)">
+                        Restore
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
+
+            </div>
+        </main>
+    </div>
 </body>
 
 </html>
@@ -341,3 +341,10 @@ $qrcode = "../uploads/sample_qr.png";
         alert('QR Code scanner feature coming soon!');
     }
 </script>
+
+            </div><!-- End admin-content -->
+        </main><!-- End admin-main -->
+    </div><!-- End admin-wrapper -->
+</body>
+
+</html>
