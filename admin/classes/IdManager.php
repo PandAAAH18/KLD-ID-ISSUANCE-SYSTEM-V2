@@ -256,65 +256,67 @@ class IdManager extends User
     $expiry   = date('Y-m-d', strtotime('+4 years'));
 
     /* 3. QR code ------------------------------------------------------------- */
-$verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
+    $verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
 
-$qrName = $idNumber.'.png';          // file name we will store & reference
-$qrPath = __DIR__.'/../../uploads/qr/'.$qrName;
+    $qrName = $idNumber.'.png';          // file name we will store & reference
+    $qrPath = __DIR__.'/../../uploads/qr/'.$qrName;
 
-/* -------  Endroid QrCode  ------- */
-$writer = new \Endroid\QrCode\Writer\PngWriter();
+    /* -------  Endroid QrCode  ------- */
+    $writer = new \Endroid\QrCode\Writer\PngWriter();
 
-$qrCode = new \Endroid\QrCode\QrCode(
-    data: $verifyUrl,                                        // verification link
-    encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-    errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
-    size: 300,
-    margin: 10,
-    foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-    backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
-);
+    $qrCode = new \Endroid\QrCode\QrCode(
+        data: $verifyUrl,
+        encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+        errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+        size: 300,
+        margin: 10,
+        foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+        backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+    );
 
-// optional logo – comment out if you don’t want it
-$logo = new \Endroid\QrCode\Logo\Logo(
-    path: __DIR__.'/../../assets/images/kldlogo.png',
-    resizeToWidth: 50,
-    punchoutBackground: true
-);
+    // optional logo – comment out if you don't want it
+    $logo = new \Endroid\QrCode\Logo\Logo(
+        path: __DIR__.'/../../assets/images/kldlogo.png',
+        resizeToWidth: 50,
+        punchoutBackground: true
+    );
 
-$result = $writer->write($qrCode, $logo);   // label omitted – add if desired
-$result->saveToFile($qrPath);               // physical file for local storage
-/* -------------------------------- */
+    $result = $writer->write($qrCode, $logo);
+    $result->saveToFile($qrPath);
 
+    /* 3.5 Save QR code location to student table */
+    $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
+    $updateStudent->execute([$qrName, $studentId]);
 
     $options = new \Dompdf\Options();
-$options->set('isRemoteEnabled', true);
-$dompdf = new \Dompdf\Dompdf($options);
+    $options->set('isRemoteEnabled', true);
+    $dompdf = new \Dompdf\Dompdf($options);
 
-// Increase the height of the ID cards
-$cardHeight = '300px'; // Increased from 214px
+    // Rest of your existing code remains the same...
+    $cardHeight = '300px';
 
-$front = '
-<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
-    <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
-    <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
-    <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
-    <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
-    <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
-</div>';
+    $front = '
+    <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+        <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+        <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
+        <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
+        <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
+        <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
+    </div>';
 
-$back = '
-<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
-    <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
-    <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
-    <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
-</div>';
+    $back = '
+    <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+        <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
+        <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
+        <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+    </div>';
 
-// Wrap both divs in a container
-$html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
+    // Wrap both divs in a container
+    $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
 
-$dompdf->loadHtml($html);
-$dompdf->setPaper('CR80', 'landscape'); // Keep CR80 paper size
-$dompdf->render();
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('CR80', 'landscape');
+    $dompdf->render();
 
     /* 5.  save PDF */
     $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
@@ -338,10 +340,10 @@ $dompdf->render();
     error_log("DEBUG regenerateId: called with idNumber='{$idNumber}' (type: " . gettype($idNumber) . ")");
 
     try {
-        $db = $this->db; // Use class $db directly
+        $db = $this->db;
 
         // 1. Get existing issued ID + student data
-        $stmt = $db->prepare("SELECT i.id_number, i.digital_id_file,
+        $stmt = $db->prepare("SELECT i.id_number, i.digital_id_file, i.user_id,
                                      s.email, s.first_name, s.last_name,
                                      s.course, s.year_level, s.photo, s.signature,
                                      s.emergency_contact, s.blood_type, s.student_id, s.emergency_contact_name
@@ -356,9 +358,10 @@ $dompdf->render();
             return false;
         }
 
+        $studentId = $row['user_id'];
         $oldDigitalFile = $row['digital_id_file'];
 
-        // 2. Delete old files (consistent naming: no "qr_" prefix)
+        // 2. Delete old files
         $qrName = $idNumber . '.png';
         $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
@@ -398,35 +401,38 @@ $dompdf->render();
         $result = $writer->write($qrCode, $logo);
         $result->saveToFile($qrPath);
 
-      $options = new \Dompdf\Options();
-$options->set('isRemoteEnabled', true);
-$dompdf = new \Dompdf\Dompdf($options);
+        // 3.5 Update QR code location in student table
+        $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
+        $updateStudent->execute([$qrName, $studentId]);
 
-// Increase the height of the ID cards
-$cardHeight = '300px'; // Increased from 214px
+        // Rest of your existing code remains the same...
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
 
-$front = '
-<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
-    <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
-    <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
-    <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
-    <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
-    <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
-</div>';
+        $cardHeight = '300px';
 
-$back = '
-<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
-    <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
-    <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
-    <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
-</div>';
+        $front = '
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+            <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+            <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
+            <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
+            <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
+            <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
+        </div>';
 
-// Wrap both divs in a container
-$html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
+        $back = '
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+            <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
+            <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
+            <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+        </div>';
 
-$dompdf->loadHtml($html);
-$dompdf->setPaper('CR80', 'landscape'); // Keep CR80 paper size
-$dompdf->render();
+        $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('CR80', 'landscape');
+        $dompdf->render();
 
         // 5. Save new PDF
         $newFileName = $row['email'] . '_' . date('YmdHis') . '.pdf';
@@ -456,7 +462,7 @@ $dompdf->render();
         return true;
 
     } catch (Exception $e) {
-        error_log("Regenerate ID failed (ID {$issuedId}): " . $e->getMessage());
+        error_log("Regenerate ID failed (ID {$idNumber}): " . $e->getMessage());
         return false;
     }
 }
@@ -522,7 +528,7 @@ $dompdf->render();
                     $expiry = date('Y-m-d', strtotime('+4 years'));
 
                     // Generate QR Code
-                    $qrResult = $this->generateQRCode($idNumber);
+                    $qrResult = $this->generateQRCode($idNumber, $studentId);
                     if (!$qrResult['success']) {
                         $errors[] = "Failed to generate QR for request {$requestId}: " . $qrResult['message'];
                         continue;
@@ -618,14 +624,11 @@ $dompdf->render();
         }
     }
 
-    /**
-     * Generate QR Code for ID
-     */
-    private function generateQRCode(string $idNumber): array
+    private function generateQRCode(string $idNumber, int $studentId): array
 {
     try {
         $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
-        $qrName = $idNumber . '.png'; // Consistent with generateId and regenerateId
+        $qrName = $idNumber . '.png';
         $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
         // Create directory if it doesn't exist
@@ -633,7 +636,7 @@ $dompdf->render();
             mkdir(dirname($qrPath), 0755, true);
         }
 
-        // Generate QR code - use the same approach as generateId function
+        // Generate QR code
         $writer = new \Endroid\QrCode\Writer\PngWriter();
         
         $qrCode = new \Endroid\QrCode\QrCode(
@@ -646,7 +649,6 @@ $dompdf->render();
             backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
         );
 
-        // Optional: Add logo if available - same as generateId
         $logoPath = __DIR__ . '/../../assets/images/kldlogo.png';
         $logo = file_exists($logoPath)
             ? new \Endroid\QrCode\Logo\Logo(path: $logoPath, resizeToWidth: 50, punchoutBackground: true)
@@ -654,6 +656,10 @@ $dompdf->render();
 
         $result = $writer->write($qrCode, $logo);
         $result->saveToFile($qrPath);
+
+        // Save QR code location to student table
+        $updateStudent = $this->db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
+        $updateStudent->execute([$qrName, $studentId]);
 
         return [
             'success' => true,

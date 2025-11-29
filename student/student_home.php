@@ -148,6 +148,30 @@ $qrcode = "../uploads/sample_qr.png";
                 </div>
             </div>
             <div class="portrait-side portrait-back" style="background-image: url('../assets/images/id_back.png'); background-size: contain; background-position: inherit; background-repeat: round; padding: 0;">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; box-sizing: border-box;">
+           <!-- Emergency Contact Information -->
+        <div class="emergency-contact-section" style="text-align: center; color: #333;">
+            <div class="emergency-contact-info" style="line-height: 1.4; margin-top: 80px; font-weight: bold;">
+                <p style="margin: 5px 0; font-size: 20px; "><strong></strong> <?php echo $emergency_contact_name; ?></p>
+                <p style="margin: 5px 0; font-size: 15px; "><strong></strong> <?php echo $emergency_contact; ?></p>
+            </div>
+        </div>
+    <!-- QR Code Section -->
+        <div class="qr-code-section" style="margin-bottom: 20px; margin-left: 60%;">
+            <?php 
+            // Update QR code path
+            $qrcode_path = "../uploads/qr/" . htmlspecialchars($student['qr_code'] ?? $studentID . '.png');
+            if (file_exists($qrcode_path)): 
+            ?>
+                <img src="<?php echo $qrcode_path; ?>" alt="Student QR Code" class="qr-code-image" style="width: 120px; height: 120px; border: 2px solid #333;">
+            <?php else: ?>
+                <div class="qr-code-placeholder" style="width: 120px; height: 120px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc;">
+                    <span style="color: #666; font-size: 12px;">QR Code</span>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>
