@@ -35,7 +35,7 @@ if (isset($_POST['update_user'])) {
 
 // 3. DELETE USER
 if (isset($_POST['delete_user'])) {
-    $ok = $adminModel->softDeleteUser((int)$_POST['user_id']);
+    $ok = $adminModel->deleteUser((int)$_POST['user_id']);
     if ($ok) {
         $message = 'User deleted successfully!';
     } else {

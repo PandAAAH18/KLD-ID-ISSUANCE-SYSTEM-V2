@@ -628,43 +628,6 @@ require_once 'admin_header.php';
                 </form>
             </div>
         </div>
-
-        <!-- ========== ADDITIONAL INFORMATION SECTION ========== -->
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <span><i class="fas fa-database"></i> Additional Information</span>
-            </div>
-            <div class="admin-card-body">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                    <div>
-                        <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;">Student ID</div>
-                        <div style="font-size: 1rem; font-weight: 600;">
-                            <?= !empty($student['student_id']) ? htmlspecialchars($student['student_id']) : '<em style="color: #999;">Not assigned</em>' ?>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;">Email</div>
-                        <div style="font-size: 0.95rem;">
-                            <a href="mailto:<?= htmlspecialchars($student['email']) ?>" style="color: var(--school-green); text-decoration: none;">
-                                <?= htmlspecialchars($student['email']) ?>
-                            </a>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;">Course</div>
-                        <div style="font-size: 0.95rem;">
-                            <?= !empty($student['course']) ? htmlspecialchars($student['course']) : '<em style="color: #999;">Not set</em>' ?>
-                        </div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85rem; color: #666; font-weight: 500; margin-bottom: 5px;">Year Level</div>
-                        <div style="font-size: 0.95rem;">
-                            <?= !empty($student['year_level']) ? htmlspecialchars($student['year_level']) : '<em style="color: #999;">Not set</em>' ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script>
