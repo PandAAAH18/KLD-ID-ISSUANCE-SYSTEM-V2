@@ -1,22 +1,65 @@
 <?php
 require_once 'config.php';
 require_once 'User.php';
+require_once __DIR__ . '/../admin/classes/EmailVerification.php';
+
+$error = null;
+$success = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $user = new User();
-    $ok  = $user->create(
-        $_POST['email'],
-        $_POST['password'],
-        'student'                 // default role
-    );
+    // Validate input
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $fullName = trim($_POST['full_name'] ?? '');
 
-    if ($ok) {
-        $success = 'Account created successfully! You can now log in.';
+    // Basic validation
+    if (empty($email) || empty($password) || empty($fullName)) {
+        $error = 'All fields are required.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Invalid email address.';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters.';
     } else {
-        $error = 'Registration failed (email already used?)';
+        try {
+            $user = new User();
+            $result = $user->create($email, $password, 'student');
+
+            if ($result) {
+                // Get the newly created user's ID
+                $newUser = $user->findByEmail($email);
+                if ($newUser) {
+                    $userId = $newUser['user_id'];
+
+                    // Create and send verification email
+                    $emailVerifier = new EmailVerification($user->getDb());
+                    $token = $emailVerifier->createVerificationToken($userId, $email);
+
+                    if ($token && SEND_VERIFICATION_EMAIL) {
+                        if ($emailVerifier->sendVerificationEmail($email, $token, $fullName)) {
+                            $_SESSION['message'] = "Account created successfully! Check your email to verify your account.";
+                            $_SESSION['pending_verification_email'] = $email;
+                            $success = 'Account created! A verification email has been sent to ' . esc_html($email);
+                        } else {
+                            $error = 'Account created, but verification email could not be sent. Please try again later.';
+                        }
+                    } else {
+                        $success = 'Account created successfully! You can now log in.';
+                    }
+                } else {
+                    $error = 'Account created but could not retrieve user information. Please try logging in.';
+                }
+            } else {
+                $error = 'Registration failed. Email may already be in use or an error occurred.';
+            }
+        } catch (\Exception $e) {
+            error_log("Registration error: " . $e->getMessage());
+            $error = 'Registration failed. Please try again later.';
+        }
     }
 }
 ?>
+
+
 <!doctype html>
 <html lang="en">
 <head>

@@ -27,7 +27,15 @@ if (isset($_POST['mark_complete']) && isset($_POST['issued_id'])){
     header('Location: admin_id.php'); exit();
 }
 if (isset($_POST['regenerate']) && isset($_POST['issued_id'])){
-    $adm->regenerateId((int)$_POST['issued_id']);
+    $id_number = $_POST['issued_id']; // string id_number like '2025100001'
+    error_log("REGEN DEBUG: Handler received issued_id = '{$id_number}' from POST");
+    if ($adm->regenerateId($id_number)) {
+        $_SESSION['success_msg'] = 'ID regenerated successfully.';
+        error_log("REGEN DEBUG: regenerateId succeeded for {$id_number}");
+    } else {
+        $_SESSION['error_msg'] = 'Failed to regenerate ID. Check logs.';
+        error_log("REGEN DEBUG: regenerateId FAILED for {$id_number}");
+    }
     header('Location: admin_id.php?filter=generated');
     exit();
 }
@@ -50,19 +58,57 @@ if (isset($_POST['bulk_generate_ids']) && isset($_POST['request_ids'])){
     exit();
 }
 
-if (isset($_POST['bulk_print_ids']) && isset($_POST['student_ids'])) {
-    $layout = $_POST['print_layout'] ?? '2x2';
-    $result = $adm->generateBulkIdPrint($_POST['student_ids'], $layout);
-    
-    if ($result['success']) {
-        $_SESSION['bulk_print_result'] = $result;
-        header('Location: admin_id.php?filter=generated&bulk_print=' . $result['filename']);
-    } else {
-        $_SESSION['bulk_operation_result'] = [
-            'success_count' => 0,
-            'errors' => [$result['message']]
-        ];
+/* ---------- BULK PRINT ---------- */
+/* ---------- BULK PRINT ---------- */
+if (isset($_POST['bulk_print']) && isset($_POST['selected_issued_ids'])) {
+    try {
+        $result = $adm->bulkPrintIds($_POST['selected_issued_ids']);
+        
+        if ($result['success']) {
+            // Store the IDs that were included in the PDF for later status update
+            $_SESSION['pending_print_ids'] = $result['id_numbers'];
+            $_SESSION['pending_print_filename'] = $result['filename'];
+            $_SESSION['show_print_modal'] = true;
+            
+            // Store download URL for JavaScript to open in new tab
+            $_SESSION['bulk_print_download_url'] = APP_URL . '/uploads/bulk_print/' . $result['filename'];
+            
+            header('Location: admin_id.php?filter=generated');
+            exit();
+        } else {
+            $_SESSION['error_msg'] = "Bulk printing failed: " . $result['message'];
+            header('Location: admin_id.php?filter=generated');
+            exit();
+        }
+        
+    } catch (Exception $e) {
+        $_SESSION['error_msg'] = "Bulk printing failed: " . $e->getMessage();
+        header('Location: admin_id.php?filter=generated');
+        exit();
     }
+}
+
+/* ---------- CONFIRM PRINT COMPLETION ---------- */
+if (isset($_POST['confirm_print_completion']) && isset($_POST['printed_ids'])) {
+    $success = $adm->markIdsAsPrinted($_POST['printed_ids']);
+    
+    if ($success) {
+        $_SESSION['success_msg'] = "Successfully marked " . count($_POST['printed_ids']) . " ID(s) as printed.";
+        unset($_SESSION['pending_print_ids']);
+        unset($_SESSION['pending_print_filename']);
+    } else {
+        $_SESSION['error_msg'] = "Failed to update print status. Please try again.";
+    }
+    
+    header('Location: admin_id.php?filter=generated');
+    exit();
+}
+
+/* ---------- CANCEL PRINT ---------- */
+if (isset($_POST['cancel_print'])) {
+    unset($_SESSION['pending_print_ids']);
+    unset($_SESSION['pending_print_filename']);
+    header('Location: admin_id.php?filter=generated');
     exit();
 }
 
@@ -85,6 +131,11 @@ if (isset($_SESSION['bulk_operation_result'])) {
     $bulkResult = $_SESSION['bulk_operation_result'];
     unset($_SESSION['bulk_operation_result']);
 }
+
+$success_msg = $_SESSION['success_msg'] ?? null;
+unset($_SESSION['success_msg']);
+$error_msg = $_SESSION['error_msg'] ?? null;
+unset($_SESSION['error_msg']);
         require_once 'admin_header.php';
 
         // Get counts for statistics
@@ -116,6 +167,21 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
             <h2><i class="fas fa-id-card-alt"></i> ID Card Management</h2>
             <p>Manage student ID requests, approvals, and generated cards</p>
         </div>
+
+        <!-- Display messages -->
+        <?php if ($success_msg): ?>
+            <div class="alert-banner alert-success">
+                <i class="fas fa-check-circle"></i>
+                <?= htmlspecialchars($success_msg) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($error_msg): ?>
+            <div class="alert-banner alert-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <?= htmlspecialchars($error_msg) ?>
+            </div>
+        <?php endif; ?>
 
         <!-- Display bulk operation results -->
         <?php if ($bulkResult): ?>
@@ -428,101 +494,172 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
         <?php endif; ?>
 
         <!-- ISSUED CARDS TABLE (generated) -->
-        <?php if (in_array($filter,['generated'])): ?>
-            <div class="admin-card">
-                <div class="admin-card-header">
-                    <span>
-                        <i class="fas fa-id-card"></i>
-                        Generated ID Cards
-                    </span>
-                    <span class="badge"><?= count($issued) ?></span>
+<?php if (in_array($filter,['generated'])): ?>
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <span>
+                <i class="fas fa-id-card"></i>
+                Generated ID Cards
+            </span>
+            <span class="badge"><?= count($issued) ?></span>
+        </div>
+        <div class="admin-card-body">
+            <?php if (empty($issued)): ?>
+                <div class="empty-state">
+                    <i class="fas fa-id-card"></i>
+                    <h4>No generated IDs</h4>
+                    <p>There are currently no generated ID cards in the system.</p>
                 </div>
-                <div class="admin-card-body">
-                    <?php if (empty($issued)): ?>
-                        <div class="empty-state">
-                            <i class="fas fa-id-card"></i>
-                            <h4>No generated IDs</h4>
-                            <p>There are currently no generated ID cards in the system.</p>
+            <?php else: ?>
+                <!-- BULK PRINT SECTION FOR GENERATED IDs -->
+                <form method="post" id="bulkPrintForm">
+                    <div class="bulk-section" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4><i class="fas fa-print"></i> Bulk Print IDs</h4>
+                        <p>Select multiple generated IDs and print them in batch</p>
+                        <div class="bulk-actions">
+                            <button type="submit" name="bulk_print" class="btn-admin btn-bulk">
+                                <i class="fas fa-print"></i> Print Selected IDs
+                            </button>
+                            <span id="bulkPrintSelectedCount" class="text-muted">0 selected</span>
                         </div>
-                    <?php else: ?>
-                        <div class="table-responsive">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID Number</th>
-                                        <th>Student Information</th>
-                                        <th>Issue Date</th>
-                                        <th>Expiry Date</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($issued as $row):
-                                        $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
-                                        // Use the actual ID field that exists - either 'id' or 'id_number'
-                                        $issuedId = $row['id'] ?? $row['id_number'] ?? 'N/A';
-                                    ?>
-                                    <tr>
-                                        <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
-                                        <td>
-                                            <div style="font-weight: 600;"><?= $name ?></div>
-                                            <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars(isset($row['email']) ? $row['email'] : '') ?></div>
-                                        </td>
-                                        <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
-                                        <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
-                                        <td>
-                                            <span class="status-badge status-generated">
-                                                <?= ucfirst($row['status']) ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons">
-                                                <?php
-                                                if ($row['status']==='generated'):
-                                                    $file = $row['digital_id_file'] ?? null;
-                                                    if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
-                                                        $safe   = htmlspecialchars($file);
-                                                        $jsSafe = addslashes($safe);
-                                                ?>
-                                                        <a href="../uploads/digital_id/<?= $safe ?>" target="_blank" class="btn-admin btn-view" title="View ID">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <a href="../uploads/digital_id/<?= $safe ?>" download class="btn-admin btn-generate" title="Download ID">
-                                                            <i class="fas fa-download"></i>
-                                                        </a>
-                                                        <button type="button" onclick="window.open('../uploads/digital_id/<?= $jsSafe ?>', '_blank').print();" class="btn-admin" title="Print ID">
-                                                            <i class="fas fa-print"></i>
-                                                        </button>
-                                                        <form method="post" style="display: inline;">
-                                                            <input type="hidden" name="issued_id" value="<?= $row['id_number'] ?>">
-                                                            <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
-                                                                <i class="fas fa-sync"></i>
-                                                            </button>
-                                                        </form>
-                                                    <?php else: ?>
-                                                        <span class="text-muted" style="font-size: 0.85rem;">File missing</span>
-                                                        <form method="post" style="display: inline;">
-                                                            <input type="hidden" name="issued_id" value="<?= $row['id_number'] ?>">
-                                                            <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
-                                                                <i class="fas fa-sync"></i> Regenerate
-                                                            </button>
-                                                        </form>
-                                                    <?php endif; ?>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-    </div>
+                    </div>
 
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th class="select-all-cell">
+                                        <input type="checkbox" id="selectAllGenerated" class="form-check-input">
+                                    </th>
+                                    <th>ID Number</th>
+                                    <th>Student Information</th>
+                                    <th>Issue Date</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($issued as $row): 
+                                    $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
+                                ?>
+                                <tr>
+                                    <td class="select-all-cell">
+                                        <input type="checkbox" name="selected_issued_ids[]" value="<?= htmlspecialchars($row['id_number']) ?>" class="form-check-input generated-checkbox">
+                                    </td>
+                                    <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
+                                    <td>
+                                        <div style="font-weight: 600;"><?= $name ?></div>
+                                        <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars(isset($row['email']) ? $row['email'] : '') ?></div>
+                                    </td>
+                                    <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
+                                    <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
+                                    <td>
+                                        <span class="status-badge status-generated">
+                                            <?= ucfirst($row['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <?php
+                                            if ($row['status']==='generated'):
+                                                $file = $row['digital_id_file'] ?? null;
+                                                if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
+                                                    $safe   = htmlspecialchars($file);
+                                                    $jsSafe = addslashes($safe);
+                                            ?>
+                                                    <a href="../uploads/digital_id/<?= $safe ?>" target="_blank" class="btn-admin btn-view" title="View ID">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="../uploads/digital_id/<?= $safe ?>" download class="btn-admin btn-generate" title="Download ID">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                    <button type="button" onclick="window.open('../uploads/digital_id/<?= $jsSafe ?>', '_blank').print();" class="btn-admin" title="Print ID">
+                                                        <i class="fas fa-print"></i>
+                                                    </button>
+                                                    <form method="post" style="display: inline;">
+                                                        <input type="hidden" name="issued_id" value="<?= htmlspecialchars($row['id_number']) ?>">
+                                                        <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
+                                                            <i class="fas fa-sync"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <span class="text-muted" style="font-size: 0.85rem;">File missing</span>
+                                                    <form method="post" style="display: inline;">
+                                                        <input type="hidden" name="issued_id" value="<?= htmlspecialchars($row['id_number']) ?>">
+                                                        <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
+                                                            <i class="fas fa-sync"></i> Regenerate
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+    </div>
+<?php if (isset($_SESSION['pending_print_ids']) && isset($_SESSION['show_print_modal'])): ?>
+<div id="printConfirmationModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
+        <h3><i class="fas fa-print"></i> Print Confirmation</h3>
+        <p>Your bulk ID PDF has been generated and opened in a new tab. Did you successfully print the <?= count($_SESSION['pending_print_ids']) ?> selected ID card(s)?</p>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+            <strong>Printed IDs:</strong>
+            <ul style="margin: 10px 0 0 20px;">
+                <?php foreach ($_SESSION['pending_print_ids'] as $id): ?>
+                    <li><?= htmlspecialchars($id) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        
+        <form method="post" style="display: inline;">
+            <?php foreach ($_SESSION['pending_print_ids'] as $id): ?>
+                <input type="hidden" name="printed_ids[]" value="<?= htmlspecialchars($id) ?>">
+            <?php endforeach; ?>
+            <button type="submit" name="confirm_print_completion" class="btn-admin btn-success">
+                <i class="fas fa-check"></i> Yes, Printing Successful
+            </button>
+        </form>
+        
+        <form method="post" style="display: inline; margin-left: 10px;">
+            <button type="submit" name="cancel_print" class="btn-admin btn-reject">
+                <i class="fas fa-times"></i> No, Printing Failed
+            </button>
+        </form>
+        
+        <div style="margin-top: 15px; font-size: 0.9em; color: #666;">
+            <i class="fas fa-info-circle"></i> 
+            Status will remain "generated" if printing failed. You can re-print later.
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-show the modal and open PDF in new tab
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('printConfirmationModal').style.display = 'block';
+        
+        // Open PDF in new tab
+        <?php if (isset($_SESSION['bulk_print_download_url'])): ?>
+            window.open('<?= $_SESSION['bulk_print_download_url'] ?>', '_blank');
+            <?php unset($_SESSION['bulk_print_download_url']); ?>
+        <?php endif; ?>
+        
+        // Clear the trigger flag
+        <?php unset($_SESSION['show_print_modal']); ?>
+    });
+</script>
+<?php endif; ?>
     <script>
         // Select All functionality
         document.addEventListener('DOMContentLoaded', function() {
@@ -634,7 +771,51 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
                 behavior: 'smooth'
             });
         }
+        const selectAllGenerated = document.getElementById('selectAllGenerated');
+if (selectAllGenerated) {
+    selectAllGenerated.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.generated-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkPrintSelectedCount();
+    });
+}
 
+// Update selected count for bulk print
+function updateBulkPrintSelectedCount() {
+    const checkboxes = document.querySelectorAll('.generated-checkbox');
+    const checked = document.querySelectorAll('.generated-checkbox:checked');
+    const countElement = document.getElementById('bulkPrintSelectedCount');
+    if (countElement) {
+        countElement.textContent = `${checked.length} selected`;
+    }
+}
+
+// Add event listeners to generated checkboxes
+const generatedCheckboxes = document.querySelectorAll('.generated-checkbox');
+generatedCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkPrintSelectedCount);
+});
+
+// Confirm bulk print
+const bulkPrintBtn = document.querySelector('button[name="bulk_print"]');
+if (bulkPrintBtn) {
+    bulkPrintBtn.addEventListener('click', function(e) {
+        const checked = document.querySelectorAll('.generated-checkbox:checked');
+        if (checked.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one ID to print.');
+            return false;
+        }
+        if (!confirm(`Print ${checked.length} selected ID cards? This will generate a PDF with all selected IDs.`)) {
+            e.preventDefault();
+        }
+    });
+}
+
+// Initial count update for bulk print
+updateBulkPrintSelectedCount();
         
     </script>
 

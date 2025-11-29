@@ -63,6 +63,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $import_errors = $result['errors'];
         }
     }
+
+    if (isset($_POST['assign_student_id'])) {
+    $email = $_POST['email'];
+    $studentId = $_POST['student_id'];
+    
+    if (!empty($email) && !empty($studentId)) {
+        $success = $studentModel->assignStudentID($email, $studentId);
+        
+        if ($success) {
+            $message = "Student ID assigned successfully!";
+        } else {
+            $error = "Error assigning Student ID. The ID might already be in use.";
+        }
+    } else {
+        $error = "Email and Student ID are required.";
+    }
+}
     
     // Bulk Actions
     if (isset($_POST['bulk_action'])) {
@@ -270,6 +287,40 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
             </div>
         </div>
 
+        <!-- Quick Actions Section -->
+        <div class="action-section">
+            <h3><i class="fas fa-plus-circle"></i> Quick Actions</h3>
+            <p>Add new students or import multiple records via CSV</p>
+            
+            <div class="form-row">
+                <!-- Add Student Form -->
+                <form method="POST" class="form-group" style="flex: 2;">
+                    <div class="form-row">
+                        <input type="text" name="first_name" class="form-input" placeholder="First Name" required>
+                        <input type="text" name="last_name" class="form-input" placeholder="Last Name" required>
+                        <input type="email" name="email" class="form-input" placeholder="Email Address" required>
+                        <button type="submit" name="add_student" class="btn btn-primary" style="height: 46px;">
+                            <i class="fas fa-user-plus"></i> Add Student
+                        </button>
+                    </div>
+                </form>
+
+                <!-- CSV Import Form -->
+                <form method="POST" enctype="multipart/form-data" class="form-group" style="flex: 1;">
+                    <div class="form-row">
+                        <input type="file" name="csv_file" class="form-input" accept=".csv" required 
+                               style="border: 2px dashed var(--school-gray); padding: 10px;">
+                        <button type="submit" name="import_students" class="btn btn-secondary" style="height: 46px;">
+                            <i class="fas fa-file-import"></i> Import CSV
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">
+                <i class="fas fa-info-circle"></i> CSV format: email, student_id, first_name, last_name
+            </p>
+        </div>
+
         <!-- Search and Filter Section -->
         <div class="admin-card">
             <div class="admin-card-header">
@@ -288,6 +339,8 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                         <i class="fas fa-times"></i> Clear
                     </a>
                 </form>
+
+                
 
                 <!-- Filter Form -->
                 <form method="GET" class="filter-form">
@@ -341,40 +394,6 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                     </div>
                 </form>
             </div>
-        </div>
-
-        <!-- Quick Actions Section -->
-        <div class="action-section">
-            <h3><i class="fas fa-plus-circle"></i> Quick Actions</h3>
-            <p>Add new students or import multiple records via CSV</p>
-            
-            <div class="form-row">
-                <!-- Add Student Form -->
-                <form method="POST" class="form-group" style="flex: 2;">
-                    <div class="form-row">
-                        <input type="text" name="first_name" class="form-input" placeholder="First Name" required>
-                        <input type="text" name="last_name" class="form-input" placeholder="Last Name" required>
-                        <input type="email" name="email" class="form-input" placeholder="Email Address" required>
-                        <button type="submit" name="add_student" class="btn btn-primary" style="height: 46px;">
-                            <i class="fas fa-user-plus"></i> Add Student
-                        </button>
-                    </div>
-                </form>
-
-                <!-- CSV Import Form -->
-                <form method="POST" enctype="multipart/form-data" class="form-group" style="flex: 1;">
-                    <div class="form-row">
-                        <input type="file" name="csv_file" class="form-input" accept=".csv" required 
-                               style="border: 2px dashed var(--school-gray); padding: 10px;">
-                        <button type="submit" name="import_students" class="btn btn-secondary" style="height: 46px;">
-                            <i class="fas fa-file-import"></i> Import CSV
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">
-                <i class="fas fa-info-circle"></i> CSV format: email, student_id, first_name, last_name
-            </p>
         </div>
 
         <!-- Students List -->
@@ -440,16 +459,15 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                                         <div style="font-size: 0.85rem;">
                                             <?php if (empty($student['student_id'])): ?>
                                             <form method="POST" class="inline-form" style="margin-top: 5px;">
-                                                <input type="hidden" name="action" value="assign_id">
-                                                <input type="hidden" name="email" value="<?= $student['email'] ?>">
-                                                <div style="display: flex; gap: 5px;">
-                                                    <input type="text" name="student_id" class="form-input" 
-                                                           placeholder="Enter ID" required style="padding: 4px 8px; font-size: 0.8rem;">
-                                                    <button type="submit" class="btn btn-small btn-primary">
-                                                        <i class="fas fa-id-card"></i>
-                                                    </button>
-                                                </div>
-                                            </form>
+    <input type="hidden" name="email" value="<?= $student['email'] ?>">
+    <div style="display: flex; gap: 5px;">
+        <input type="text" name="student_id" class="form-input" 
+               placeholder="Enter ID" required style="padding: 4px 8px; font-size: 0.8rem;">
+        <button type="submit" name="assign_student_id" class="btn btn-small btn-primary">
+            <i class="fas fa-id-card"></i>
+        </button>
+    </div>
+</form>
                                             <?php else: ?>
                                             <span style="color: var(--school-green); font-weight: 500;">
                                                 <i class="fas fa-id-card"></i> <?= htmlspecialchars($student['student_id']) ?>

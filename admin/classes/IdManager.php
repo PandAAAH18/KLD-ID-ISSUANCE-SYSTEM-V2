@@ -1,6 +1,16 @@
 <?php
+require_once __DIR__ . '/../../includes/config.php';
 require_once __DIR__ . '/../../includes/User.php';
 require_once __DIR__ . '/AuditLogger.php';
+require_once __DIR__.'/../../vendor/autoload.php';
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use Endroid\QrCode\src\Writer\PngWriter;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Color\Color;
+use Endroid\QrCode\Logo\Logo;
 
 class IdManager extends User
 {
@@ -222,250 +232,234 @@ class IdManager extends User
         }
     }
 
-    public function generateId(int $requestId): bool
-    {
-        try {
-            $this->db->beginTransaction();
+    public function generateId(int $requestId): void
+{
+    $db = $this->getDb();
 
-            // Get request + student data
-            $stmt = $this->db->prepare("SELECT r.student_id, s.email, s.first_name, s.last_name,
-                                               s.course, s.year_level, s.photo, s.signature,
-                                               s.emergency_contact, s.blood_type
-                                        FROM id_requests r
-                                        JOIN student s ON s.id = r.student_id
-                                        WHERE r.id = ? AND r.status = 'approved'");
-            $stmt->execute([$requestId]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$row) {
-                $this->db->rollBack();
-                return false;
-            }
+    /* 1.  pull request + student */
+    $stmt = $db->prepare("SELECT r.student_id, s.email, s.first_name, s.last_name,
+                                 s.course, s.year_level, s.photo, s.signature,
+                                 s.emergency_contact, s.blood_type
+                          FROM   id_requests r
+                          JOIN   student      s ON s.id = r.student_id
+                          WHERE  r.id = ? AND r.status = 'approved'");
+    $stmt->execute([$requestId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) return;
 
-            $studentId = $row['student_id'];
+    $studentId = $row['student_id'];
 
-            // Generate next ID number
-            $last = $this->db->query("SELECT id_number FROM issued_ids ORDER BY id_number DESC LIMIT 1")->fetchColumn();
-            $next = $last ? (intval(substr($last, -6)) + 1) : 100000;
-            $idNumber = date('Y').str_pad($next, 6, '0', STR_PAD_LEFT);
-            $expiry = date('Y-m-d', strtotime('+4 years'));
+    /* 2.  next id number */
+    $last = $db->query("SELECT id_number FROM issued_ids ORDER BY id_number DESC LIMIT 1")->fetchColumn();
+    $next = $last ? (intval(substr($last, -6)) + 1) : 100000;
+    $idNumber = date('Y').str_pad($next, 6, '0', STR_PAD_LEFT);
+    $expiry   = date('Y-m-d', strtotime('+4 years'));
 
-            // Generate QR code
-            $verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
-            $qrName = $idNumber.'.png';
-            $qrPath = __DIR__.'/../uploads/qr/'.$qrName;
+    /* 3. QR code ------------------------------------------------------------- */
+$verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
 
-            $writer = new \Endroid\QrCode\Writer\PngWriter();
-            $qrCode = new \Endroid\QrCode\QrCode(
-                data: $verifyUrl,
-                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-                errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
-                size: 300,
-                margin: 10,
-                foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-                backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
-            );
+$qrName = $idNumber.'.png';          // file name we will store & reference
+$qrPath = __DIR__.'/../../uploads/qr/'.$qrName;
 
-            $logo = new \Endroid\QrCode\Logo\Logo(
-                path: __DIR__.'/../assets/images/kldlogo.png',
-                resizeToWidth: 50,
-                punchoutBackground: true
-            );
+/* -------  Endroid QrCode  ------- */
+$writer = new \Endroid\QrCode\Writer\PngWriter();
 
-            $result = $writer->write($qrCode, $logo);
-            $result->saveToFile($qrPath);
+$qrCode = new \Endroid\QrCode\QrCode(
+    data: $verifyUrl,                                        // verification link
+    encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+    errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+    size: 300,
+    margin: 10,
+    foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+    backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+);
 
-            // Generate PDF
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $dompdf = new Dompdf($options);
+// optional logo – comment out if you don’t want it
+$logo = new \Endroid\QrCode\Logo\Logo(
+    path: __DIR__.'/../../assets/images/kldlogo.png',
+    resizeToWidth: 50,
+    punchoutBackground: true
+);
 
-            $front = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:0 auto;text-align:center;">
-                <h3>SCHOOL NAME</h3>
-                <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:90px;height:90px;object-fit:cover;border:1px solid #ccc;"><br>
-                <b>'.$row['first_name'].' '.$row['last_name'].'</b><br>
-                '.$row['course'].' - '.$row['year_level'].'<br>
-                ID: '.$idNumber.'<br>
-                Emergency: '.$row['emergency_contact'].'<br>
-                Blood: '.$row['blood_type'].'
-            </div>';
+$result = $writer->write($qrCode, $logo);   // label omitted – add if desired
+$result->saveToFile($qrPath);               // physical file for local storage
+/* -------------------------------- */
 
-            $back = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:30px auto;text-align:center;">
-                <p style="margin-top:10px;">If found please return to school registrar.</p>
-                <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:80px;"><br>
-                <small>Signature</small><br>
-                <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:120px;">
-            </div>';
 
-            $dompdf->loadHtml($front.$back);
-            $dompdf->setPaper('CR80', 'landscape');
-            $dompdf->render();
+    $options = new \Dompdf\Options();
+$options->set('isRemoteEnabled', true);
+$dompdf = new \Dompdf\Dompdf($options);
 
-            // Save PDF
-            $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
-            $filePath = __DIR__.'/../uploads/digital_id/'.$fileName;
-            if (!is_dir(dirname($filePath))) mkdir(dirname($filePath), 0755, true);
-            file_put_contents($filePath, $dompdf->output());
+// Increase the height of the ID cards
+$cardHeight = '300px'; // Increased from 214px
 
-            // Insert issued ID record
-            $ins = $this->db->prepare("INSERT INTO issued_ids
-                            (user_id, id_number, issue_date, expiry_date, status, digital_id_file)
-                            VALUES (?, ?, NOW(), ?, 'generated', ?)");
-            $ins->execute([$studentId, $idNumber, $expiry, $fileName]);
+$front = '
+<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+    <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+    <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
+    <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
+    <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
+    <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
+</div>';
 
-            $issuedId = $this->db->lastInsertId();
+$back = '
+<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+    <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
+    <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
+    <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+</div>';
 
-            // Update request status
-            $this->db->prepare("UPDATE id_requests SET status='generated', updated_at=NOW() WHERE id=?")
-                   ->execute([$requestId]);
+// Wrap both divs in a container
+$html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
 
-            // Log the action
-            $this->auditLogger->logAction(
-                'generate_digital_id',
-                $requestId,
-                'id_requests',
-                ['status' => 'approved'],
-                [
-                    'status' => 'generated',
-                    'issued_id' => $issuedId,
-                    'id_number' => $idNumber,
-                    'digital_file' => $fileName,
-                    'qr_code' => $qrName
-                ]
-            );
+$dompdf->loadHtml($html);
+$dompdf->setPaper('CR80', 'landscape'); // Keep CR80 paper size
+$dompdf->render();
 
-            $this->db->commit();
-            return true;
+    /* 5.  save PDF */
+    $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
+    $filePath = __DIR__.'/../../uploads/digital_id/'.$fileName;
+    if (!is_dir(dirname($filePath))) mkdir(dirname($filePath), 0755, true);
+    file_put_contents($filePath, $dompdf->output());
 
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Error generating digital ID for request {$requestId}: " . $e->getMessage());
+    /* 6.  insert row */
+    $ins = $db->prepare("INSERT INTO issued_ids
+                        (user_id, id_number, issue_date, expiry_date, status, digital_id_file)
+                        VALUES (?, ?, NOW(), ?, 'generated', ?)");
+    $ins->execute([$studentId, $idNumber, $expiry, $fileName]);
+
+    /* 7.  close request */
+    $db->prepare("UPDATE id_requests SET status='generated', updated_at=NOW() WHERE id=?")
+       ->execute([$requestId]);
+}
+
+   public function regenerateId(string $idNumber): bool
+{
+    error_log("DEBUG regenerateId: called with idNumber='{$idNumber}' (type: " . gettype($idNumber) . ")");
+
+    try {
+        $db = $this->db; // Use class $db directly
+
+        // 1. Get existing issued ID + student data
+        $stmt = $db->prepare("SELECT i.id_number, i.digital_id_file,
+                                     s.email, s.first_name, s.last_name,
+                                     s.course, s.year_level, s.photo, s.signature,
+                                     s.emergency_contact, s.blood_type, s.student_id, s.emergency_contact_name
+                              FROM issued_ids i
+                              JOIN student s ON s.id = i.user_id
+                              WHERE i.id_number = ?");
+        $stmt->execute([$idNumber]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            error_log("DEBUG regenerateId: No row found for id_number '{$idNumber}'");
             return false;
         }
-    }
 
-    public function regenerateId(int $issuedId): bool
-    {
-        try {
-            // Get issued ID data
-            $stmt = $this->db->prepare("SELECT i.id_number, i.digital_id_file,
-                                               s.email, s.first_name, s.last_name,
-                                               s.course, s.year_level, s.photo, s.signature,
-                                               s.emergency_contact, s.blood_type
-                                        FROM issued_ids i
-                                        JOIN student s ON s.id = i.user_id
-                                        WHERE i.id = ?");
-            $stmt->execute([$issuedId]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$row) return false;
+        $oldDigitalFile = $row['digital_id_file'];
 
-            $idNumber = $row['id_number'];
-            $oldDigitalFile = $row['digital_id_file'];
+        // 2. Delete old files (consistent naming: no "qr_" prefix)
+        $qrName = $idNumber . '.png';
+        $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
-            // Delete old files
-            if ($oldDigitalFile && file_exists(__DIR__.'/../uploads/digital_id/'.$oldDigitalFile)) {
-                unlink(__DIR__.'/../uploads/digital_id/'.$oldDigitalFile);
+        if ($oldDigitalFile) {
+            $oldPdfPath = __DIR__ . '/../../uploads/digital_id/' . $oldDigitalFile;
+            if (file_exists($oldPdfPath)) {
+                unlink($oldPdfPath);
             }
-            if (file_exists(__DIR__.'/../uploads/qr/qr_'.$idNumber.'.png')) {
-                unlink(__DIR__.'/../uploads/qr/qr_'.$idNumber.'.png');
-            }
+        }
+        if (file_exists($qrPath)) {
+            unlink($qrPath);
+        }
 
-            // Generate new QR code
-            $verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
-            $qrName = 'qr_'.$idNumber.'.png';
-            $qrPath = __DIR__.'/../uploads/qr/'.$qrName;
+        // 3. Regenerate QR code
+        $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
 
-            $writer = new \Endroid\QrCode\Writer\PngWriter();
-            $qrCode = new \Endroid\QrCode\QrCode(
-                data: $verifyUrl,
-                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-                errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
-                size: 300,
-                margin: 10,
-                foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-                backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
-            );
+        if (!is_dir(dirname($qrPath))) {
+            mkdir(dirname($qrPath), 0755, true);
+        }
 
-            $logoPath = __DIR__.'/../assets/images/kldlogo.png';
-            if (file_exists($logoPath)) {
-                $logo = new \Endroid\QrCode\Logo\Logo(
-                    path: $logoPath,
-                    resizeToWidth: 50,
-                    punchoutBackground: true
-                );
-                $result = $writer->write($qrCode, $logo);
-            } else {
-                $result = $writer->write($qrCode);
-            }
+        $writer = new \Endroid\QrCode\Writer\PngWriter();
+        $qrCode = new \Endroid\QrCode\QrCode(
+            data: $verifyUrl,
+            encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+            errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+            size: 300,
+            margin: 10,
+            foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+            backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+        );
 
-            if (!is_dir(dirname($qrPath))) {
-                mkdir(dirname($qrPath), 0755, true);
-            }
+        $logoPath = __DIR__ . '/../../assets/images/kldlogo.png';
+        $logo     = file_exists($logoPath)
+            ? new \Endroid\QrCode\Logo\Logo(path: $logoPath, resizeToWidth: 50, punchoutBackground: true)
+            : null;
 
-            $result->saveToFile($qrPath);
+        $result = $writer->write($qrCode, $logo);
+        $result->saveToFile($qrPath);
 
-            // Rebuild PDF
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $dompdf = new Dompdf($options);
+      $options = new \Dompdf\Options();
+$options->set('isRemoteEnabled', true);
+$dompdf = new \Dompdf\Dompdf($options);
 
-            $front = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:0 auto;text-align:center;">
-                <h3>SCHOOL NAME</h3>
-                <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:90px;height:90px;object-fit:cover;border:1px solid #ccc;"><br>
-                <b>'.$row['first_name'].' '.$row['last_name'].'</b><br>
-                '.$row['course'].' - '.$row['year_level'].'<br>
-                ID: '.$idNumber.'<br>
-                Emergency: '.$row['emergency_contact'].'<br>
-                Blood: '.$row['blood_type'].'
-            </div>';
+// Increase the height of the ID cards
+$cardHeight = '300px'; // Increased from 214px
 
-            $back = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:30px auto;text-align:center;">
-                <p style="margin-top:10px;">If found please return to school registrar.</p>
-                <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:80px;"><br>
-                <small>Signature</small><br>
-                <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:120px;">
-            </div>';
+$front = '
+<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+    <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+    <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
+    <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
+    <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
+    <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
+</div>';
 
-            $dompdf->loadHtml($front.$back);
-            $dompdf->setPaper('CR80', 'landscape');
-            $dompdf->render();
+$back = '
+<div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+    <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
+    <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
+    <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+</div>';
 
-            // Save new PDF
-            $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
-            $filePath = __DIR__.'/../uploads/digital_id/'.$fileName;
-            file_put_contents($filePath, $dompdf->output());
+// Wrap both divs in a container
+$html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
 
-            // Update issued ID record
-            $updateStmt = $this->db->prepare("UPDATE issued_ids
-                              SET digital_id_file = ?, issue_date = NOW()
-                              WHERE id = ?");
-            $updateStmt->execute([$fileName, $issuedId]);
+$dompdf->loadHtml($html);
+$dompdf->setPaper('CR80', 'landscape'); // Keep CR80 paper size
+$dompdf->render();
 
-            // Log the action
+        // 5. Save new PDF
+        $newFileName = $row['email'] . '_' . date('YmdHis') . '.pdf';
+        $newFilePath = __DIR__ . '/../../uploads/digital_id/' . $newFileName;
+        if (!is_dir(dirname($newFilePath))) {
+            mkdir(dirname($newFilePath), 0755, true);
+        }
+        file_put_contents($newFilePath, $dompdf->output());
+
+        // 6. Update database record
+        $update = $db->prepare("UPDATE issued_ids
+                                SET digital_id_file = ?, issue_date = NOW()
+                                WHERE id_number = ?");
+        $update->execute([$newFileName, $idNumber]);
+
+        // 7. Audit log
+        if (method_exists($this, 'auditLogger') && $this->auditLogger) {
             $this->auditLogger->logAction(
                 'regenerate_id',
-                $issuedId,
+                $idNumber,
                 'issued_ids',
                 ['digital_id_file' => $oldDigitalFile],
-                [
-                    'digital_id_file' => $fileName,
-                    'qr_code' => $qrName
-                ]
+                ['digital_id_file' => $newFileName, 'qr_code' => $qrName]
             );
-
-            return true;
-
-        } catch (Exception $e) {
-            error_log("Error regenerating ID {$issuedId}: " . $e->getMessage());
-            return false;
         }
-    }
 
+        return true;
+
+    } catch (Exception $e) {
+        error_log("Regenerate ID failed (ID {$issuedId}): " . $e->getMessage());
+        return false;
+    }
+}
     /* ==================== BULK ID GENERATION ==================== */
 
     public function bulkGenerateIds(array $requestIds): array
@@ -628,120 +622,112 @@ class IdManager extends User
      * Generate QR Code for ID
      */
     private function generateQRCode(string $idNumber): array
-    {
-        try {
-            $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
-            $qrName = 'qr_' . $idNumber . '.png';
-            $qrPath = __DIR__ . '/../uploads/qr/' . $qrName;
+{
+    try {
+        $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
+        $qrName = $idNumber . '.png'; // Consistent with generateId and regenerateId
+        $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
-            // Create directory if it doesn't exist
-            if (!is_dir(dirname($qrPath))) {
-                mkdir(dirname($qrPath), 0755, true);
-            }
-
-            // Generate QR code using your existing method
-            $writer = new \Endroid\QrCode\Writer\PngWriter();
-            
-            $qrCode = new \Endroid\QrCode\QrCode(
-                data: $verifyUrl,
-                encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-                errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
-                size: 300,
-                margin: 10,
-                foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-                backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
-            );
-
-            // Optional: Add logo if available
-            $logoPath = __DIR__ . '/../assets/images/kldlogo.png';
-            if (file_exists($logoPath)) {
-                $logo = new \Endroid\QrCode\Logo\Logo(
-                    path: $logoPath,
-                    resizeToWidth: 50,
-                    punchoutBackground: true
-                );
-                $result = $writer->write($qrCode, $logo);
-            } else {
-                $result = $writer->write($qrCode);
-            }
-
-            $result->saveToFile($qrPath);
-
-            return [
-                'success' => true,
-                'filename' => $qrName,
-                'filepath' => $qrPath
-            ];
-
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+        // Create directory if it doesn't exist
+        if (!is_dir(dirname($qrPath))) {
+            mkdir(dirname($qrPath), 0755, true);
         }
+
+        // Generate QR code - use the same approach as generateId function
+        $writer = new \Endroid\QrCode\Writer\PngWriter();
+        
+        $qrCode = new \Endroid\QrCode\QrCode(
+            data: $verifyUrl,
+            encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+            errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+            size: 300,
+            margin: 10,
+            foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+            backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+        );
+
+        // Optional: Add logo if available - same as generateId
+        $logoPath = __DIR__ . '/../../assets/images/kldlogo.png';
+        $logo = file_exists($logoPath)
+            ? new \Endroid\QrCode\Logo\Logo(path: $logoPath, resizeToWidth: 50, punchoutBackground: true)
+            : null;
+
+        $result = $writer->write($qrCode, $logo);
+        $result->saveToFile($qrPath);
+
+        return [
+            'success' => true,
+            'filename' => $qrName,
+            'filepath' => $qrPath
+        ];
+
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
     }
+}
 
     /**
      * Generate ID PDF
      */
     private function generateIdPDF(array $studentData, string $idNumber, string $qrFilename): array
-    {
-        try {
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $dompdf = new Dompdf($options);
+{
+    try {
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
 
-            // Front of ID
-            $front = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:0 auto;text-align:center;padding:10px;font-family:Arial;">
-                <h3 style="margin:5px 0;">KLD - ID CARD</h3>
-                <img src="' . APP_URL . '/uploads/student_photos/' . ($studentData['photo'] ?? 'default.png') . '" 
-                     style="width:80px;height:80px;object-fit:cover;border:1px solid #ccc;border-radius:5px;"><br>
-                <b style="font-size:14px;">' . htmlspecialchars($studentData['first_name'] . ' ' . $studentData['last_name']) . '</b><br>
-                <span style="font-size:12px;">' . htmlspecialchars($studentData['course'] ?? 'N/A') . ' - ' . htmlspecialchars($studentData['year_level'] ?? 'N/A') . '</span><br>
-                <span style="font-size:11px;">ID: ' . $idNumber . '</span><br>
-                <span style="font-size:10px;">Emergency: ' . htmlspecialchars($studentData['emergency_contact'] ?? 'N/A') . '</span><br>
-                <span style="font-size:10px;">Blood Type: ' . htmlspecialchars($studentData['blood_type'] ?? 'N/A') . '</span>
-            </div>';
+        // Increase the height of the ID cards
+        $cardHeight = '300px';
 
-            // Back of ID
-            $back = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:30px auto;text-align:center;padding:10px;font-family:Arial;">
-                <p style="margin-top:10px;font-size:12px;">If found please return to school registrar.</p>
-                <img src="' . APP_URL . '/uploads/qr/' . $qrFilename . '" style="width:70px;"><br>
-                <small>Signature</small><br>
-                <img src="' . APP_URL . '/uploads/student_signatures/' . ($studentData['signature'] ?? 'default.png') . '" 
-                     style="width:100px;height:40px;object-fit:contain;">
-                <p style="font-size:10px;margin-top:10px;">Valid until: ' . date('M Y', strtotime('+4 years')) . '</p>
-            </div>';
+        $front = '
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+            <img src="'.APP_URL.'/uploads/student_photos/'.$studentData['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+            <b style="font-size:12px;">'.$studentData['first_name'].' '.$studentData['last_name'].'</b><br>
+            <span style="font-size:10px;">'.$studentData['course'].' - '.$studentData['year_level'].'</span><br>
+            <span style="font-size:10px;">ID: '.$studentData['student_id'].'</span><br>
+            <img src="'.APP_URL.'/uploads/student_signatures/'.$studentData['signature'].'" style="width:100px;margin-top:50px;">
+        </div>';
 
-            $dompdf->loadHtml($front . $back);
-            $dompdf->setPaper('CR80', 'landscape');
-            $dompdf->render();
+        $back = '
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+            <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$studentData['emergency_contact_name'].'</span><br>
+            <span style="font-size:13px;display:inline-block;">'.$studentData['emergency_contact'].'</span><br>
+            <img src="'.APP_URL.'/uploads/qr/'.$qrFilename.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+        </div>';
 
-            // Save PDF
-            $fileName = $studentData['email'] . '_' . $idNumber . '.pdf';
-            $filePath = __DIR__ . '/../uploads/digital_id/' . $fileName;
-            
-            if (!is_dir(dirname($filePath))) {
-                mkdir(dirname($filePath), 0755, true);
-            }
-            
-            file_put_contents($filePath, $dompdf->output());
+        // Wrap both divs in a container
+        $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
 
-            return [
-                'success' => true,
-                'filename' => $fileName,
-                'filepath' => $filePath
-            ];
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('CR80', 'landscape');
+        $dompdf->render();
 
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+        // Save PDF - use consistent naming
+        $fileName = $studentData['email'] . '_' . date('YmdHis') . '.pdf';
+        $filePath = __DIR__ . '/../../uploads/digital_id/' . $fileName;
+        
+        if (!is_dir(dirname($filePath))) {
+            mkdir(dirname($filePath), 0755, true);
         }
+        
+        file_put_contents($filePath, $dompdf->output());
+
+        return [
+            'success' => true,
+            'filename' => $fileName,
+            'filepath' => $filePath
+        ];
+
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
     }
+}
 
     /**
      * Get approved requests for bulk processing
@@ -783,4 +769,241 @@ class IdManager extends User
         $stmt->execute([$issuedId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
+
+  public function bulkPrintIds(array $idNumbers): array
+{
+    try {
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $dompdf = new Dompdf($options);
+
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .page {
+                    width: 100%;
+                }
+                .id-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 30px;
+                }
+                .id-cell {
+                    width: 50%;
+                    vertical-align: top;
+                    padding: 10px;
+                }
+                .id-card {
+                    width: 340px;
+                    height: 300px;
+                    background: url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;
+                    padding: 20px 15px;
+                    box-sizing: border-box;
+                    text-align: center;
+                    margin-bottom: 15px;
+                }
+                .id-card.back {
+                    background: url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;
+                }
+                .student-photo {
+                    width: 75px;
+                    height: 75px;
+                    object-fit: cover;
+                    border: 1px solid #ccc;
+                    margin-top: 70px;
+                    margin-bottom: 10px;
+                }
+                .student-name {
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin: 5px 0;
+                }
+                .student-details {
+                    font-size: 10px;
+                    margin: 2px 0;
+                }
+                .student-signature {
+                    width: 100px;
+                    margin-top: 50px;
+                }
+                .emergency-contact {
+                    font-size: 13px;
+                    margin-top: 95px;
+                    display: block;
+                }
+                .emergency-number {
+                    font-size: 13px;
+                    margin-top: 5px;
+                    display: block;
+                }
+                .qr-code {
+                    width: 70px;
+                    margin-top: 40px;
+                    margin-left: 95px;
+                }
+                .page-break {
+                    page-break-after: always;
+                }
+            </style>
+        </head>
+        <body>';
+        
+        $count = 0;
+        $processedIds = [];
+        $totalIds = count($idNumbers);
+        
+        for ($i = 0; $i < $totalIds; $i += 2) {
+            $html .= '<div class="page">';
+            $html .= '<table class="id-table"><tr>';
+            
+            // Process 2 IDs per page
+            for ($j = 0; $j < 2; $j++) {
+                $index = $i + $j;
+                if ($index >= $totalIds) {
+                    // Empty cell if no more IDs
+                    $html .= '<td class="id-cell"></td>';
+                    continue;
+                }
+                
+                $idNumber = $idNumbers[$index];
+                $idData = $this->getIssuedIdDataByNumber($idNumber);
+                if (!$idData) {
+                    error_log("ID data not found for: " . $idNumber);
+                    $html .= '<td class="id-cell"></td>';
+                    continue;
+                }
+                
+                $processedIds[] = $idNumber;
+                $count++;
+                
+                $html .= '<td class="id-cell">';
+                $html .= '
+                    <!-- Front Card -->
+                    <div class="id-card">
+                        <img src="'.APP_URL.'/uploads/student_photos/'.$idData['photo'].'" class="student-photo">
+                        <div class="student-name">'.$idData['first_name'].' '.$idData['last_name'].'</div>
+                        <div class="student-details">'.$idData['course'].' - '.$idData['year_level'].'</div>
+                        <div class="student-details">ID: '.$idData['student_id'].'</div>
+                        <img src="'.APP_URL.'/uploads/student_signatures/'.$idData['signature'].'" class="student-signature">
+                    </div>
+                    
+                    <!-- Back Card -->
+                    <div class="id-card back">
+                        <span class="emergency-contact">'.$idData['emergency_contact_name'].'</span>
+                        <span class="emergency-number">'.$idData['emergency_contact'].'</span>
+                        <img src="'.APP_URL.'/uploads/qr/'.$idNumber.'.png" class="qr-code">
+                    </div>
+                </td>';
+            }
+            
+            $html .= '</tr></table>';
+            $html .= '</div>'; // Close page
+            
+            // Add page break if there are more IDs to process
+            if ($i + 2 < $totalIds) {
+                $html .= '<div class="page-break"></div>';
+            }
+        }
+        
+        $html .= '
+        </body>
+        </html>';
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        // Generate filename
+        $filename = 'bulk_ids_' . date('Ymd_His') . '.pdf';
+        $filePath = __DIR__ . '/../../uploads/bulk_print/' . $filename;
+        
+        if (!is_dir(dirname($filePath))) {
+            mkdir(dirname($filePath), 0755, true);
+        }
+        
+        file_put_contents($filePath, $dompdf->output());
+
+        return [
+            'success' => true,
+            'filename' => $filename,
+            'filepath' => $filePath,
+            'count' => $count,
+            'id_numbers' => $processedIds
+        ];
+
+    } catch (Exception $e) {
+        error_log("Bulk print failed: " . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
+    }
+}
+
+// New method to mark IDs as physically printed
+public function markIdsAsPrinted(array $idNumbers): bool
+{
+    try {
+        $this->db->beginTransaction();
+        
+        $sql = "UPDATE issued_ids SET status = 'printed' WHERE id_number = ? AND status = 'generated'";
+        $stmt = $this->db->prepare($sql);
+        
+        foreach ($idNumbers as $idNumber) {
+            $stmt->execute([$idNumber]);
+            
+            // Log the action
+            $this->auditLogger->logAction(
+                'mark_id_printed',
+                $idNumber,
+                'issued_ids',
+                ['status' => 'generated'],
+                ['status' => 'printed']
+            );
+        }
+        
+        $this->db->commit();
+        return true;
+        
+    } catch (Exception $e) {
+        $this->db->rollBack();
+        error_log("Error marking IDs as printed: " . $e->getMessage());
+        return false;
+    }
+}
+
+private function getIssuedIdDataByNumber(string $idNumber): ?array
+{
+    $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level, 
+                   s.photo, s.signature, s.emergency_contact, s.blood_type, 
+                   s.student_id, s.emergency_contact_name
+            FROM issued_ids i
+            JOIN student s ON s.id = i.user_id
+            WHERE i.id_number = ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$idNumber]);
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+private function markIdAsPrintedInBulk(string $idNumber): bool
+{
+    try {
+        $sql = "UPDATE issued_ids SET status = 'printed' WHERE id_number = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([$idNumber]);
+    } catch (Exception $e) {
+        error_log("Error marking ID as printed in bulk: " . $e->getMessage());
+        return false;
+    }
+}
+    
 }

@@ -1,46 +1,70 @@
 <?php
 require_once 'includes/config.php';
 require_once 'includes/user.php';
+require_once 'admin/classes/EmailVerification.php';
+
+$error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $userObj = new User();
-    $user = $userObj->findByEmail($_POST['email']);
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    if ($user && password_verify($_POST['password'], $user['password_hash'])) {
-        $_SESSION['user_id']   = $user['user_id'];
-        $_SESSION['email']     = $user['email'];
-        $_SESSION['user_type'] = $user['role'];          // admin | student | teacher
+    if (empty($email) || empty($password)) {
+        $error = 'Email and password are required.';
+    } else {
+        try {
+            $userObj = new User();
+            $user = $userObj->findByEmail($email);
 
-        if ($user['role'] === 'student') {
-            /* ----------  NEW: make sure student row exists  ---------- */
-            $pdo = $userObj->getDb();          // or however you expose the PDO object
-            $stmt = $pdo->prepare(
-                'INSERT IGNORE INTO student (email) VALUES (:email)'
-            );
-            $stmt->execute([':email' => $user['email']]);
-            /* --------------------------------------------------------- */
+            if ($user && password_verify($password, $user['password_hash'])) {
+                // Check if email is verified (skip in dev mode if REQUIRE_EMAIL_VERIFICATION is false)
+                $requireVerification = defined('REQUIRE_EMAIL_VERIFICATION') ? REQUIRE_EMAIL_VERIFICATION : true;
+                
+                if ($requireVerification && !$user['is_verified']) {
+                    $error = 'Please verify your email address first. Check your inbox for the verification link.';
+                    $_SESSION['pending_verification_email'] = $email;
+                } else {
+                    // Email verified, proceed with login
+                    $_SESSION['user_id']   = $user['user_id'];
+                    $_SESSION['email']     = $user['email'];
+                    $_SESSION['user_type'] = $user['role'];          // admin | student | teacher
 
-            $student = $userObj->findStudentbyEmail($user['email']);
-            $_SESSION['student_id'] = $student['id'];
+                    if ($user['role'] === 'student') {
+                        // Ensure student row exists
+                        $pdo = $userObj->getDb();
+                        $stmt = $pdo->prepare(
+                            'INSERT IGNORE INTO student (email) VALUES (:email)'
+                        );
+                        $stmt->execute([':email' => $user['email']]);
 
-            // make sure the profile is complete
-            if (empty($student['course'])) {
-                header('Location: includes/complete_profile.php');
-                exit();
+                        $student = $userObj->findStudentbyEmail($user['email']);
+                        $_SESSION['student_id'] = $student['id'];
+
+                        // Check if profile is complete
+                        if (empty($student['course'])) {
+                            header('Location: includes/complete_profile.php');
+                            exit();
+                        }
+                    }
+
+                    // Redirect based on role
+                    $goto = $user['role'] === 'admin'
+                          ? 'admin/admin_dashboard.php'
+                          : 'student/student_home.php';
+                    header("Location: $goto");
+                    exit();
+                }
+            } else {
+                $error = 'Invalid email or password.';
             }
+        } catch (\Exception $e) {
+            error_log("Login error: " . $e->getMessage());
+            $error = 'An error occurred during login. Please try again.';
         }
-
-        // everyone else (or student with complete profile)
-        $goto = $user['role'] === 'admin'
-              ? 'admin/admin_dashboard.php'
-              : 'student/student_home.php';
-        header("Location: $goto");
-        exit();
     }
-
-    $error = 'Invalid email or password.';
 }
 ?>
+
 <!doctype html>
 <html lang="en">
 <head>
