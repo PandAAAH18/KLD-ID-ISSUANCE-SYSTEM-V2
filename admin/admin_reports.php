@@ -361,182 +361,188 @@ require_once 'admin_header.php';
     </div>
 
     <script>
-// Chart data and configuration
-const charts = [
-    {
-        title: "User Distribution",
-        type: "doughnut",
-        labels: ["Students", "System Users", "Admin Users", "Undefined"],
-        data: [
-            <?= $stats['total_students'] ?>,
-            <?= $stats['total_users'] - $stats['total_students'] - $stats['total_admins'] ?>,
-            <?= $stats['total_admins'] ?>,
-            <?= $stats['total_users'] - ($stats['total_students'] + ($stats['total_users'] - $stats['total_students'] - $stats['total_admins']) + $stats['total_admins']) ?>
-        ],
-        backgroundColor: ['#357737', '#b69b04', '#17a2b8', '#6c757d'],
-        tableData: [
-            { type: "Students", count: <?= $stats['total_students'] ?> },
-            { type: "System Users", count: <?= $stats['total_users'] - $stats['total_students'] - $stats['total_admins'] ?> },
-            { type: "Admin Users", count: <?= $stats['total_admins'] ?> },
-            { type: "Undefined", count: <?= $stats['total_users'] - ($stats['total_students'] + ($stats['total_users'] - $stats['total_students'] - $stats['total_admins']) + $stats['total_admins']) ?> }
-        ],
-        tableHeaders: ['User Type', 'Count']
-    },
-    {
-        title: "Students by Course",
-        type: "bar",
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['course'] ? $item['course'] : 'Undefined'; 
-        }, $courseStats)) ?>,
-        data: <?= json_encode(array_column($courseStats, 'count')) ?>,
-        backgroundColor: <?= json_encode(array_map(function($item) {
-            return $item['course'] ? '#357737' : '#6c757d';
-        }, $courseStats)) ?>,
-        borderColor: '#205022',
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'course' => $item['course'] ? $item['course'] : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $courseStats)) ?>,
-        tableHeaders: ['Course', 'Count']
-    },
-    {
-        title: "Students by Year Level",
-        type: "bar", 
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['year_level'] ? $item['year_level'] : 'Undefined'; 
-        }, $yearLevelStats)) ?>,
-        data: <?= json_encode(array_column($yearLevelStats, 'count')) ?>,
-        backgroundColor: <?= json_encode(array_map(function($item) {
-            return $item['year_level'] ? '#b69b04' : '#6c757d';
-        }, $yearLevelStats)) ?>,
-        borderColor: '#a08603',
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'year_level' => $item['year_level'] ? $item['year_level'] : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $yearLevelStats)) ?>,
-        tableHeaders: ['Year Level', 'Count']
-    },
-    {
-        title: "ID Generation Status",
-        type: "pie",
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['status'] ? ucfirst($item['status']) : 'Undefined'; 
-        }, $idGenStats)) ?>,
-        data: <?= json_encode(array_column($idGenStats, 'count')) ?>,
-        backgroundColor: ['#357737', '#b69b04', '#17a2b8', '#28a745', '#dc3545', '#6c757d'],
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'status' => $item['status'] ? ucfirst($item['status']) : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $idGenStats)) ?>,
-        tableHeaders: ['Status', 'Count']
-    },
-    {
-        title: "ID Request Status", 
-        type: "pie",
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['status'] ? ucfirst($item['status']) : 'Undefined'; 
-        }, $idReqStats)) ?>,
-        data: <?= json_encode(array_column($idReqStats, 'count')) ?>,
-        backgroundColor: <?= json_encode(array_map(function($item) {
-            $status = $item['status'] ? strtolower($item['status']) : 'undefined';
-            switch($status) {
-                case 'rejected': return '#dc3545';
-                case 'undefined': return '#6c757d';
-                case 'pending': return '#b69b04';
-                case 'approved': return '#357737';
-                default: return '#17a2b8';
+        // Chart data and configuration
+        const charts = [
+            {
+                title: "User Distribution",
+                type: "doughnut",
+                labels: ["Students", "System Users", "Admin Users", "Undefined"],
+                data: [
+                    <?= $stats['total_students'] ?>,
+                    <?= $stats['total_users'] - $stats['total_students'] - $stats['total_admins'] ?>,
+                    <?= $stats['total_admins'] ?>,
+                    <?= $stats['total_users'] - ($stats['total_students'] + ($stats['total_users'] - $stats['total_students'] - $stats['total_admins']) + $stats['total_admins']) ?>
+                ],
+                backgroundColor: ['#357737', '#b69b04', '#17a2b8', '#6c757d'],
+                tableData: [
+                    { type: "Students", count: <?= $stats['total_students'] ?> },
+                    { type: "System Users", count: <?= $stats['total_users'] - $stats['total_students'] - $stats['total_admins'] ?> },
+                    { type: "Admin Users", count: <?= $stats['total_admins'] ?> },
+                    { type: "Undefined", count: <?= $stats['total_users'] - ($stats['total_students'] + ($stats['total_users'] - $stats['total_students'] - $stats['total_admins']) + $stats['total_admins']) ?> }
+                ],
+                tableHeaders: ['User Type', 'Count']
+            },
+            {
+                title: "Students by Course",
+                type: "bar",
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['course'] ? $item['course'] : 'Undefined'; 
+                }, $courseStats)) ?>,
+                data: <?= json_encode(array_column($courseStats, 'count')) ?>,
+                backgroundColor: <?= json_encode(array_map(function($item) {
+                    return $item['course'] ? '#357737' : '#6c757d';
+                }, $courseStats)) ?>,
+                borderColor: <?= json_encode(array_map(function($item) {
+                    return $item['course'] ? '#205022' : '#5a6268';
+                }, $courseStats)) ?>,
+                borderWidth: 1,
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'course' => $item['course'] ? $item['course'] : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $courseStats)) ?>,
+                tableHeaders: ['Course', 'Count']
+            },
+            {
+                title: "Students by Year Level",
+                type: "bar", 
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['year_level'] ? $item['year_level'] : 'Undefined'; 
+                }, $yearLevelStats)) ?>,
+                data: <?= json_encode(array_column($yearLevelStats, 'count')) ?>,
+                backgroundColor: <?= json_encode(array_map(function($item) {
+                    return $item['year_level'] ? '#357737' : '#6c757d';
+                }, $yearLevelStats)) ?>,
+                borderColor: <?= json_encode(array_map(function($item) {
+                    return $item['year_level'] ? '#205022' : '#5a6268';
+                }, $yearLevelStats)) ?>,
+                borderWidth: 1,
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'year_level' => $item['year_level'] ? $item['year_level'] : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $yearLevelStats)) ?>,
+                tableHeaders: ['Year Level', 'Count']
+            },
+            {
+                title: "ID Generation Status",
+                type: "pie",
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['status'] ? ucfirst($item['status']) : 'Undefined'; 
+                }, $idGenStats)) ?>,
+                data: <?= json_encode(array_column($idGenStats, 'count')) ?>,
+                backgroundColor: ['#357737', '#b69b04', '#17a2b8', '#28a745', '#dc3545', '#6c757d'],
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'status' => $item['status'] ? ucfirst($item['status']) : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $idGenStats)) ?>,
+                tableHeaders: ['Status', 'Count']
+            },
+            {
+                title: "ID Request Status", 
+                type: "pie",
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['status'] ? ucfirst($item['status']) : 'Undefined'; 
+                }, $idReqStats)) ?>,
+                data: <?= json_encode(array_column($idReqStats, 'count')) ?>,
+                backgroundColor: <?= json_encode(array_map(function($item) {
+                    $status = $item['status'] ? strtolower($item['status']) : 'undefined';
+                    switch($status) {
+                        case 'rejected': return '#dc3545';
+                        case 'undefined': return '#6c757d';
+                        case 'pending': return '#b69b04';
+                        case 'approved': return '#357737';
+                        default: return '#17a2b8';
+                    }
+                }, $idReqStats)) ?>,
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'status' => $item['status'] ? ucfirst($item['status']) : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $idReqStats)) ?>,
+                tableHeaders: ['Status', 'Count']
+            },
+            {
+                title: "User Verification Status",
+                type: "doughnut", 
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['status'] ? $item['status'] : 'Undefined'; 
+                }, $userVerStats)) ?>,
+                data: <?= json_encode(array_column($userVerStats, 'count')) ?>,
+                backgroundColor: <?= json_encode(array_map(function($item) {
+                    $status = $item['status'] ? strtolower($item['status']) : 'undefined';
+                    switch($status) {
+                        case 'verified': return '#357737';
+                        case 'not verified': return '#b69b04';
+                        case 'undefined': return '#6c757d';
+                        default: return '#17a2b8';
+                    }
+                }, $userVerStats)) ?>,
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'status' => $item['status'] ? $item['status'] : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $userVerStats)) ?>,
+                tableHeaders: ['Status', 'Count']
+            },
+            {
+                title: "User Account Status",
+                type: "doughnut",
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['status'] ? ucfirst($item['status']) : 'Undefined'; 
+                }, $userStatusStats)) ?>,
+                data: <?= json_encode(array_column($userStatusStats, 'count')) ?>,
+                backgroundColor: <?= json_encode(array_map(function($item) {
+                    $status = $item['status'] ? strtolower($item['status']) : 'undefined';
+                    switch($status) {
+                        case 'pending': return '#b69b04';
+                        case 'approved': return '#357737';
+                        case 'undefined': return '#6c757d';
+                        case 'active': return '#28a745';
+                        case 'inactive': return '#dc3545';
+                        default: return '#17a2b8';
+                    }
+                }, $userStatusStats)) ?>,
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'status' => $item['status'] ? ucfirst($item['status']) : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $userStatusStats)) ?>,
+                tableHeaders: ['Status', 'Count']
+            },
+            {
+                title: "Profile Completion Status",
+                type: "pie",
+                labels: <?= json_encode(array_map(function($item) { 
+                    return $item['status'] ? $item['status'] : 'Undefined'; 
+                }, $profileStats)) ?>,
+                data: <?= json_encode(array_column($profileStats, 'count')) ?>,
+                backgroundColor: <?= json_encode(array_map(function($item) {
+                    $status = $item['status'] ? strtolower($item['status']) : 'undefined';
+                    switch($status) {
+                        case 'complete': return '#357737';
+                        case 'incomplete': return '#dc3545';
+                        case 'undefined': return '#6c757d';
+                        case 'pending': return '#b69b04';
+                        default: return '#17a2b8';
+                    }
+                }, $profileStats)) ?>,
+                tableData: <?= json_encode(array_map(function($item) {
+                    return [
+                        'status' => $item['status'] ? $item['status'] : 'Undefined',
+                        'count' => $item['count']
+                    ];
+                }, $profileStats)) ?>,
+                tableHeaders: ['Status', 'Count']
             }
-        }, $idReqStats)) ?>,
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'status' => $item['status'] ? ucfirst($item['status']) : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $idReqStats)) ?>,
-        tableHeaders: ['Status', 'Count']
-    },
-    {
-        title: "User Verification Status",
-        type: "doughnut", 
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['status'] ? $item['status'] : 'Undefined'; 
-        }, $userVerStats)) ?>,
-        data: <?= json_encode(array_column($userVerStats, 'count')) ?>,
-        backgroundColor: <?= json_encode(array_map(function($item) {
-            $status = $item['status'] ? strtolower($item['status']) : 'undefined';
-            switch($status) {
-                case 'verified': return '#357737';
-                case 'not verified': return '#b69b04';
-                case 'undefined': return '#6c757d';
-                default: return '#17a2b8';
-            }
-        }, $userVerStats)) ?>,
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'status' => $item['status'] ? $item['status'] : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $userVerStats)) ?>,
-        tableHeaders: ['Status', 'Count']
-    },
-    {
-        title: "User Account Status",
-        type: "doughnut",
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['status'] ? ucfirst($item['status']) : 'Undefined'; 
-        }, $userStatusStats)) ?>,
-        data: <?= json_encode(array_column($userStatusStats, 'count')) ?>,
-        backgroundColor: <?= json_encode(array_map(function($item) {
-            $status = $item['status'] ? strtolower($item['status']) : 'undefined';
-            switch($status) {
-                case 'pending': return '#b69b04';
-                case 'approved': return '#357737';
-                case 'undefined': return '#6c757d';
-                case 'active': return '#28a745';
-                case 'inactive': return '#dc3545';
-                default: return '#17a2b8';
-            }
-        }, $userStatusStats)) ?>,
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'status' => $item['status'] ? ucfirst($item['status']) : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $userStatusStats)) ?>,
-        tableHeaders: ['Status', 'Count']
-    },
-    {
-        title: "Profile Completion Status",
-        type: "pie",
-        labels: <?= json_encode(array_map(function($item) { 
-            return $item['status'] ? $item['status'] : 'Undefined'; 
-        }, $profileStats)) ?>,
-        data: <?= json_encode(array_column($profileStats, 'count')) ?>,
-        backgroundColor: <?= json_encode(array_map(function($item) {
-            $status = $item['status'] ? strtolower($item['status']) : 'undefined';
-            switch($status) {
-                case 'complete': return '#357737';
-                case 'incomplete': return '#dc3545';
-                case 'undefined': return '#6c757d';
-                case 'pending': return '#b69b04';
-                default: return '#17a2b8';
-            }
-        }, $profileStats)) ?>,
-        tableData: <?= json_encode(array_map(function($item) {
-            return [
-                'status' => $item['status'] ? $item['status'] : 'Undefined',
-                'count' => $item['count']
-            ];
-        }, $profileStats)) ?>,
-        tableHeaders: ['Status', 'Count']
-    }
-];
+        ];
 
         let currentChartIndex = 0;
         let currentChart = null;
@@ -571,7 +577,7 @@ const charts = [
                         data: chartConfig.data,
                         backgroundColor: chartConfig.backgroundColor,
                         borderColor: chartConfig.borderColor || '#fff',
-                        borderWidth: chartConfig.borderColor ? 1 : 2
+                        borderWidth: chartConfig.borderWidth || 2
                     }]
                 },
                 options: {
