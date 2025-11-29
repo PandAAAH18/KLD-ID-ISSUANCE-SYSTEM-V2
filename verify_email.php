@@ -12,17 +12,20 @@ if (empty($token)) {
     try {
         $emailVerifier = new EmailVerification();
         
-        // Check if token is valid
-        if (!$emailVerifier->isTokenValid($token)) {
-            $error = 'Invalid or expired verification token. Please request a new verification email.';
+        // First check if user is already verified using the EmailVerification method
+        if ($emailVerifier->isEmailVerifiedFromToken($token)) {
+            $success = 'Your email is already verified! You can now log in with your account.';
         } else {
-            // Verify the token
-            $verifiedRecord = $emailVerifier->verifyToken($token);
-            
-            if ($verifiedRecord) {
-                $success = 'Email verified successfully! You can now log in with your account.';
+            // User not verified yet, proceed with verification
+            if (!$emailVerifier->isTokenValid($token)) {
+                $error = 'Invalid or expired verification token. Please request a new verification email.';
             } else {
-                $error = 'Could not verify email. Token may be expired or invalid.';
+                $verifiedRecord = $emailVerifier->verifyToken($token);
+                if ($verifiedRecord) {
+                    $success = 'Email verified successfully! You can now log in with your account.';
+                } else {
+                    $error = 'Could not verify email. Please try again.';
+                }
             }
         }
     } catch (\Exception $e) {

@@ -52,5 +52,55 @@ class AuditLogger
             return false;
         }
     }
+
+    public function verifyToken(string $token): ?array
+{
+    try {
+        $sql = "SELECT * FROM email_verification 
+                WHERE token = :token 
+                AND expires_at > NOW() 
+                AND is_verified = 0 
+                LIMIT 1";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':token' => $token]);
+        $record = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($record) {
+            // Start transaction to ensure both updates succeed
+            $this->db->beginTransaction();
+            
+            try {
+                // 1. Mark token as verified in email_verification table
+                $updateSql = "UPDATE email_verification 
+                             SET is_verified = 1, verified_at = NOW() 
+                             WHERE id = :id";
+                $updateStmt = $this->db->prepare($updateSql);
+                $updateStmt->execute([':id' => $record['id']]);
+
+                // 2. Update user record - mark as verified in users table
+                $userSql = "UPDATE users 
+                           SET is_verified = 1, verified_at = NOW() 
+                           WHERE user_id = :user_id";
+                $userStmt = $this->db->prepare($userSql);
+                $userStmt->execute([':user_id' => $record['user_id']]);
+
+                // Commit both changes
+                $this->db->commit();
+                
+                return $record;
+            } catch (\Exception $e) {
+                // Rollback if any update fails
+                $this->db->rollBack();
+                throw $e;
+            }
+        }
+
+        return null;
+    } catch (\Exception $e) {
+        error_log("Error verifying token: " . $e->getMessage());
+        return null;
+    }
+}
     
 }

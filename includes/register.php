@@ -3,6 +3,18 @@ require_once 'config.php';
 require_once 'User.php';
 require_once __DIR__ . '/../admin/classes/EmailVerification.php';
 
+// Define constants if not already defined
+if (!defined('SEND_VERIFICATION_EMAIL')) {
+    define('SEND_VERIFICATION_EMAIL', true);
+}
+
+// Helper function
+if (!function_exists('esc_html')) {
+    function esc_html($text) {
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    }
+}
+
 $error = null;
 $success = null;
 
@@ -31,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $userId = $newUser['user_id'];
 
                     // Create and send verification email
-                    $emailVerifier = new EmailVerification($user->getDb());
+                    $emailVerifier = new EmailVerification(); // Remove parameter
                     $token = $emailVerifier->createVerificationToken($userId, $email);
 
                     if ($token && SEND_VERIFICATION_EMAIL) {

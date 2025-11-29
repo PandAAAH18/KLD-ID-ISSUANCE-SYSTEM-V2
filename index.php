@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $requireVerification = defined('REQUIRE_EMAIL_VERIFICATION') ? REQUIRE_EMAIL_VERIFICATION : true;
                 
                 if ($requireVerification && !$user['is_verified']) {
-                    $error = 'Please verify your email address first. Check your inbox for the verification link.';
+                   $error = 'Please verify your email address first. Check your inbox at ' . htmlspecialchars($email) . ' for the verification link.';
                     $_SESSION['pending_verification_email'] = $email;
                 } else {
                     // Email verified, proceed with login

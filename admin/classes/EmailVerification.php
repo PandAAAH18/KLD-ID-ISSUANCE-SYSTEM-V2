@@ -118,43 +118,72 @@ class EmailVerification
     /**
      * Verify email token and mark as verified
      */
-    public function verifyToken(string $token): ?array
-    {
-        try {
-            $sql = "SELECT * FROM email_verification 
-                    WHERE token = :token 
-                    AND expires_at > NOW() 
-                    AND is_verified = 0 
-                    LIMIT 1";
+    /**
+ * Verify email token and mark as verified
+ */
+public function verifyToken(string $token): ?array
+{
+    try {
+        // First, check if token exists and is not expired
+        $sql = "SELECT * FROM email_verification 
+                WHERE token = :token 
+                AND expires_at > NOW() 
+                LIMIT 1";
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([':token' => $token]);
-            $record = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':token' => $token]);
+        $record = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-            if ($record) {
-                // Mark token as verified
-                $updateSql = "UPDATE email_verification 
-                             SET is_verified = 1, verified_at = NOW() 
-                             WHERE id = :id";
-                $updateStmt = $this->db->prepare($updateSql);
-                $updateStmt->execute([':id' => $record['id']]);
+        if ($record) {
+            error_log("Token found for user: " . $record['user_id'] . ", is_verified: " . $record['is_verified']);
+            
+            // Start transaction
+            $this->db->beginTransaction();
+            
+            try {
+                // Check if we need to mark token as verified
+                if (!$record['is_verified']) {
+                    $updateSql = "UPDATE email_verification 
+                                 SET is_verified = 1, verified_at = NOW() 
+                                 WHERE id = :id";
+                    $updateStmt = $this->db->prepare($updateSql);
+                    $updateStmt->execute([':id' => $record['id']]);
+                    error_log("Marked token as verified in email_verification table");
+                } else {
+                    error_log("Token was already marked as verified");
+                }
 
-                // Update user record
+                // Update user record - set both is_verified and verified to 1
                 $userSql = "UPDATE users 
                            SET is_verified = 1, verified = 1, verified_at = NOW() 
                            WHERE user_id = :user_id";
                 $userStmt = $this->db->prepare($userSql);
                 $userStmt->execute([':user_id' => $record['user_id']]);
+                
+                $rowsAffected = $userStmt->rowCount();
+                error_log("Updated users table. Rows affected: " . $rowsAffected);
 
+                // Commit transaction
+                $this->db->commit();
+                error_log("Verification completed successfully for user: " . $record['user_id']);
+                
                 return $record;
+            } catch (\Exception $e) {
+                // Rollback if any update fails
+                $this->db->rollBack();
+                error_log("Transaction failed, rolled back: " . $e->getMessage());
+                throw $e;
             }
-
-            return null;
-        } catch (\Exception $e) {
-            error_log("Error verifying token: " . $e->getMessage());
-            return null;
+        } else {
+            error_log("Token not found or expired: " . $token);
         }
+
+        return null;
+    } catch (\Exception $e) {
+        error_log("Error verifying token: " . $e->getMessage());
+        return null;
     }
+}
 
     /**
      * Check if email is verified
@@ -179,23 +208,48 @@ class EmailVerification
     /**
      * Check if token is valid (not expired, not verified)
      */
-    public function isTokenValid(string $token): bool
-    {
-        try {
-            $sql = "SELECT COUNT(*) FROM email_verification 
-                    WHERE token = :token 
-                    AND expires_at > NOW() 
-                    AND is_verified = 0";
+   /**
+ * Check if token is valid (not expired AND user not verified)
+ */
+public function isTokenValid(string $token): bool
+{
+    try {
+        $sql = "SELECT COUNT(*) FROM email_verification ev
+                JOIN users u ON ev.user_id = u.user_id
+                WHERE ev.token = :token 
+                AND ev.expires_at > NOW() 
+                AND u.is_verified = 0";  // Check if user is NOT verified
 
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([':token' => $token]);
-            return (int)$stmt->fetchColumn() > 0;
-        } catch (\Exception $e) {
-            error_log("Error checking token validity: " . $e->getMessage());
-            return false;
-        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':token' => $token]);
+        return (int)$stmt->fetchColumn() > 0;
+    } catch (\Exception $e) {
+        error_log("Error checking token validity: " . $e->getMessage());
+        return false;
     }
+}
 
+/**
+ * Check if email is verified by token
+ */
+public function isEmailVerifiedFromToken(string $token): bool
+{
+    try {
+        $sql = "SELECT u.is_verified 
+                FROM email_verification ev 
+                JOIN users u ON ev.user_id = u.user_id 
+                WHERE ev.token = :token";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':token' => $token]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        
+        return $result && $result['is_verified'] == 1;
+    } catch (\Exception $e) {
+        error_log("Error checking email verification from token: " . $e->getMessage());
+        return false;
+    }
+}
     /**
      * Resend verification email
      */
