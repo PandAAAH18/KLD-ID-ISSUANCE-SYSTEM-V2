@@ -2067,7 +2067,6 @@ body {
 
 .admin-main {
     padding: 0;
-    margin: 0;
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
@@ -2457,7 +2456,6 @@ body {
 /* Responsive - Student Home Enhancements */
 @media (max-width: 1024px) {
     .admin-main {
-        margin-left: 0 !important;
         width: 100% !important;
         max-width: 100vw;
     }
@@ -2498,7 +2496,6 @@ body {
 
 @media (max-width: 768px) {
     .admin-main {
-        margin-left: 0 !important;
         width: 100% !important;
         max-width: 100vw;
         padding: 0;
@@ -2629,7 +2626,6 @@ body {
 
 @media (max-width: 480px) {
     .admin-main {
-        margin-left: 0 !important;
         width: 100% !important;
         max-width: 100vw;
         padding: 0;
