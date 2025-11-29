@@ -63,6 +63,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $import_errors = $result['errors'];
         }
     }
+
+    if (isset($_POST['assign_student_id'])) {
+    $email = $_POST['email'];
+    $studentId = $_POST['student_id'];
+    
+    if (!empty($email) && !empty($studentId)) {
+        $success = $studentModel->assignStudentID($email, $studentId);
+        
+        if ($success) {
+            $message = "Student ID assigned successfully!";
+        } else {
+            $error = "Error assigning Student ID. The ID might already be in use.";
+        }
+    } else {
+        $error = "Email and Student ID are required.";
+    }
+}
     
     // Bulk Actions
     if (isset($_POST['bulk_action'])) {
@@ -440,16 +457,15 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                                         <div style="font-size: 0.85rem;">
                                             <?php if (empty($student['student_id'])): ?>
                                             <form method="POST" class="inline-form" style="margin-top: 5px;">
-                                                <input type="hidden" name="action" value="assign_id">
-                                                <input type="hidden" name="email" value="<?= $student['email'] ?>">
-                                                <div style="display: flex; gap: 5px;">
-                                                    <input type="text" name="student_id" class="form-input" 
-                                                           placeholder="Enter ID" required style="padding: 4px 8px; font-size: 0.8rem;">
-                                                    <button type="submit" class="btn btn-small btn-primary">
-                                                        <i class="fas fa-id-card"></i>
-                                                    </button>
-                                                </div>
-                                            </form>
+    <input type="hidden" name="email" value="<?= $student['email'] ?>">
+    <div style="display: flex; gap: 5px;">
+        <input type="text" name="student_id" class="form-input" 
+               placeholder="Enter ID" required style="padding: 4px 8px; font-size: 0.8rem;">
+        <button type="submit" name="assign_student_id" class="btn btn-small btn-primary">
+            <i class="fas fa-id-card"></i>
+        </button>
+    </div>
+</form>
                                             <?php else: ?>
                                             <span style="color: var(--school-green); font-weight: 500;">
                                                 <i class="fas fa-id-card"></i> <?= htmlspecialchars($student['student_id']) ?>

@@ -622,120 +622,112 @@ $dompdf->render();
      * Generate QR Code for ID
      */
     private function generateQRCode(string $idNumber): array
-    {
-        try {
-            $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
-            $qrName = 'qr_' . $idNumber . '.png';
-            $qrPath = __DIR__ . '/../uploads/qr/' . $qrName;
+{
+    try {
+        $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
+        $qrName = $idNumber . '.png'; // Consistent with generateId and regenerateId
+        $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
-            // Create directory if it doesn't exist
-            if (!is_dir(dirname($qrPath))) {
-                mkdir(dirname($qrPath), 0755, true);
-            }
-
-            // Generate QR code
-            $writer = new PngWriter();
-            
-            $qrCode = new QrCode(
-                data: $verifyUrl,
-                encoding: new Encoding('UTF-8'),
-                errorCorrectionLevel: ErrorCorrectionLevel::Low,
-                size: 300,
-                margin: 10,
-                foregroundColor: new Color(0, 0, 0),
-                backgroundColor: new Color(255, 255, 255)
-            );
-
-            // Optional: Add logo if available
-            $logoPath = __DIR__ . '/../../assets/images/kldlogo.png';
-            if (file_exists($logoPath)) {
-                $logo = new Logo(
-                    path: $logoPath,
-                    resizeToWidth: 50,
-                    punchoutBackground: true
-                );
-                $result = $writer->write($qrCode, $logo);
-            } else {
-                $result = $writer->write($qrCode);
-            }
-
-            $result->saveToFile($qrPath);
-
-            return [
-                'success' => true,
-                'filename' => $qrName,
-                'filepath' => $qrPath
-            ];
-
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+        // Create directory if it doesn't exist
+        if (!is_dir(dirname($qrPath))) {
+            mkdir(dirname($qrPath), 0755, true);
         }
+
+        // Generate QR code - use the same approach as generateId function
+        $writer = new \Endroid\QrCode\Writer\PngWriter();
+        
+        $qrCode = new \Endroid\QrCode\QrCode(
+            data: $verifyUrl,
+            encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+            errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+            size: 300,
+            margin: 10,
+            foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+            backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+        );
+
+        // Optional: Add logo if available - same as generateId
+        $logoPath = __DIR__ . '/../../assets/images/kldlogo.png';
+        $logo = file_exists($logoPath)
+            ? new \Endroid\QrCode\Logo\Logo(path: $logoPath, resizeToWidth: 50, punchoutBackground: true)
+            : null;
+
+        $result = $writer->write($qrCode, $logo);
+        $result->saveToFile($qrPath);
+
+        return [
+            'success' => true,
+            'filename' => $qrName,
+            'filepath' => $qrPath
+        ];
+
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
     }
+}
 
     /**
      * Generate ID PDF
      */
     private function generateIdPDF(array $studentData, string $idNumber, string $qrFilename): array
-    {
-        try {
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $dompdf = new Dompdf($options);
+{
+    try {
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
 
-            // Front of ID
-            $front = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:0 auto;text-align:center;padding:10px;font-family:Arial;">
-                <h3 style="margin:5px 0;">KLD - ID CARD</h3>
-                <img src="' . APP_URL . '/uploads/student_photos/' . ($studentData['photo'] ?? 'default.png') . '" 
-                     style="width:80px;height:80px;object-fit:cover;border:1px solid #ccc;border-radius:5px;"><br>
-                <b style="font-size:14px;">' . htmlspecialchars($studentData['first_name'] . ' ' . $studentData['last_name']) . '</b><br>
-                <span style="font-size:12px;">' . htmlspecialchars($studentData['course'] ?? 'N/A') . ' - ' . htmlspecialchars($studentData['year_level'] ?? 'N/A') . '</span><br>
-                <span style="font-size:11px;">ID: ' . $idNumber . '</span><br>
-                <span style="font-size:10px;">Emergency: ' . htmlspecialchars($studentData['emergency_contact'] ?? 'N/A') . '</span><br>
-                <span style="font-size:10px;">Blood Type: ' . htmlspecialchars($studentData['blood_type'] ?? 'N/A') . '</span>
-            </div>';
+        // Increase the height of the ID cards
+        $cardHeight = '300px';
 
-            // Back of ID
-            $back = '
-            <div style="width:340px;height:214px;border:1px solid #000;margin:30px auto;text-align:center;padding:10px;font-family:Arial;">
-                <p style="margin-top:10px;font-size:12px;">If found please return to school registrar.</p>
-                <img src="' . APP_URL . '/uploads/qr/' . $qrFilename . '" style="width:70px;"><br>
-                <small>Signature</small><br>
-                <img src="' . APP_URL . '/uploads/student_signatures/' . ($studentData['signature'] ?? 'default.png') . '" 
-                     style="width:100px;height:40px;object-fit:contain;">
-                <p style="font-size:10px;margin-top:10px;">Valid until: ' . date('M Y', strtotime('+4 years')) . '</p>
-            </div>';
+        $front = '
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+            <img src="'.APP_URL.'/uploads/student_photos/'.$studentData['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+            <b style="font-size:12px;">'.$studentData['first_name'].' '.$studentData['last_name'].'</b><br>
+            <span style="font-size:10px;">'.$studentData['course'].' - '.$studentData['year_level'].'</span><br>
+            <span style="font-size:10px;">ID: '.$studentData['student_id'].'</span><br>
+            <img src="'.APP_URL.'/uploads/student_signatures/'.$studentData['signature'].'" style="width:100px;margin-top:50px;">
+        </div>';
 
-            $dompdf->loadHtml($front . $back);
-            $dompdf->setPaper('CR80', 'landscape');
-            $dompdf->render();
+        $back = '
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+            <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$studentData['emergency_contact_name'].'</span><br>
+            <span style="font-size:13px;display:inline-block;">'.$studentData['emergency_contact'].'</span><br>
+            <img src="'.APP_URL.'/uploads/qr/'.$qrFilename.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+        </div>';
 
-            // Save PDF
-            $fileName = $studentData['email'] . '_' . $idNumber . '.pdf';
-            $filePath = __DIR__ . '/../../uploads/digital_id/' . $fileName;
-            
-            if (!is_dir(dirname($filePath))) {
-                mkdir(dirname($filePath), 0755, true);
-            }
-            
-            file_put_contents($filePath, $dompdf->output());
+        // Wrap both divs in a container
+        $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
 
-            return [
-                'success' => true,
-                'filename' => $fileName,
-                'filepath' => $filePath
-            ];
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('CR80', 'landscape');
+        $dompdf->render();
 
-        } catch (Exception $e) {
-            return [
-                'success' => false,
-                'message' => $e->getMessage()
-            ];
+        // Save PDF - use consistent naming
+        $fileName = $studentData['email'] . '_' . date('YmdHis') . '.pdf';
+        $filePath = __DIR__ . '/../../uploads/digital_id/' . $fileName;
+        
+        if (!is_dir(dirname($filePath))) {
+            mkdir(dirname($filePath), 0755, true);
         }
+        
+        file_put_contents($filePath, $dompdf->output());
+
+        return [
+            'success' => true,
+            'filename' => $fileName,
+            'filepath' => $filePath
+        ];
+
+    } catch (Exception $e) {
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
     }
+}
 
     /**
      * Get approved requests for bulk processing
@@ -786,48 +778,144 @@ $dompdf->render();
         $options->set('isHtml5ParserEnabled', true);
         $dompdf = new Dompdf($options);
 
-        $html = '<div style="width:100%; text-align:center; font-family: Arial, sans-serif;">';
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                }
+                .page {
+                    width: 100%;
+                }
+                .id-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 30px;
+                }
+                .id-cell {
+                    width: 50%;
+                    vertical-align: top;
+                    padding: 10px;
+                }
+                .id-card {
+                    width: 340px;
+                    height: 300px;
+                    background: url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;
+                    padding: 20px 15px;
+                    box-sizing: border-box;
+                    text-align: center;
+                    margin-bottom: 15px;
+                }
+                .id-card.back {
+                    background: url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;
+                }
+                .student-photo {
+                    width: 75px;
+                    height: 75px;
+                    object-fit: cover;
+                    border: 1px solid #ccc;
+                    margin-top: 70px;
+                    margin-bottom: 10px;
+                }
+                .student-name {
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin: 5px 0;
+                }
+                .student-details {
+                    font-size: 10px;
+                    margin: 2px 0;
+                }
+                .student-signature {
+                    width: 100px;
+                    margin-top: 50px;
+                }
+                .emergency-contact {
+                    font-size: 13px;
+                    margin-top: 95px;
+                    display: block;
+                }
+                .emergency-number {
+                    font-size: 13px;
+                    margin-top: 5px;
+                    display: block;
+                }
+                .qr-code {
+                    width: 70px;
+                    margin-top: 40px;
+                    margin-left: 95px;
+                }
+                .page-break {
+                    page-break-after: always;
+                }
+            </style>
+        </head>
+        <body>';
         
         $count = 0;
-        $cardsPerRow = 2;
+        $processedIds = [];
+        $totalIds = count($idNumbers);
         
-        foreach ($idNumbers as $idNumber) {
-            $idData = $this->getIssuedIdDataByNumber($idNumber);
-            if (!$idData) {
-                error_log("ID data not found for: " . $idNumber);
-                continue;
+        for ($i = 0; $i < $totalIds; $i += 2) {
+            $html .= '<div class="page">';
+            $html .= '<table class="id-table"><tr>';
+            
+            // Process 2 IDs per page
+            for ($j = 0; $j < 2; $j++) {
+                $index = $i + $j;
+                if ($index >= $totalIds) {
+                    // Empty cell if no more IDs
+                    $html .= '<td class="id-cell"></td>';
+                    continue;
+                }
+                
+                $idNumber = $idNumbers[$index];
+                $idData = $this->getIssuedIdDataByNumber($idNumber);
+                if (!$idData) {
+                    error_log("ID data not found for: " . $idNumber);
+                    $html .= '<td class="id-cell"></td>';
+                    continue;
+                }
+                
+                $processedIds[] = $idNumber;
+                $count++;
+                
+                $html .= '<td class="id-cell">';
+                $html .= '
+                    <!-- Front Card -->
+                    <div class="id-card">
+                        <img src="'.APP_URL.'/uploads/student_photos/'.$idData['photo'].'" class="student-photo">
+                        <div class="student-name">'.$idData['first_name'].' '.$idData['last_name'].'</div>
+                        <div class="student-details">'.$idData['course'].' - '.$idData['year_level'].'</div>
+                        <div class="student-details">ID: '.$idData['student_id'].'</div>
+                        <img src="'.APP_URL.'/uploads/student_signatures/'.$idData['signature'].'" class="student-signature">
+                    </div>
+                    
+                    <!-- Back Card -->
+                    <div class="id-card back">
+                        <span class="emergency-contact">'.$idData['emergency_contact_name'].'</span>
+                        <span class="emergency-number">'.$idData['emergency_contact'].'</span>
+                        <img src="'.APP_URL.'/uploads/qr/'.$idNumber.'.png" class="qr-code">
+                    </div>
+                </td>';
             }
             
-            if ($count % $cardsPerRow === 0 && $count > 0) {
-                $html .= '<div style="clear:both; height:20px;"></div>';
-            }
+            $html .= '</tr></table>';
+            $html .= '</div>'; // Close page
             
-            // Front card
-            $html .= '
-            <div style="width:340px;height:300px;background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;display:inline-block;vertical-align:top;text-align:center;margin:10px;">
-                <img src="'.APP_URL.'/uploads/student_photos/'.$idData['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
-                <b style="font-size:12px;">'.$idData['first_name'].' '.$idData['last_name'].'</b><br>
-                <span style="font-size:10px;">'.$idData['course'].' - '.$idData['year_level'].'</span><br>
-                <span style="font-size:10px;">ID: '.$idData['student_id'].'</span><br>
-                <img src="'.APP_URL.'/uploads/student_signatures/'.$idData['signature'].'" style="width:100px;margin-top:50px;">
-            </div>';
-            
-            // Back card
-            $html .= '
-            <div style="width:340px;height:300px;background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;display:inline-block;vertical-align:top;margin:10px;text-align:center;">
-                <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$idData['emergency_contact_name'].'</span><br>
-                <span style="font-size:13px;display:inline-block;">'.$idData['emergency_contact'].'</span><br>
-                <img src="'.APP_URL.'/uploads/qr/'.$idNumber.'.png" style="width:70px;margin-top:40px;margin-left:95px;"><br>
-            </div>';
-            
-            $count++;
-            
-            if ($count % 2 === 0 && $count > 0) {
-                $html .= '<div style="page-break-after: always;"></div>';
+            // Add page break if there are more IDs to process
+            if ($i + 2 < $totalIds) {
+                $html .= '<div class="page-break"></div>';
             }
         }
         
-        $html .= '</div>';
+        $html .= '
+        </body>
+        </html>';
 
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
@@ -843,13 +931,12 @@ $dompdf->render();
         
         file_put_contents($filePath, $dompdf->output());
 
-        // Return PDF info WITHOUT updating status
         return [
             'success' => true,
             'filename' => $filename,
             'filepath' => $filePath,
             'count' => $count,
-            'id_numbers' => $idNumbers
+            'id_numbers' => $processedIds
         ];
 
     } catch (Exception $e) {

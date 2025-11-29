@@ -494,7 +494,7 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
         <?php endif; ?>
 
         <!-- ISSUED CARDS TABLE (generated) -->
-        <?php if (in_array($filter,['generated'])): ?>
+<?php if (in_array($filter,['generated'])): ?>
     <div class="admin-card">
         <div class="admin-card-header">
             <span>
@@ -512,97 +512,95 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
                 </div>
             <?php else: ?>
                 <!-- BULK PRINT SECTION FOR GENERATED IDs -->
-                <div class="bulk-section" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <h4><i class="fas fa-print"></i> Bulk Print IDs</h4>
-                    <p>Select multiple generated IDs and print them in batch</p>
-                    <form method="post" id="bulkPrintForm">
+                <form method="post" id="bulkPrintForm">
+                    <div class="bulk-section" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <h4><i class="fas fa-print"></i> Bulk Print IDs</h4>
+                        <p>Select multiple generated IDs and print them in batch</p>
                         <div class="bulk-actions">
                             <button type="submit" name="bulk_print" class="btn-admin btn-bulk">
                                 <i class="fas fa-print"></i> Print Selected IDs
                             </button>
                             <span id="bulkPrintSelectedCount" class="text-muted">0 selected</span>
                         </div>
-                </div>
+                    </div>
 
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th class="select-all-cell">
-                                    <input type="checkbox" id="selectAllGenerated" class="form-check-input">
-                                </th>
-                                <th>ID Number</th>
-                                <th>Student Information</th>
-                                <th>Issue Date</th>
-                                <th>Expiry Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($issued as $row):
-                                $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
-                                // Use the actual ID field that exists - either 'id' or 'id_number'
-                                $issuedId = $row['id'] ?? $row['id_number'] ?? 'N/A';
-                            ?>
-                            <tr>
-                                <td class="select-all-cell">
-                                    <input type="checkbox" name="selected_issued_ids[]" value="<?= htmlspecialchars($row['id_number']) ?>" class="form-check-input generated-checkbox">
-                                </td>
-                                <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
-                                <td>
-                                    <div style="font-weight: 600;"><?= $name ?></div>
-                                    <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars(isset($row['email']) ? $row['email'] : '') ?></div>
-                                </td>
-                                <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
-                                <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
-                                <td>
-                                    <span class="status-badge status-generated">
-                                        <?= ucfirst($row['status']) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <?php
-                                        if ($row['status']==='generated'):
-                                            $file = $row['digital_id_file'] ?? null;
-                                            if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
-                                                $safe   = htmlspecialchars($file);
-                                                $jsSafe = addslashes($safe);
-                                        ?>
-                                                <a href="../uploads/digital_id/<?= $safe ?>" target="_blank" class="btn-admin btn-view" title="View ID">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="../uploads/digital_id/<?= $safe ?>" download class="btn-admin btn-generate" title="Download ID">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
-                                                <button type="button" onclick="window.open('../uploads/digital_id/<?= $jsSafe ?>', '_blank').print();" class="btn-admin" title="Print ID">
-                                                    <i class="fas fa-print"></i>
-                                                </button>
-                                                <form method="post" style="display: inline;">
-                                                    <input type="hidden" name="issued_id" value="<?= htmlspecialchars($row['id_number']) ?>">
-                                                    <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
-                                                        <i class="fas fa-sync"></i>
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th class="select-all-cell">
+                                        <input type="checkbox" id="selectAllGenerated" class="form-check-input">
+                                    </th>
+                                    <th>ID Number</th>
+                                    <th>Student Information</th>
+                                    <th>Issue Date</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($issued as $row): 
+                                    $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
+                                ?>
+                                <tr>
+                                    <td class="select-all-cell">
+                                        <input type="checkbox" name="selected_issued_ids[]" value="<?= htmlspecialchars($row['id_number']) ?>" class="form-check-input generated-checkbox">
+                                    </td>
+                                    <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
+                                    <td>
+                                        <div style="font-weight: 600;"><?= $name ?></div>
+                                        <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars(isset($row['email']) ? $row['email'] : '') ?></div>
+                                    </td>
+                                    <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
+                                    <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
+                                    <td>
+                                        <span class="status-badge status-generated">
+                                            <?= ucfirst($row['status']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <?php
+                                            if ($row['status']==='generated'):
+                                                $file = $row['digital_id_file'] ?? null;
+                                                if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
+                                                    $safe   = htmlspecialchars($file);
+                                                    $jsSafe = addslashes($safe);
+                                            ?>
+                                                    <a href="../uploads/digital_id/<?= $safe ?>" target="_blank" class="btn-admin btn-view" title="View ID">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="../uploads/digital_id/<?= $safe ?>" download class="btn-admin btn-generate" title="Download ID">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                    <button type="button" onclick="window.open('../uploads/digital_id/<?= $jsSafe ?>', '_blank').print();" class="btn-admin" title="Print ID">
+                                                        <i class="fas fa-print"></i>
                                                     </button>
-                                                </form>
-                                            <?php else: ?>
-                                                <span class="text-muted" style="font-size: 0.85rem;">File missing</span>
-                                                <form method="post" style="display: inline;">
-                                                    <input type="hidden" name="issued_id" value="<?= htmlspecialchars($row['id_number']) ?>">
-                                                    <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
-                                                        <i class="fas fa-sync"></i> Regenerate
-                                                    </button>
-                                                </form>
+                                                    <form method="post" style="display: inline;">
+                                                        <input type="hidden" name="issued_id" value="<?= htmlspecialchars($row['id_number']) ?>">
+                                                        <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
+                                                            <i class="fas fa-sync"></i>
+                                                        </button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <span class="text-muted" style="font-size: 0.85rem;">File missing</span>
+                                                    <form method="post" style="display: inline;">
+                                                        <input type="hidden" name="issued_id" value="<?= htmlspecialchars($row['id_number']) ?>">
+                                                        <button type="submit" name="regenerate" class="btn-admin btn-regenerate" title="Regenerate ID" onclick="return confirm('Regenerate this ID card?');">
+                                                            <i class="fas fa-sync"></i> Regenerate
+                                                        </button>
+                                                    </form>
+                                                <?php endif; ?>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                    </form> <!-- Close the bulk print form here -->
-                </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
             <?php endif; ?>
         </div>
     </div>

@@ -425,10 +425,32 @@ public function importCSV(array $csvFile): array
 public function assignStudentID(string $email, string $studentId): bool
 {
     try {
-        $stmt = $this->db->prepare("UPDATE student SET student_id = ? WHERE email = ?");
-        $stmt->execute([$studentId, $email]);
-        return $stmt->rowCount() > 0;
+        // Check if student ID already exists for another student
+        $checkStmt = $this->db->prepare("SELECT id FROM student WHERE student_id = ? AND email != ? AND deleted_at IS NULL");
+        $checkStmt->execute([$studentId, $email]);
+        
+        if ($checkStmt->rowCount() > 0) {
+            // Student ID already exists for another student
+            return false;
+        }
+        
+        // Check if the email exists
+        $emailStmt = $this->db->prepare("SELECT id FROM student WHERE email = ? AND deleted_at IS NULL");
+        $emailStmt->execute([$email]);
+        
+        if ($emailStmt->rowCount() === 0) {
+            // Student with this email doesn't exist
+            return false;
+        }
+        
+        // Update the student ID
+        $updateStmt = $this->db->prepare("UPDATE student SET student_id = ? WHERE email = ? AND deleted_at IS NULL");
+        $updateStmt->execute([$studentId, $email]);
+        
+        return $updateStmt->rowCount() > 0;
+        
     } catch (PDOException $e) {
+        error_log("Error assigning student ID: " . $e->getMessage());
         return false;
     }
 }
