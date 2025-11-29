@@ -161,6 +161,44 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
     <title>System Logs - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+.audit-details {
+    display: none;
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px;
+    max-width: 350px;
+    z-index: 1000; /* Increased z-index */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-top: 5px;
+    right: 10px;
+    top: 100%;
+}
+
+/* Ensure the table cell has proper positioning */
+.admin-table td {
+    position: relative;
+}
+
+/* Style for the details button */
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.btn-sm:hover {
+    background: #0056b3;
+}
+</style>
 </head>
 
 <body class="admin-body">
@@ -365,27 +403,26 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                                             <span style="color: #666;">-</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
-                                        <?php 
-                                            $oldData = formatAuditData($row['old_data']);
-                                            $newData = formatAuditData($row['new_data']);
-                                            $hasChanges = ($oldData !== '-' || $newData !== '-');
-                                        ?>
-                                        <?php if ($hasChanges): ?>
-                                            <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="toggleAuditDetails(this)" title="View changes">
-                                                <i class="fas fa-eye"></i> Details
-                                            </button>
-                                            <div class="audit-details" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-width: 350px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; right: 0; left: auto;">
-                                                <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px;">Old Data:</strong>
-                                                <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0 0 8px 0; white-space: pre-wrap; word-wrap: break-word;"><?= $oldData ?></pre>
-                                                <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px; margin-top: 8px;">New Data:</strong>
-                                                <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><?= $newData ?></pre>
-                                                <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 8px; cursor: pointer;" onclick="this.closest('.audit-details').style.display='none';">Close</button>
-                                            </div>
-                                        <?php else: ?>
-                                            <span style="color: #999; font-size: 0.9rem;">-</span>
-                                        <?php endif; ?>
-                                    </td>
+                                    <td style="position: relative;">
+    <?php 
+        $oldData = formatAuditData($row['old_data']);
+        $newData = formatAuditData($row['new_data']);
+        $hasChanges = ($oldData !== '-' || $newData !== '-');
+    ?>
+    <?php if ($hasChanges): ?>
+<button class="btn-audit-details" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px;" onclick="toggleAuditDetails(this)" title="View changes">            <i class="fas fa-eye"></i> Details
+        </button>
+        <div class="audit-details" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-width: 350px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; right: 10px; top: 100%;">
+            <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px;">Old Data:</strong>
+            <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0 0 8px 0; white-space: pre-wrap; word-wrap: break-word;"><?= $oldData ?></pre>
+            <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px; margin-top: 8px;">New Data:</strong>
+            <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><?= $newData ?></pre>
+            <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 8px; cursor: pointer;" onclick="this.closest('.audit-details').style.display='none';">Close</button>
+        </div>
+    <?php else: ?>
+        <span style="color: #999; font-size: 0.9rem;">-</span>
+    <?php endif; ?>
+</td>
                                 </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -396,67 +433,102 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
         </div>
     </div>
 
-    <script>
-        // Back to top functionality
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+<script>
+    // Back to top functionality
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.addEventListener('scroll', function() {
+        const backToTop = document.querySelector('.back-to-top');
+        if (window.pageYOffset > 300) {
+            backToTop.style.display = 'flex';
+        } else {
+            backToTop.style.display = 'none';
         }
+    });
 
-        window.addEventListener('scroll', function() {
-            const backToTop = document.querySelector('.back-to-top');
-            if (window.pageYOffset > 300) {
-                backToTop.style.display = 'flex';
-            } else {
-                backToTop.style.display = 'none';
-            }
-        });
-
-        // Toggle audit details popup
-        function toggleAuditDetails(button) {
-            // Find the details div - next sibling
-            const detailsDiv = button.nextElementSibling;
-            
-            if (detailsDiv && detailsDiv.classList.contains('audit-details')) {
-                // Close all other details first
-                document.querySelectorAll('.audit-details').forEach(d => {
-                    if (d !== detailsDiv) {
-                        d.style.display = 'none';
-                    }
-                });
-                
-                // Toggle current details
-                if (detailsDiv.style.display === 'none' || detailsDiv.style.display === '') {
-                    detailsDiv.style.display = 'block';
-                } else {
-                    detailsDiv.style.display = 'none';
+    // Toggle audit details popup - FIXED VERSION
+    function toggleAuditDetails(button) {
+        console.log('Button clicked'); // Debug log
+        
+        // Find the details div - next sibling
+        const detailsDiv = button.nextElementSibling;
+        console.log('Details div found:', detailsDiv); // Debug log
+        
+        if (detailsDiv && detailsDiv.classList.contains('audit-details')) {
+            // Close all other details first
+            document.querySelectorAll('.audit-details').forEach(d => {
+                if (d !== detailsDiv) {
+                    d.style.display = 'none';
                 }
+            });
+            
+            // Toggle current details
+            if (detailsDiv.style.display === 'none' || detailsDiv.style.display === '') {
+                detailsDiv.style.display = 'block';
+                
+                // Position the details popup properly
+                const buttonRect = button.getBoundingClientRect();
+                const detailsRect = detailsDiv.getBoundingClientRect();
+                
+                // Check if it would go off-screen to the right
+                if (buttonRect.right + detailsRect.width > window.innerWidth) {
+                    detailsDiv.style.right = '0';
+                    detailsDiv.style.left = 'auto';
+                }
+                
+                // Check if it would go off-screen to the bottom
+                if (buttonRect.bottom + detailsRect.height > window.innerHeight) {
+                    detailsDiv.style.bottom = '100%';
+                    detailsDiv.style.top = 'auto';
+                }
+            } else {
+                detailsDiv.style.display = 'none';
             }
         }
+    }
 
-        // Close details when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.audit-details') && !e.target.closest('button')) {
-                document.querySelectorAll('.audit-details').forEach(d => d.style.display = 'none');
-            }
-        });
-
-        // Export logs functionality
-        function exportLogs() {
-            const params = new URLSearchParams(window.location.search);
-            params.append('export', 'csv');
-            window.location.href = '?' + params.toString();
+    // Close details when clicking outside - FIXED VERSION
+    document.addEventListener('click', function(e) {
+        const isDetailsButton = e.target.closest('button') && 
+                               (e.target.closest('button').textContent.includes('Details') || 
+                                e.target.closest('button').querySelector('.fa-eye'));
+        
+        if (!e.target.closest('.audit-details') && !isDetailsButton) {
+            document.querySelectorAll('.audit-details').forEach(d => {
+                d.style.display = 'none';
+            });
         }
+    });
 
-        // Mobile sidebar toggle
-        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.toggle('mobile-open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
-        });
+    // Export logs functionality
+    function exportLogs() {
+        const params = new URLSearchParams(window.location.search);
+        params.append('export', 'csv');
+        window.location.href = '?' + params.toString();
+    }
 
-        document.getElementById('sidebarOverlay').addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.remove('mobile-open');
-            this.classList.remove('active');
-        });
+    // Mobile sidebar toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', function() {
+                document.getElementById('adminSidebar').classList.toggle('mobile-open');
+                if (sidebarOverlay) {
+                    sidebarOverlay.classList.toggle('active');
+                }
+            });
+        }
+        
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', function() {
+                document.getElementById('adminSidebar').classList.remove('mobile-open');
+                this.classList.remove('active');
+            });
+        }
 
         // Update page title based on current page
         const pageTitles = {
@@ -469,9 +541,11 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
         };
 
         const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
-        if (pageTitles[currentPage]) {
-            document.getElementById('pageTitle').textContent = pageTitles[currentPage];
+        const pageTitleElement = document.getElementById('pageTitle');
+        if (pageTitleElement && pageTitles[currentPage]) {
+            pageTitleElement.textContent = pageTitles[currentPage];
         }
-    </script>
+    });
+</script>
 </body>
 </html>
