@@ -958,7 +958,6 @@ body {
 /* ID Status Tracker Styles */
 .id-status-tracker {
     background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-    border-left: 8px solid #1b5e20;
     border-radius: 16px;
     padding: 40px 40px;
     margin-bottom: 40px;
@@ -1103,7 +1102,6 @@ body {
     padding-top: 0;
     border-top: none;
     background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-    border-left: 8px solid #1b5e20;
     border-radius: 16px;
     padding: 0;
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
@@ -1252,7 +1250,7 @@ body {
 .id-history-section h3 {
     margin: 0;
     color: #1b5e20;
-    font-size: 28px;
+    font-size: 25px;
     font-weight: 700;
     letter-spacing: 0.5px;
     display: flex;
@@ -2266,7 +2264,7 @@ body {
     font-size: 22px;
     font-weight: 700;
     color: var(--primary-dark);
-    margin: 0 0 12px 0;
+    margin: 10px 0 10px 25px;
     letter-spacing: 0.3px;
 }
 
@@ -2284,7 +2282,7 @@ body {
 }
 
 .id-status-tracker>h3 {
-    margin: 0 0 15px 0;
+    margin: 0 0 15px 4px;
     color: var(--primary-dark);
     font-size: 18px;
     font-weight: 700;
@@ -2368,9 +2366,8 @@ body {
 }
 
 .id-history-header-left h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 700;
+    margin: 1px 5px 0px 20px;
+    font-weight: 500;
     letter-spacing: 0.3px;
 }
 
