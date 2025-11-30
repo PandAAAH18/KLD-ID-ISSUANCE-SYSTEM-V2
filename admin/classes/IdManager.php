@@ -184,22 +184,26 @@ class IdManager extends User
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getIssuedByStatus(string $filter): array
-    {
-        $map = ['generated' => 'generated', 'completed' => 'delivered'];
-        $targetStatus = $map[$filter] ?? $filter;
-        
-        $sql = "SELECT i.*, s.first_name, s.last_name, s.email
-                FROM issued_ids i
-                JOIN student s ON s.id = i.user_id
-                WHERE i.status = ?
-                ORDER BY i.issue_date DESC";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$targetStatus]);
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+public function getIssuedByStatus(string $filter): array
+{
+    $statusMap = [
+        'generated' => 'generated', 
+        'printed' => 'printed',
+        'completed' => 'delivered'
+    ];
+    $targetStatus = $statusMap[$filter] ?? $filter;
+    
+    $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level
+            FROM issued_ids i
+            JOIN student s ON s.id = i.user_id
+            WHERE i.status = ?
+            ORDER BY i.issue_date DESC";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$targetStatus]);
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     public function setRequestStatus(int $requestId, string $newStatus): bool
     {
@@ -239,7 +243,7 @@ class IdManager extends User
     /* 1.  pull request + student */
     $stmt = $db->prepare("SELECT r.student_id, s.email, s.first_name, s.last_name,
                                  s.course, s.year_level, s.photo, s.signature,
-                                 s.emergency_contact, s.blood_type
+                                 s.emergency_contact, s.blood_type, s.emergency_contact_name
                           FROM   id_requests r
                           JOIN   student      s ON s.id = r.student_id
                           WHERE  r.id = ? AND r.status = 'approved'");
@@ -249,11 +253,37 @@ class IdManager extends User
 
     $studentId = $row['student_id'];
 
+    /* 1.5 Check if student already has a generated ID */
+    $checkStmt = $db->prepare("
+        SELECT COUNT(*) as existing_count 
+        FROM issued_ids 
+        WHERE user_id = ? AND status IN ('generated', 'printed')
+    ");
+    $checkStmt->execute([$studentId]);
+    $existingCount = $checkStmt->fetch(PDO::FETCH_ASSOC)['existing_count'];
+    
+    if ($existingCount > 0) {
+        // Student already has a generated ID, update request status and return
+        $updateRequest = $db->prepare("UPDATE id_requests SET status='rejected', updated_at=NOW() WHERE id=?");
+        $updateRequest->execute([$requestId]);
+        
+        // Log the action
+        $this->auditLogger->logAction(
+            'generate_id_blocked',
+            $requestId,
+            'id_requests',
+            ['status' => 'approved'],
+            ['status' => 'rejected', 'reason' => 'Student already has generated ID']
+        );
+        return;
+    }
+
     /* 2.  next id number */
     $last = $db->query("SELECT id_number FROM issued_ids ORDER BY id_number DESC LIMIT 1")->fetchColumn();
     $next = $last ? (intval(substr($last, -6)) + 1) : 100000;
     $idNumber = date('Y').str_pad($next, 6, '0', STR_PAD_LEFT);
     $expiry   = date('Y-m-d', strtotime('+4 years'));
+
 
     /* 3. QR code ------------------------------------------------------------- */
     $verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
@@ -275,11 +305,14 @@ class IdManager extends User
     );
 
     // optional logo – comment out if you don't want it
-    $logo = new \Endroid\QrCode\Logo\Logo(
-        path: __DIR__.'/../../assets/images/kldlogo.png',
-        resizeToWidth: 50,
-        punchoutBackground: true
-    );
+    $logoPath = __DIR__.'/../../assets/images/kldlogo.png';
+    $logo = file_exists($logoPath) 
+        ? new \Endroid\QrCode\Logo\Logo(
+            path: $logoPath,
+            resizeToWidth: 50,
+            punchoutBackground: true
+        )
+        : null;
 
     $result = $writer->write($qrCode, $logo);
     $result->saveToFile($qrPath);
@@ -330,9 +363,18 @@ class IdManager extends User
                         VALUES (?, ?, NOW(), ?, 'generated', ?)");
     $ins->execute([$studentId, $idNumber, $expiry, $fileName]);
 
-    /* 7.  close request */
-    $db->prepare("UPDATE id_requests SET status='generated', updated_at=NOW() WHERE id=?")
-       ->execute([$requestId]);
+    /* 7.  close request - UPDATE STATUS FROM 'approved' TO 'generated' */
+    $updateRequest = $db->prepare("UPDATE id_requests SET status='generated', updated_at=NOW() WHERE id=?");
+    $updateRequest->execute([$requestId]);
+
+    // Log the action
+    $this->auditLogger->logAction(
+        'generate_id',
+        $requestId,
+        'id_requests',
+        ['status' => 'approved'],
+        ['status' => 'generated', 'id_number' => $idNumber]
+    );
 }
 
    public function regenerateId(string $idNumber): bool
@@ -574,12 +616,12 @@ class IdManager extends User
                     $issuedId = $this->db->lastInsertId();
 
                     // Update request status
-                    $updateStmt = $this->db->prepare("
-                        UPDATE id_requests 
-                        SET status = 'generated', updated_at = NOW() 
-                        WHERE id = ?
-                    ");
-                    $updateStmt->execute([$requestId]);
+$updateStmt = $this->db->prepare("
+    UPDATE id_requests 
+    SET status = 'generated', updated_at = NOW() 
+    WHERE id = ?
+");
+$updateStmt->execute([$requestId]);
 
                     // Log the action
                     $this->auditLogger->logAction(
@@ -1010,6 +1052,20 @@ private function markIdAsPrintedInBulk(string $idNumber): bool
         error_log("Error marking ID as printed in bulk: " . $e->getMessage());
         return false;
     }
+}
+
+public function getPrintedIds(): array
+{
+    $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level
+            FROM issued_ids i
+            JOIN student s ON s.id = i.user_id
+            WHERE i.status = 'printed'
+            ORDER BY i.issue_date DESC";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
     
 }

@@ -80,6 +80,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="assets/css/login.css" rel="stylesheet">
     <!-- Preload background image -->
     <link rel="preload" href="assets/images/building.jpg" as="image">
+
+     <script src="assets/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="assets/js/login.js"></script>
+
+    <!-- Inline enhanced styles + scripts for better UX (kept local for easy edits) -->
+    <style>
+        :root{--primary-green:#2e7d32;--primary-dark:#1b5e20;--primary-light:#4caf50}
+        .enhanced-bg{background:linear-gradient(135deg, rgba(27,94,32,0.85), rgba(46,125,50,0.85)), url('assets/images/building.jpg') center/cover no-repeat fixed;min-height:100vh}
+        .bg-overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));z-index:0}
+        .particles-container{position:fixed;inset:0;z-index:0;pointer-events:none}
+        .particle{width:6px;height:6px;border-radius:50%;background:rgba(255,215,0,0.35);position:absolute;animation:float 6s linear infinite}
+        .particle:nth-child(1){left:10%;top:10%;animation-delay:0s}
+        .particle:nth-child(2){left:25%;top:5%;animation-delay:1.2s}
+        .particle:nth-child(3){left:70%;top:15%;animation-delay:2.6s}
+        @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-30px)}100%{transform:translateY(0)}}
+        .container.position-relative{z-index:3}
+        .login-card{border-radius:14px;background:rgba(255,255,255,0.98);backdrop-filter:blur(8px)}
+        .school-header{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0}
+        .logo-image{width:64px;height:64px;border-radius:50%;margin:0 auto 8px;border:2px solid rgba(255,215,0,0.15);object-fit:cover;background:rgba(255,255,255,0.1);padding:4px}
+        .animate-fade-in{animation:fadeInUp .6s ease-out}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .school-input{border-radius:10px;padding:1rem}
+        .toggle-password-btn{border-color:rgba(46,125,50,0.3)!important;color:#6c757d!important}
+        .toggle-password-btn:hover{background:var(--primary-green)!important;color:white!important;border-color:var(--primary-green)!important}
+        .forgot-password-link{color:var(--primary-green);text-decoration:none;font-size:0.9rem;font-weight:500;transition:all 0.3s ease}
+        .forgot-password-link:hover{color:var(--primary-dark);text-decoration:underline;transform:translateX(2px)}
+        .btn-enhanced{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:10px;padding:0.9rem 1rem;border:none}
+        .btn-enhanced:active .btn-ripple{transform:scale(1);opacity:0}
+        .divider{position:relative;text-align:center}
+        .divider span{background:#fff;padding:0 12px;position:relative;z-index:2}
+        .divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,0.06);z-index:1}
+        .security-notice{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border-radius:8px;background:rgba(46,125,50,0.06)}
+        @media (max-width:768px){.enhanced-bg{background-attachment:scroll}.login-card{margin:12px}}
+    </style>
 </head>
 <body class="login-body enhanced-bg">
     <div class="bg-overlay" aria-hidden="true"></div>
@@ -151,43 +187,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
-
-    <!-- Local Bootstrap JS -->
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Custom JS -->
-    <script src="assets/js/login.js"></script>
-
-    <!-- Inline enhanced styles + scripts for better UX (kept local for easy edits) -->
-    <style>
-        :root{--primary-green:#2e7d32;--primary-dark:#1b5e20;--primary-light:#4caf50}
-        .enhanced-bg{background:linear-gradient(135deg, rgba(27,94,32,0.85), rgba(46,125,50,0.85)), url('assets/images/building.jpg') center/cover no-repeat fixed;min-height:100vh}
-        .bg-overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));z-index:0}
-        .particles-container{position:fixed;inset:0;z-index:0;pointer-events:none}
-        .particle{width:6px;height:6px;border-radius:50%;background:rgba(255,215,0,0.35);position:absolute;animation:float 6s linear infinite}
-        .particle:nth-child(1){left:10%;top:10%;animation-delay:0s}
-        .particle:nth-child(2){left:25%;top:5%;animation-delay:1.2s}
-        .particle:nth-child(3){left:70%;top:15%;animation-delay:2.6s}
-        @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-30px)}100%{transform:translateY(0)}}
-        .container.position-relative{z-index:3}
-        .login-card{border-radius:14px;background:rgba(255,255,255,0.98);backdrop-filter:blur(8px)}
-        .school-header{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0}
-        .logo-image{width:64px;height:64px;border-radius:50%;margin:0 auto 8px;border:2px solid rgba(255,215,0,0.15);object-fit:cover;background:rgba(255,255,255,0.1);padding:4px}
-        .animate-fade-in{animation:fadeInUp .6s ease-out}
-        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        .school-input{border-radius:10px;padding:1rem}
-        .toggle-password-btn{border-color:rgba(46,125,50,0.3)!important;color:#6c757d!important}
-        .toggle-password-btn:hover{background:var(--primary-green)!important;color:white!important;border-color:var(--primary-green)!important}
-        .forgot-password-link{color:var(--primary-green);text-decoration:none;font-size:0.9rem;font-weight:500;transition:all 0.3s ease}
-        .forgot-password-link:hover{color:var(--primary-dark);text-decoration:underline;transform:translateX(2px)}
-        .btn-enhanced{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:10px;padding:0.9rem 1rem;border:none}
-        .btn-enhanced:active .btn-ripple{transform:scale(1);opacity:0}
-        .divider{position:relative;text-align:center}
-        .divider span{background:#fff;padding:0 12px;position:relative;z-index:2}
-        .divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,0.06);z-index:1}
-        .security-notice{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border-radius:8px;background:rgba(46,125,50,0.06)}
-        @media (max-width:768px){.enhanced-bg{background-attachment:scroll}.login-card{margin:12px}}
-    </style>
 
     <script>
         // Simple and reliable password toggle
