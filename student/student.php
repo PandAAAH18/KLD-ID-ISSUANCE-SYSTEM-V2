@@ -230,6 +230,19 @@ public function getIdRequestHistory(int $student_id): array {
     return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 }
 
+/* -------- 2c. get issued ID with digital file ------------- */
+public function getIssuedId(int $student_id): ?array {
+    $db = $this->getDb();
+    $sql = "SELECT * FROM issued_ids 
+            WHERE user_id = :sid 
+            ORDER BY issue_date DESC 
+            LIMIT 1";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':sid' => $student_id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row ?: null;
+}
+
 /* single-call file saver */
 public function saveUploadedFile(array $file, string $subFolder): string
 {
