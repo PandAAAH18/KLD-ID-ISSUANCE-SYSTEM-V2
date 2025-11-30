@@ -312,57 +312,63 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
         </div>
 
         <!-- ========== SEARCH AND FILTER SECTION ========== -->
-        <div class="admin-card">
-            <div class="admin-card-header">
-                <span><i class="fas fa-search"></i> Search & Filter Logs</span>
+<div class="admin-card">
+    <div class="admin-card-header">
+        <span><i class="fas fa-search"></i> Search & Filter Logs</span>
+    </div>
+    <div class="admin-card-body">
+        <form method="get" action="" class="filter-form">
+            <!-- Search and Action Type on top -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="text" name="search" class="form-input" value="<?= html($search) ?>"
+                        placeholder="Admin name or record ID">
+                </div>
+                <div class="form-group">
+                    <label>Action Type</label>
+                    <select name="action" class="form-select">
+                        <option value="">All Actions</option>
+                        <?php
+                        $actions = $db->query("SELECT DISTINCT action FROM audit_logs ORDER BY action")->fetchAll(PDO::FETCH_COLUMN);
+                        foreach ($actions as $a): ?>
+                        <option value="<?= html($a) ?>" <?= sel('action', $a) ?>>
+                            <?= html(ucfirst(str_replace('_', ' ', $a))) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
-            <div class="admin-card-body">
-                <form method="get" action="" class="filter-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Search</label>
-                            <input type="text" name="search" class="form-input" value="<?= html($search) ?>"
-                                placeholder="Admin name or record ID">
-                        </div>
-                        <div class="form-group">
-                            <label>Action Type</label>
-                            <select name="action" class="form-select">
-                                <option value="">All Actions</option>
-                                <?php
-                                $actions = $db->query("SELECT DISTINCT action FROM audit_logs ORDER BY action")->fetchAll(PDO::FETCH_COLUMN);
-                                foreach ($actions as $a): ?>
-                                <option value="<?= html($a) ?>" <?= sel('action', $a) ?>>
-                                    <?= html(ucfirst(str_replace('_', ' ', $a))) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Date From</label>
-                            <input type="date" name="date_from" class="form-input" value="<?= html($dateFrom) ?>">
-                        </div>
-                        <div class="form-group">
-                            <label>Date To</label>
-                            <input type="date" name="date_to" class="form-input" value="<?= html($dateTo) ?>">
-                        </div>
-                        <div class="form-group">
-                            <label>&nbsp;</label>
-                            <div style="display: flex; gap: 10px;">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-filter"></i> Apply Filters
-                                </button>
-                                <a href="?" class="btn btn-outline">
-                                    <i class="fas fa-times"></i> Clear All
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+            <!-- Date filters at the bottom -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date From</label>
+                    <input type="date" name="date_from" class="form-input" value="<?= html($dateFrom) ?>">
+                </div>
+                <div class="form-group">
+                    <label>Date To</label>
+                    <input type="date" name="date_to" class="form-input" value="<?= html($dateTo) ?>">
+                </div>
             </div>
-        </div>
+
+            <!-- Action buttons -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        <a href="?" class="btn btn-outline">
+                            <i class="fas fa-times"></i> Clear All
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
         <!-- ========== ACTION STATISTICS ========== -->
         <?php if (empty($search) && empty($action) && empty($dateFrom) && empty($dateTo)): ?>

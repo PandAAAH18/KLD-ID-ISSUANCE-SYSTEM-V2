@@ -534,21 +534,29 @@ $printedCount = $adm->countIssuedByStatus('printed');
                                 </td>
                                 <td><?= date('M d, Y', strtotime($r['created_at'])) ?></td>
                                 <td>
-                                    <div class="action-buttons">
-                                        <form method="post" style="display: inline;">
-                                            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
-                                            <button type="submit" name="approve" class="btn-admin btn-approve">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                        </form>
-                                        <form method="post" style="display: inline;">
-                                            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
-                                            <button type="submit" name="reject" class="btn-admin btn-reject" onclick="return confirm('Reject this request?');">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
+    <div class="action-buttons">
+        <!-- View Student Button -->
+        <a href="student_details.php?student_id=<?= urlencode($r['student_id'] ?? '') ?>" 
+           class="btn-admin btn-view" 
+           title="View Student Details" 
+           target="_blank">
+            <i class="fas fa-user"></i> View Student
+        </a>
+        
+        <form method="post" style="display: inline;">
+            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+            <button type="submit" name="approve" class="btn-admin btn-approve">
+                <i class="fas fa-check"></i> Approve
+            </button>
+        </form>
+        <form method="post" style="display: inline;">
+            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+            <button type="submit" name="reject" class="btn-admin btn-reject" onclick="return confirm('Reject this request?');">
+                <i class="fas fa-times"></i> Reject
+            </button>
+        </form>
+    </div>
+</td>
                             </tr>
                             <?php endforeach; ?>
                         </tbody>

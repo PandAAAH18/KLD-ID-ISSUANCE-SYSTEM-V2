@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="KLD School ID Issuance System - Secure Login">
     <link rel="shortcut icon" href="assets/image/kldlogo.png" type="../assets/image/x-icon">
-    <title>Login | KLD School Portal</title>
+    <title>Login | KLD ID SYSTEM</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Local Bootstrap CSS -->
@@ -135,8 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="logo-container mb-2">
                             <img src="assets/images/kldlogo.png" alt="KLD School Logo" class="logo-image">
                         </div>
-                        <h3 class="mb-0 fw-bold">KLD School Portal</h3>
-                        <p class="mb-0 text-muted">Secure access to school services</p>
+                        <h3 class="mb-0 fw-bold">KLD ID SYSTEM</h3>
+                        <p class="mb-0 text-muted">Reliable IDs for a Safer Campus.</p>
                         <div class="header-decoration" aria-hidden="true"></div>
                     </div>
 
