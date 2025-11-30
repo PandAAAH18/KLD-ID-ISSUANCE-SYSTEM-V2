@@ -179,6 +179,7 @@ function getPasswordResetEmailTemplate($userName, $resetUrl) {
 <html>
 <head>
     <meta charset="UTF-8">
+    <link rel="shortcut icon" href="../assets/images/kldlogo.png" type="../assets/image/x-icon">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; }
         .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -198,7 +199,7 @@ function getPasswordResetEmailTemplate($userName, $resetUrl) {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Password Reset Request</h1>
+            <h1>Password Reset Request</h1>
             <p>KLD School Portal</p>
         </div>
         
