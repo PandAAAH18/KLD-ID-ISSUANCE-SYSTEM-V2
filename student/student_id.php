@@ -46,11 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
     $type   = $_POST['request_type'] ?? '';
     $reason = trim($_POST['reason']  ?? '');
 
-    if (!in_array($type, ['new', 'replacement', 'update_information']))
+    if (!in_array($type, ['new', 'replacement']))
         $msg = 'Invalid request type.';
     else {
-        if (($type === 'replacement' || $type === 'update_information') && $reason === '')
-            $msg = 'Reason is required for replacement/update.';
+        if ($type === 'replacement' && $reason === '')
+            $msg = 'Reason is required for replacement.';
         else {
             $stuObj->insertIdRequest(
                 $student['id'],
@@ -132,30 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
 
                     <form method="post" enctype="multipart/form-data" onsubmit="handleSubmit(event)">
 
-                        <!-- STEP 1: PHOTO UPLOAD -->
-                        <div class="form-section-enhanced">
-                            <div class="form-section-header">
-                                <h3>Upload ID Photo</h3>
-                            </div>
-                            <p class="form-section-subtitle">A recent professional photo (3x4 or 4x6) in JPG, PNG format</p>
-
-                            <div class="photo-upload-container-enhanced" onclick="document.getElementById('photoInput').click();">
-                                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                                <div class="upload-text">Click to upload ID photo</div>
-                                <div class="upload-subtext">or drag and drop (JPG, PNG • Max 5MB)</div>
-                                <button type="button" class="upload-button-enhanced">
-                                    <i class="fas fa-folder-open"></i> Choose File
-                                </button>
-                                <input type="file" id="photoInput" name="id_photo" accept="image/jpeg,image/png">
-                            </div>
-
-                            <div class="photo-preview-container-enhanced" id="previewContainer" style="display: none;">
-                                <div class="photo-preview-label-enhanced">Photo Preview</div>
-                                <img id="photoPreview" class="photo-preview-enhanced" alt="Preview">
-                                <div class="current-photo-note-enhanced">Current profile photo will be used if no new photo is uploaded</div>
-                            </div>
-                        </div>
-
                         <!-- STEP 2: PERSONAL DETAILS -->
                         <div class="form-section-enhanced">
                             <div class="form-section-header">
@@ -202,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
                                         <option value="">-- Select Request Type --</option>
                                         <option value="new">New ID Application</option>
                                         <option value="replacement">Replacement (Lost/Damaged)</option>
-                                        <option value="update_information">Update Information</option>
+
                                     </select>
                                 </div>
                             </div>
@@ -1212,7 +1188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$incomplete) {
             const reasonInput = document.querySelector('textarea[name="reason"]');
 
             if (select && reasonGroup && reasonInput) {
-                if (select.value === 'replacement' || select.value === 'update_information') {
+                if (select.value === 'replacement') {
                     reasonGroup.style.display = 'block';
                     reasonInput.required = true;
                 } else {
