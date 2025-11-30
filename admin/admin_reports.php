@@ -553,71 +553,88 @@ require_once 'admin_header.php';
         });
 
         function showChart(index) {
-            currentChartIndex = index;
-            const chartConfig = charts[index];
-            
-            // Update UI
-            document.getElementById('chartTitle').textContent = chartConfig.title;
-            updateChartButtons();
-            updateNavigationButtons();
-            
-            // Destroy existing chart
-            if (currentChart) {
-                currentChart.destroy();
-            }
-            
-            // Create new chart
-            const ctx = document.getElementById('dynamicChart').getContext('2d');
-            const config = {
-                type: chartConfig.type,
-                data: {
-                    labels: chartConfig.labels,
-                    datasets: [{
-                        label: chartConfig.title,
-                        data: chartConfig.data,
-                        backgroundColor: chartConfig.backgroundColor,
-                        borderColor: chartConfig.borderColor || '#fff',
-                        borderWidth: chartConfig.borderWidth || 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                font: { size: 12 }
-                            }
-                        },
-                        title: {
-                            display: false
-                        }
+    currentChartIndex = index;
+    const chartConfig = charts[index];
+    
+    // Update UI
+    document.getElementById('chartTitle').textContent = chartConfig.title;
+    updateChartButtons();
+    updateNavigationButtons();
+    
+    // Destroy existing chart
+    if (currentChart) {
+        currentChart.destroy();
+    }
+    
+    // Create new chart
+    const ctx = document.getElementById('dynamicChart').getContext('2d');
+    
+    // Configure dataset based on chart type
+    let datasetConfig = {
+        data: chartConfig.data,
+        backgroundColor: chartConfig.backgroundColor,
+        borderColor: chartConfig.borderColor || '#fff',
+        borderWidth: chartConfig.borderWidth || 2
+    };
+    
+    // For bar charts, don't set a label to prevent legend from showing dataset name
+    if (chartConfig.type !== 'bar') {
+        datasetConfig.label = chartConfig.title;
+    }
+    
+    const config = {
+        type: chartConfig.type,
+        data: {
+            labels: chartConfig.labels,
+            datasets: [datasetConfig]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: { size: 12 }
                     },
-                    scales: chartConfig.type === 'bar' ? {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { 
-                                stepSize: 1,
-                                font: { size: 11 }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                font: { size: 11 }
-                            }
-                        }
-                    } : {}
+                    // Hide legend for bar charts since the labels are on the x-axis
+                    display: chartConfig.type !== 'bar'
+                },
+                title: {
+                    display: false
                 }
-            };
-            
-            currentChart = new Chart(ctx, config);
-            
-            // Update table content
-            updateTableContent(chartConfig.tableData, chartConfig.tableHeaders);
+            },
+            scales: chartConfig.type === 'bar' ? {
+                y: {
+                    beginAtZero: true,
+                    ticks: { 
+                        stepSize: 1,
+                        font: { size: 11 }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Number of Students'
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: { size: 11 }
+                    },
+                    title: {
+                        display: true,
+                        text: chartConfig.title.includes('Course') ? 'Courses' : 'Year Levels'
+                    }
+                }
+            } : {}
         }
-
+    };
+    
+    currentChart = new Chart(ctx, config);
+    
+    // Update table content
+    updateTableContent(chartConfig.tableData, chartConfig.tableHeaders);
+}
         function nextChart() {
             if (currentChartIndex < charts.length - 1) {
                 showChart(currentChartIndex + 1);
