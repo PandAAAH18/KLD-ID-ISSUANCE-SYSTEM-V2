@@ -73,7 +73,6 @@ $signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspec
 $qrcode = "../uploads/sample_qr.png";
 ?>
 <link href="../assets/css/student.css" rel="stylesheet">
-<<<<<<< HEAD
 <style>
 .avatar-placeholder {
     background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
@@ -338,8 +337,6 @@ $qrcode = "../uploads/sample_qr.png";
     }
 }
 </style>
-=======
->>>>>>> 258eea3de644cdfba76bf919a22cb8f7c9ee7191
 
 <!-- BACK-TO-TOP BUTTON -->
 <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()" title="Back to top">
