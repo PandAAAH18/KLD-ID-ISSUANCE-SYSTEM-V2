@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'verification') {
     } else {
         try {
             $emailVerifier = new EmailVerification();
-            
+
             if ($emailVerifier->resendVerificationEmail($email)) {
                 $success = 'Verification email sent! Please check your inbox.';
             } else {
@@ -40,13 +40,13 @@ $userId = 0;
 
 if ($action === 'reset') {
     $token = $_GET['token'] ?? '';
-    
+
     // Validate token
     if (!empty($token)) {
         try {
             $database = new Database();
             $db = $database->getConnection();
-            
+
             // Check if token exists and is not expired
             $sql = "SELECT pr.user_id, pr.expires_at, u.email, u.full_name 
                     FROM password_resets pr
@@ -55,11 +55,11 @@ if ($action === 'reset') {
                     AND pr.expires_at > NOW()
                     AND u.deleted_at IS NULL
                     LIMIT 1";
-            
+
             $stmt = $db->prepare($sql);
             $stmt->execute([':token' => $token]);
             $resetData = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($resetData) {
                 $validToken = true;
                 $userEmail = $resetData['email'];
@@ -74,12 +74,12 @@ if ($action === 'reset') {
     } else {
         $error = 'No reset token provided.';
     }
-    
+
     // Handle password reset form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
-        
+
         if (empty($newPassword) || empty($confirmPassword)) {
             $error = 'Please fill in all fields.';
         } elseif (strlen($newPassword) < 8) {
@@ -90,26 +90,26 @@ if ($action === 'reset') {
             try {
                 // Hash the new password
                 $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-                
+
                 // Update user password
                 $updateSql = "UPDATE users 
                              SET password_hash = :password_hash 
                              WHERE user_id = :user_id";
-                
+
                 $updateStmt = $db->prepare($updateSql);
                 $updateStmt->execute([
                     ':password_hash' => $passwordHash,
                     ':user_id' => $userId
                 ]);
-                
+
                 // Delete the used token
                 $deleteSql = "DELETE FROM password_resets WHERE token = :token";
                 $deleteStmt = $db->prepare($deleteSql);
                 $deleteStmt->execute([':token' => $token]);
-                
+
                 $success = 'Your password has been successfully reset. You can now log in with your new password.';
                 $validToken = false; // Prevent form from showing again
-                
+
             } catch (Exception $e) {
                 error_log("Reset password update error: " . $e->getMessage());
                 $error = 'An error occurred while resetting your password. Please try again.';
@@ -121,10 +121,12 @@ if ($action === 'reset') {
 
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Resend Email Verification - KLD School Portal">
+    <link rel="shortcut icon" href="../assets/images/kldlogo.png" type="../assets/image/x-icon">
     <title><?php echo $action === 'reset' ? 'Reset Password' : 'Resend Verification'; ?> | KLD School Portal</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -137,37 +139,185 @@ if ($action === 'reset') {
     <!-- Preload background image -->
     <link rel="preload" href="assets/images/building.jpg" as="image">
     <style>
-        :root{--primary-green:#2e7d32;--primary-dark:#1b5e20;--primary-light:#4caf50}
-        .enhanced-bg{background:linear-gradient(135deg, rgba(27,94,32,0.85), rgba(46,125,50,0.85)), url('assets/images/building.jpg') center/cover no-repeat fixed;min-height:100vh}
-        .bg-overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));z-index:0}
-        .container.position-relative{z-index:3}
-        .card{border-radius:14px;background:rgba(255,255,255,0.98);backdrop-filter:blur(8px)}
-        .school-header{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0}
-        .logo-image{width:64px;height:64px;border-radius:50%;margin:0 auto 8px;border:2px solid rgba(255,215,0,0.15);object-fit:cover;background:rgba(255,255,255,0.1);padding:4px}
-        .animate-fade-in{animation:fadeInUp .6s ease-out}
-        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        .school-input{border-radius:10px;padding:1rem}
-        .btn-primary{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));border:none;border-radius:10px;padding:0.9rem 1rem}
-        .btn-primary:hover{background:linear-gradient(90deg,var(--primary-dark),#0d3818)}
-        .school-link{color:var(--primary-green);text-decoration:none;font-size:0.9rem;font-weight:500;transition:all 0.3s ease}
-        .school-link:hover{color:var(--primary-dark);text-decoration:underline}
-        .password-strength{height:4px;margin-top:8px;background:#e0e0e0;border-radius:2px;overflow:hidden}
-        .password-strength-bar{height:100%;width:0%;transition:all 0.3s ease}
-        .password-strength-bar.weak{width:33%;background:#f44336}
-        .password-strength-bar.medium{width:66%;background:#ff9800}
-        .password-strength-bar.strong{width:100%;background:#4caf50}
-        .password-requirements{font-size:0.875rem;margin-top:8px;color:#666}
-        .password-requirements li{margin:4px 0}
-        .password-requirements li.valid{color:#4caf50}
-        .password-requirements li.valid i{color:#4caf50}
-        .password-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#666;z-index:10}
-        .password-toggle:hover{color:#333}
-        .form-floating.password-field{position:relative}
-        .token-expired-icon{font-size:4rem;color:#f44336;margin-bottom:1rem}
-        .success-icon{font-size:4rem;color:#4caf50;margin-bottom:1rem}
-        @media (max-width:768px){.enhanced-bg{background-attachment:scroll}.card{margin:12px}}
+        :root {
+            --primary-green: #2e7d32;
+            --primary-dark: #1b5e20;
+            --primary-light: #4caf50
+        }
+
+        .enhanced-bg {
+            background: linear-gradient(135deg, rgba(27, 94, 32, 0.85), rgba(46, 125, 50, 0.85)), url('assets/images/building.jpg') center/cover no-repeat fixed;
+            min-height: 100vh
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.15));
+            z-index: 0
+        }
+
+        .container.position-relative {
+            z-index: 3
+        }
+
+        .card {
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(8px)
+        }
+
+        .school-header {
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-dark));
+            color: #fff;
+            border-radius: 12px 12px 0 0
+        }
+
+        .logo-image {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            border: 2px solid rgba(255, 215, 0, 0.15);
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp .6s ease-out
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .school-input {
+            border-radius: 10px;
+            padding: 1rem
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-dark));
+            border: none;
+            border-radius: 10px;
+            padding: 0.9rem 1rem
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, var(--primary-dark), #0d3818)
+        }
+
+        .school-link {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease
+        }
+
+        .school-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline
+        }
+
+        .password-strength {
+            height: 4px;
+            margin-top: 8px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease
+        }
+
+        .password-strength-bar.weak {
+            width: 33%;
+            background: #f44336
+        }
+
+        .password-strength-bar.medium {
+            width: 66%;
+            background: #ff9800
+        }
+
+        .password-strength-bar.strong {
+            width: 100%;
+            background: #4caf50
+        }
+
+        .password-requirements {
+            font-size: 0.875rem;
+            margin-top: 8px;
+            color: #666
+        }
+
+        .password-requirements li {
+            margin: 4px 0
+        }
+
+        .password-requirements li.valid {
+            color: #4caf50
+        }
+
+        .password-requirements li.valid i {
+            color: #4caf50
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+            z-index: 10
+        }
+
+        .password-toggle:hover {
+            color: #333
+        }
+
+        .form-floating.password-field {
+            position: relative
+        }
+
+        .token-expired-icon {
+            font-size: 4rem;
+            color: #f44336;
+            margin-bottom: 1rem
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #4caf50;
+            margin-bottom: 1rem
+        }
+
+        @media (max-width:768px) {
+            .enhanced-bg {
+                background-attachment: scroll
+            }
+
+            .card {
+                margin: 12px
+            }
+        }
     </style>
 </head>
+
 <body class="enhanced-bg">
     <div class="bg-overlay" aria-hidden="true"></div>
     <div class="container position-relative">
@@ -181,7 +331,7 @@ if ($action === 'reset') {
                         <h3 class="mb-0 fw-bold"><?php echo $action === 'reset' ? 'Reset Password' : 'Resend Verification'; ?></h3>
                         <p class="mb-0 text-muted">KLD School Portal</p>
                     </div>
-                    
+
                     <div class="card-body p-4">
                         <?php if ($action === 'reset'): ?>
                             <!-- PASSWORD RESET SECTION -->
@@ -225,7 +375,7 @@ if ($action === 'reset') {
                                 <p class="text-muted text-center mb-4">
                                     Enter your new password for <strong><?= htmlspecialchars($userEmail) ?></strong>
                                 </p>
-                                
+
                                 <?php if ($error): ?>
                                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                         <i class="fas fa-exclamation-circle me-2"></i>
@@ -233,18 +383,17 @@ if ($action === 'reset') {
                                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                     </div>
                                 <?php endif; ?>
-                                
+
                                 <form id="reset-password-form" method="POST" action="?action=reset&token=<?= htmlspecialchars($token) ?>">
                                     <div class="form-floating password-field mb-3">
-                                        <input 
-                                            type="password" 
-                                            class="form-control school-input" 
-                                            id="new_password" 
-                                            name="new_password" 
+                                        <input
+                                            type="password"
+                                            class="form-control school-input"
+                                            id="new_password"
+                                            name="new_password"
                                             placeholder="New Password"
                                             required
-                                            minlength="8"
-                                        >
+                                            minlength="8">
                                         <label for="new_password">
                                             <i class="fas fa-lock me-2"></i>New Password
                                         </label>
@@ -252,11 +401,11 @@ if ($action === 'reset') {
                                             <i class="fas fa-eye" id="toggle-icon-new"></i>
                                         </span>
                                     </div>
-                                    
+
                                     <div class="password-strength">
                                         <div class="password-strength-bar" id="strength-bar"></div>
                                     </div>
-                                    
+
                                     <ul class="password-requirements" id="password-requirements">
                                         <li id="req-length">
                                             <i class="fas fa-circle-xmark"></i> At least 8 characters
@@ -271,17 +420,16 @@ if ($action === 'reset') {
                                             <i class="fas fa-circle-xmark"></i> One number
                                         </li>
                                     </ul>
-                                    
+
                                     <div class="form-floating password-field mb-4">
-                                        <input 
-                                            type="password" 
-                                            class="form-control school-input" 
-                                            id="confirm_password" 
-                                            name="confirm_password" 
+                                        <input
+                                            type="password"
+                                            class="form-control school-input"
+                                            id="confirm_password"
+                                            name="confirm_password"
                                             placeholder="Confirm Password"
                                             required
-                                            minlength="8"
-                                        >
+                                            minlength="8">
                                         <label for="confirm_password">
                                             <i class="fas fa-lock me-2"></i>Confirm Password
                                         </label>
@@ -289,7 +437,7 @@ if ($action === 'reset') {
                                             <i class="fas fa-eye" id="toggle-icon-confirm"></i>
                                         </span>
                                     </div>
-                                    
+
                                     <div class="d-grid mb-3">
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-check-circle me-2"></i>
@@ -297,7 +445,7 @@ if ($action === 'reset') {
                                         </button>
                                     </div>
                                 </form>
-                                
+
                                 <div class="text-center">
                                     <p class="mb-0">
                                         <a href="index.php" class="school-link">
@@ -315,7 +463,7 @@ if ($action === 'reset') {
                                     <i class="fas fa-exclamation-circle me-2"></i><?php echo esc_html($error); ?>
                                 </div>
                             <?php endif; ?>
-                            
+
                             <!-- Success Message -->
                             <?php if (isset($success)): ?>
                                 <div class="alert alert-success" role="alert">
@@ -334,8 +482,8 @@ if ($action === 'reset') {
                                 <!-- Resend Form -->
                                 <form method="post" class="login-form">
                                     <div class="form-floating mb-3">
-                                        <input type="email" class="form-control school-input" id="email" name="email" 
-                                               placeholder="name@example.com" required>
+                                        <input type="email" class="form-control school-input" id="email" name="email"
+                                            placeholder="name@example.com" required>
                                         <label for="email"><i class="fas fa-envelope me-2"></i>Email address</label>
                                     </div>
 
@@ -363,100 +511,101 @@ if ($action === 'reset') {
 
     <!-- Local Bootstrap JS -->
     <script src="assets/js/bootstrap.bundle.min.js"></script>
-    
+
     <?php if ($action === 'reset'): ?>
-    <!-- Password Reset Scripts -->
-    <script>
-        // Password visibility toggle
-        function togglePassword(fieldId) {
-            const field = document.getElementById(fieldId);
-            const icon = document.getElementById('toggle-icon-' + (fieldId === 'new_password' ? 'new' : 'confirm'));
-            
-            if (field.type === 'password') {
-                field.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                field.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-            }
-        }
-        
-        // Password strength checker
-        document.addEventListener('DOMContentLoaded', function() {
-            const newPassword = document.getElementById('new_password');
-            const confirmPassword = document.getElementById('confirm_password');
-            const strengthBar = document.getElementById('strength-bar');
-            
-            if (newPassword) {
-                newPassword.addEventListener('input', function() {
-                    const password = this.value;
-                    let strength = 0;
-                    
-                    // Check requirements
-                    const hasLength = password.length >= 8;
-                    const hasUppercase = /[A-Z]/.test(password);
-                    const hasLowercase = /[a-z]/.test(password);
-                    const hasNumber = /[0-9]/.test(password);
-                    
-                    // Update requirement indicators
-                    updateRequirement('req-length', hasLength);
-                    updateRequirement('req-uppercase', hasUppercase);
-                    updateRequirement('req-lowercase', hasLowercase);
-                    updateRequirement('req-number', hasNumber);
-                    
-                    // Calculate strength
-                    if (hasLength) strength++;
-                    if (hasUppercase) strength++;
-                    if (hasLowercase) strength++;
-                    if (hasNumber) strength++;
-                    
-                    // Update strength bar
-                    strengthBar.className = 'password-strength-bar';
-                    if (strength <= 2) {
-                        strengthBar.classList.add('weak');
-                    } else if (strength === 3) {
-                        strengthBar.classList.add('medium');
-                    } else if (strength === 4) {
-                        strengthBar.classList.add('strong');
-                    }
-                });
-                
-                // Check password match
-                confirmPassword.addEventListener('input', function() {
-                    if (this.value && this.value !== newPassword.value) {
-                        this.setCustomValidity('Passwords do not match');
-                    } else {
-                        this.setCustomValidity('');
-                    }
-                });
-                
-                newPassword.addEventListener('input', function() {
-                    if (confirmPassword.value && confirmPassword.value !== this.value) {
-                        confirmPassword.setCustomValidity('Passwords do not match');
-                    } else {
-                        confirmPassword.setCustomValidity('');
-                    }
-                });
-            }
-            
-            function updateRequirement(id, valid) {
-                const element = document.getElementById(id);
-                const icon = element.querySelector('i');
-                
-                if (valid) {
-                    element.classList.add('valid');
-                    icon.classList.remove('fa-circle-xmark');
-                    icon.classList.add('fa-circle-check');
+        <!-- Password Reset Scripts -->
+        <script>
+            // Password visibility toggle
+            function togglePassword(fieldId) {
+                const field = document.getElementById(fieldId);
+                const icon = document.getElementById('toggle-icon-' + (fieldId === 'new_password' ? 'new' : 'confirm'));
+
+                if (field.type === 'password') {
+                    field.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
                 } else {
-                    element.classList.remove('valid');
-                    icon.classList.remove('fa-circle-check');
-                    icon.classList.add('fa-circle-xmark');
+                    field.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
                 }
             }
-        });
-    </script>
+
+            // Password strength checker
+            document.addEventListener('DOMContentLoaded', function() {
+                const newPassword = document.getElementById('new_password');
+                const confirmPassword = document.getElementById('confirm_password');
+                const strengthBar = document.getElementById('strength-bar');
+
+                if (newPassword) {
+                    newPassword.addEventListener('input', function() {
+                        const password = this.value;
+                        let strength = 0;
+
+                        // Check requirements
+                        const hasLength = password.length >= 8;
+                        const hasUppercase = /[A-Z]/.test(password);
+                        const hasLowercase = /[a-z]/.test(password);
+                        const hasNumber = /[0-9]/.test(password);
+
+                        // Update requirement indicators
+                        updateRequirement('req-length', hasLength);
+                        updateRequirement('req-uppercase', hasUppercase);
+                        updateRequirement('req-lowercase', hasLowercase);
+                        updateRequirement('req-number', hasNumber);
+
+                        // Calculate strength
+                        if (hasLength) strength++;
+                        if (hasUppercase) strength++;
+                        if (hasLowercase) strength++;
+                        if (hasNumber) strength++;
+
+                        // Update strength bar
+                        strengthBar.className = 'password-strength-bar';
+                        if (strength <= 2) {
+                            strengthBar.classList.add('weak');
+                        } else if (strength === 3) {
+                            strengthBar.classList.add('medium');
+                        } else if (strength === 4) {
+                            strengthBar.classList.add('strong');
+                        }
+                    });
+
+                    // Check password match
+                    confirmPassword.addEventListener('input', function() {
+                        if (this.value && this.value !== newPassword.value) {
+                            this.setCustomValidity('Passwords do not match');
+                        } else {
+                            this.setCustomValidity('');
+                        }
+                    });
+
+                    newPassword.addEventListener('input', function() {
+                        if (confirmPassword.value && confirmPassword.value !== this.value) {
+                            confirmPassword.setCustomValidity('Passwords do not match');
+                        } else {
+                            confirmPassword.setCustomValidity('');
+                        }
+                    });
+                }
+
+                function updateRequirement(id, valid) {
+                    const element = document.getElementById(id);
+                    const icon = element.querySelector('i');
+
+                    if (valid) {
+                        element.classList.add('valid');
+                        icon.classList.remove('fa-circle-xmark');
+                        icon.classList.add('fa-circle-check');
+                    } else {
+                        element.classList.remove('valid');
+                        icon.classList.remove('fa-circle-check');
+                        icon.classList.add('fa-circle-xmark');
+                    }
+                }
+            });
+        </script>
     <?php endif; ?>
 </body>
+
 </html>

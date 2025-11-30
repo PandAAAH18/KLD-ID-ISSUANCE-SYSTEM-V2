@@ -67,63 +67,7 @@ if (!$avatar) {
 $signature = $student['signature'] ? '../uploads/student_signatures/' . htmlspecialchars($student['signature']) : null;
 $qrcode = "../uploads/sample_qr.png";
 ?>
-
-<!-- PAGE CONTENT STARTS HERE -->
-
 <link href="../assets/css/student.css" rel="stylesheet">
-<style>
-    .avatar-placeholder {
-        background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
-        color: #757575;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        border: 2px solid #e0e0e0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .avatar-placeholder::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(224, 224, 224, 0.8), rgba(189, 189, 189, 0.8));
-        z-index: 1;
-    }
-
-    .avatar-placeholder i {
-        position: relative;
-        z-index: 2;
-        font-size: 2em;
-        opacity: 0.8;
-    }
-
-    .student-photo.avatar-placeholder {
-        width: 80px;
-        height: 80px;
-    }
-
-    .student-photo.avatar-placeholder i {
-        font-size: 2.5em;
-    }
-
-    .welcome-avatar.avatar-placeholder {
-        width: 80px;
-        height: 80px;
-        border: 3px solid #e0e0e0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .welcome-box:hover .welcome-avatar.avatar-placeholder {
-        transform: scale(1.05);
-        border-color: #bdbdbd;
-    }
-</style>
 
 <!-- BACK-TO-TOP BUTTON -->
 <button id="backToTopBtn" class="back-to-top" onclick="scrollToTop()" title="Back to top">

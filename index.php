@@ -19,9 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($user && password_verify($password, $user['password_hash'])) {
                 // Check if email is verified (skip in dev mode if REQUIRE_EMAIL_VERIFICATION is false)
                 $requireVerification = defined('REQUIRE_EMAIL_VERIFICATION') ? REQUIRE_EMAIL_VERIFICATION : true;
-                
+
                 if ($requireVerification && !$user['is_verified']) {
-                   $error = 'Please verify your email address first. Check your inbox at ' . htmlspecialchars($email) . ' for the verification link.';
+                    $error = 'Please verify your email address first. Check your inbox at ' . htmlspecialchars($email) . ' for the verification link.';
                     $_SESSION['pending_verification_email'] = $email;
                 } else {
                     // Email verified, proceed with login
@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Redirect based on role
                     $goto = $user['role'] === 'admin'
-                          ? 'admin/admin_dashboard.php'
-                          : 'student/student_home.php';
+                        ? 'admin/admin_dashboard.php'
+                        : 'student/student_home.php';
                     header("Location: $goto");
                     exit();
                 }
@@ -67,10 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="KLD School ID Issuance System - Secure Login">
+    <link rel="shortcut icon" href="assets/image/kldlogo.png" type="../assets/image/x-icon">
     <title>Login | KLD School Portal</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -81,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Preload background image -->
     <link rel="preload" href="assets/images/building.jpg" as="image">
 </head>
+
 <body class="login-body enhanced-bg">
     <div class="bg-overlay" aria-hidden="true"></div>
     <div class="particles-container" aria-hidden="true">
@@ -100,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <p class="mb-0 text-muted">Secure access to school services</p>
                         <div class="header-decoration" aria-hidden="true"></div>
                     </div>
-                    
+
                     <div class="card-body p-4">
                         <!-- Error Message -->
                         <?php if (isset($error)): ?>
@@ -154,39 +157,206 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <!-- Local Bootstrap JS -->
     <script src="assets/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- Custom JS -->
     <script src="assets/js/login.js"></script>
 
     <!-- Inline enhanced styles + scripts for better UX (kept local for easy edits) -->
     <style>
-        :root{--primary-green:#2e7d32;--primary-dark:#1b5e20;--primary-light:#4caf50}
-        .enhanced-bg{background:linear-gradient(135deg, rgba(27,94,32,0.85), rgba(46,125,50,0.85)), url('assets/images/building.jpg') center/cover no-repeat fixed;min-height:100vh}
-        .bg-overlay{position:fixed;inset:0;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.15));z-index:0}
-        .particles-container{position:fixed;inset:0;z-index:0;pointer-events:none}
-        .particle{width:6px;height:6px;border-radius:50%;background:rgba(255,215,0,0.35);position:absolute;animation:float 6s linear infinite}
-        .particle:nth-child(1){left:10%;top:10%;animation-delay:0s}
-        .particle:nth-child(2){left:25%;top:5%;animation-delay:1.2s}
-        .particle:nth-child(3){left:70%;top:15%;animation-delay:2.6s}
-        @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(-30px)}100%{transform:translateY(0)}}
-        .container.position-relative{z-index:3}
-        .login-card{border-radius:14px;background:rgba(255,255,255,0.98);backdrop-filter:blur(8px)}
-        .school-header{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:12px 12px 0 0}
-        .logo-image{width:64px;height:64px;border-radius:50%;margin:0 auto 8px;border:2px solid rgba(255,215,0,0.15);object-fit:cover;background:rgba(255,255,255,0.1);padding:4px}
-        .animate-fade-in{animation:fadeInUp .6s ease-out}
-        @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        .school-input{border-radius:10px;padding:1rem}
-        .toggle-password-btn{border-color:rgba(46,125,50,0.3)!important;color:#6c757d!important}
-        .toggle-password-btn:hover{background:var(--primary-green)!important;color:white!important;border-color:var(--primary-green)!important}
-        .forgot-password-link{color:var(--primary-green);text-decoration:none;font-size:0.9rem;font-weight:500;transition:all 0.3s ease}
-        .forgot-password-link:hover{color:var(--primary-dark);text-decoration:underline;transform:translateX(2px)}
-        .btn-enhanced{background:linear-gradient(90deg,var(--primary-green),var(--primary-dark));color:#fff;border-radius:10px;padding:0.9rem 1rem;border:none}
-        .btn-enhanced:active .btn-ripple{transform:scale(1);opacity:0}
-        .divider{position:relative;text-align:center}
-        .divider span{background:#fff;padding:0 12px;position:relative;z-index:2}
-        .divider::before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,0.06);z-index:1}
-        .security-notice{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border-radius:8px;background:rgba(46,125,50,0.06)}
-        @media (max-width:768px){.enhanced-bg{background-attachment:scroll}.login-card{margin:12px}}
+        :root {
+            --primary-green: #2e7d32;
+            --primary-dark: #1b5e20;
+            --primary-light: #4caf50
+        }
+
+        .enhanced-bg {
+            background: linear-gradient(135deg, rgba(27, 94, 32, 0.85), rgba(46, 125, 50, 0.85)), url('assets/images/building.jpg') center/cover no-repeat fixed;
+            min-height: 100vh
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.15));
+            z-index: 0
+        }
+
+        .particles-container {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .particle {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.35);
+            position: absolute;
+            animation: float 6s linear infinite
+        }
+
+        .particle:nth-child(1) {
+            left: 10%;
+            top: 10%;
+            animation-delay: 0s
+        }
+
+        .particle:nth-child(2) {
+            left: 25%;
+            top: 5%;
+            animation-delay: 1.2s
+        }
+
+        .particle:nth-child(3) {
+            left: 70%;
+            top: 15%;
+            animation-delay: 2.6s
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-30px)
+            }
+
+            100% {
+                transform: translateY(0)
+            }
+        }
+
+        .container.position-relative {
+            z-index: 3
+        }
+
+        .login-card {
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(8px)
+        }
+
+        .school-header {
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-dark));
+            color: #fff;
+            border-radius: 12px 12px 0 0
+        }
+
+        .logo-image {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            border: 2px solid rgba(255, 215, 0, 0.15);
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp .6s ease-out
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .school-input {
+            border-radius: 10px;
+            padding: 1rem
+        }
+
+        .toggle-password-btn {
+            border-color: rgba(46, 125, 50, 0.3) !important;
+            color: #6c757d !important
+        }
+
+        .toggle-password-btn:hover {
+            background: var(--primary-green) !important;
+            color: white !important;
+            border-color: var(--primary-green) !important
+        }
+
+        .forgot-password-link {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease
+        }
+
+        .forgot-password-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+            transform: translateX(2px)
+        }
+
+        .btn-enhanced {
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-dark));
+            color: #fff;
+            border-radius: 10px;
+            padding: 0.9rem 1rem;
+            border: none
+        }
+
+        .btn-enhanced:active .btn-ripple {
+            transform: scale(1);
+            opacity: 0
+        }
+
+        .divider {
+            position: relative;
+            text-align: center
+        }
+
+        .divider span {
+            background: #fff;
+            padding: 0 12px;
+            position: relative;
+            z-index: 2
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.06);
+            z-index: 1
+        }
+
+        .security-notice {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(46, 125, 50, 0.06)
+        }
+
+        @media (max-width:768px) {
+            .enhanced-bg {
+                background-attachment: scroll
+            }
+
+            .login-card {
+                margin: 12px
+            }
+        }
     </style>
 
     <script>
@@ -195,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const toggleBtn = document.getElementById('togglePassword');
             const passwordField = document.getElementById('password');
             const eyeIcon = document.getElementById('eyeIcon');
-            
+
             if (toggleBtn && passwordField && eyeIcon) {
                 toggleBtn.addEventListener('click', function() {
                     if (passwordField.type === 'password') {
@@ -231,4 +401,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         });
     </script>
 </body>
+
 </html>
