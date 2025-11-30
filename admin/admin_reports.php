@@ -300,9 +300,6 @@ require_once 'admin_header.php';
                 <button class="chart-btn" onclick="showChart(6)">
                     <i class="fas fa-user-check"></i> User Status
                 </button>
-                <button class="chart-btn" onclick="showChart(7)">
-                    <i class="fas fa-chart-pie"></i> Profile Completion
-                </button>
             </div>
         </div>
 
@@ -515,31 +512,6 @@ require_once 'admin_header.php';
                         'count' => $item['count']
                     ];
                 }, $userStatusStats)) ?>,
-                tableHeaders: ['Status', 'Count']
-            },
-            {
-                title: "Profile Completion Status",
-                type: "pie",
-                labels: <?= json_encode(array_map(function($item) { 
-                    return $item['status'] ? $item['status'] : 'Undefined'; 
-                }, $profileStats)) ?>,
-                data: <?= json_encode(array_column($profileStats, 'count')) ?>,
-                backgroundColor: <?= json_encode(array_map(function($item) {
-                    $status = $item['status'] ? strtolower($item['status']) : 'undefined';
-                    switch($status) {
-                        case 'complete': return '#357737';
-                        case 'incomplete': return '#dc3545';
-                        case 'undefined': return '#6c757d';
-                        case 'pending': return '#b69b04';
-                        default: return '#17a2b8';
-                    }
-                }, $profileStats)) ?>,
-                tableData: <?= json_encode(array_map(function($item) {
-                    return [
-                        'status' => $item['status'] ? $item['status'] : 'Undefined',
-                        'count' => $item['count']
-                    ];
-                }, $profileStats)) ?>,
                 tableHeaders: ['Status', 'Count']
             }
         ];

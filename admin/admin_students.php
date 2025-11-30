@@ -369,15 +369,6 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                     </div>
 
                     <div class="form-group">
-                        <label>Profile Status</label>
-                        <select name="profile_completed" class="form-select">
-                            <option value="">All Profiles</option>
-                            <option value="1" <?= ($filters['profile_completed'] === '1') ? 'selected' : '' ?>>Completed</option>
-                            <option value="0" <?= ($filters['profile_completed'] === '0') ? 'selected' : '' ?>>Incomplete</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
                         <label>Account Status</label>
                         <select name="account_status" class="form-select">
                             <option value="">All Students</option>
@@ -429,7 +420,6 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                                     <th>ID</th>
                                     <th>Student Information</th>
                                     <th>Academic Details</th>
-                                    <th>Profile Status</th>
                                     <th>Account Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -478,11 +468,6 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                                     <td>
                                         <div><?= htmlspecialchars($student['course'] ?? 'Not set') ?></div>
                                         <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($student['year_level'] ?? 'Not set') ?></div>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge <?= $student['profile_completed'] ? 'status-completed' : 'status-incomplete' ?>">
-                                            <?= $student['profile_completed'] ? 'Complete' : 'Incomplete' ?>
-                                        </span>
                                     </td>
                                     <td>
                                         <?php if ($student['has_account']): ?>
