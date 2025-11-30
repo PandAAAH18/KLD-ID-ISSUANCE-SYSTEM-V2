@@ -18,8 +18,15 @@ $recentActivities = $reportsManager->getRecentActivities(5);
 
 require_once 'admin_header.php';
 ?>
-
-                <!-- Dashboard Header -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+     <!-- Dashboard Header -->
                 <div class="page-header">
                     <h2>Welcome back, <?= htmlspecialchars($_SESSION['email'] ?? 'Admin') ?>!</h2>
                     <p>Here's an overview of your system statistics</p>
@@ -282,7 +289,99 @@ require_once 'admin_header.php';
                         </div>
                     </div>
                 </div>
+                <!-- QR Code Scanner Section -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <span><i class="fas fa-qrcode"></i> QR Code Scanner</span>
+    </div>
+    <div class="admin-card-body">
+        <div class="action-section">
+            <h3><i class="fas fa-camera"></i> Scan Student ID QR Code</h3>
+            
+            <!-- Mode Selection -->
+            <div class="mode-selection" style="margin-bottom: 20px;">
+                <div class="mode-buttons" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button id="camera-mode" class="btn-admin btn-primary mode-btn active">
+                        <i class="fas fa-camera"></i> Camera Scan
+                    </button>
+                    <button id="file-mode" class="btn-admin btn-secondary mode-btn">
+                        <i class="fas fa-file-upload"></i> Upload Image
+                    </button>
+                </div>
+            </div>
 
+            <!-- Camera Scanner Container -->
+            <div id="camera-container" class="scanner-mode">
+                <!-- Camera Selection -->
+                <div style="margin-bottom: 15px;">
+                    <label for="camera-select">Select Camera:</label>
+                    <select id="camera-select" class="form-select" style="margin-top: 5px;">
+                        <option value="">Loading cameras...</option>
+                    </select>
+                </div>
+
+                <!-- Scanner -->
+                <div id="qr-reader" style="width: 100%; max-width: 500px; margin: 0 auto; border: 2px solid var(--school-gray); border-radius: 8px; overflow: hidden;"></div>
+                
+                <!-- Camera Controls -->
+                <div style="text-align: center; margin-top: 15px;">
+                    <button id="start-scanner" class="btn-admin btn-primary">
+                        <i class="fas fa-play"></i> Start Scanner
+                    </button>
+                    <button id="stop-scanner" class="btn-admin btn-secondary" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop Scanner
+                    </button>
+                    <button id="restart-scanner" class="btn-admin btn-outline">
+                        <i class="fas fa-redo"></i> Restart Scanner
+                    </button>
+                </div>
+            </div>
+
+            <!-- File Upload Container -->
+            <div id="file-container" class="scanner-mode" style="display: none;">
+                <!-- File Drop Zone -->
+                <div id="file-drop-zone" style="border: 2px dashed var(--school-gray); border-radius: 8px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: var(--school-gray-light);">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--school-gray); margin-bottom: 15px;"></i>
+                    <h4>Drop QR Code Image Here</h4>
+                    <p style="color: var(--school-gray-dark); margin-bottom: 15px;">or click to select file</p>
+                    <p style="font-size: 0.8rem; color: var(--school-gray-dark);">
+                        Supported formats: JPG, PNG, GIF, WebP
+                    </p>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                </div>
+
+                <!-- File Preview -->
+                <div id="file-preview" style="margin-top: 20px; display: none;">
+                    <h5>Image Preview:</h5>
+                    <img id="preview-image" style="max-width: 300px; max-height: 300px; border: 1px solid var(--school-gray); border-radius: 4px;">
+                    <div style="margin-top: 10px;">
+                        <button id="scan-file" class="btn-admin btn-primary">
+                            <i class="fas fa-search"></i> Scan QR Code
+                        </button>
+                        <button id="clear-file" class="btn-admin btn-outline">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner Results -->
+            <div id="qr-reader-results" style="margin-top: 20px;"></div>
+
+            <!-- Manual Input Fallback -->
+            <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+                <h4><i class="fas fa-keyboard"></i> Or Enter Student ID Manually</h4>
+                <form id="manual-search-form" style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input type="text" id="student-id-input" placeholder="Enter Student ID or ID Number" 
+                           class="form-input" style="flex: 1;">
+                    <button type="submit" class="btn-admin btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>                      
             </div>
         </main>
     </div>
@@ -336,44 +435,435 @@ require_once 'admin_header.php';
         }
     </style>
 
-    <!-- Scripts -->
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Mobile menu toggle
-        document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.toggle('mobile-open');
-            document.getElementById('sidebarOverlay').classList.toggle('active');
+   <!-- Scripts -->
+<script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.min.js"></script>
+<script>
+// Mobile menu toggle and basic dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile menu
+    document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
+        document.getElementById('adminSidebar').classList.toggle('mobile-open');
+        document.getElementById('sidebarOverlay').classList.toggle('active');
+    });
+
+    // Close sidebar when clicking overlay
+    document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
+        document.getElementById('adminSidebar').classList.remove('mobile-open');
+        this.classList.remove('active');
+    });
+
+    // Update page title
+    document.getElementById('pageTitle').textContent = 'Admin Dashboard';
+
+    // Refresh stats every 60 seconds
+    setInterval(function() {
+        console.log('Dashboard stats are up to date');
+    }, 60000);
+
+    // Update page title based on current page
+    const pageTitles = {
+        'admin_dashboard.php': 'Dashboard Overview',
+        'admin_students.php': 'Student Management',
+        'admin_id.php': 'ID Card Management',
+        'admin_user.php': 'User Management',
+        'admin_reports.php': 'Reports & Analytics',
+        'admin_logs.php': 'System Logs'
+    };
+
+    const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
+    if (pageTitles[currentPage]) {
+        document.getElementById('pageTitle').textContent = pageTitles[currentPage];
+    }
+    
+    // Initialize QR Scanner after DOM is loaded
+    initializeQRScanner();
+});
+
+// QR Scanner functionality
+let html5QrcodeScanner;
+let currentCameraId = null;
+let currentFile = null;
+
+function initializeQRScanner() {
+    // Mode Switching - Wait for elements to exist
+    const cameraModeBtn = document.getElementById('camera-mode');
+    const fileModeBtn = document.getElementById('file-mode');
+    
+    if (cameraModeBtn && fileModeBtn) {
+        cameraModeBtn.addEventListener('click', function() {
+            switchMode('camera');
         });
 
-        // Close sidebar when clicking overlay
-        document.getElementById('sidebarOverlay')?.addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.remove('mobile-open');
-            this.classList.remove('active');
+        fileModeBtn.addEventListener('click', function() {
+            switchMode('file');
         });
+    } else {
+        console.error('Mode buttons not found');
+        return;
+    }
 
-        // Update page title
-        document.getElementById('pageTitle').textContent = 'Admin Dashboard';
+    // Initialize other QR scanner components
+    populateCameras();
+    setupFileHandlers();
+    setupCameraControls();
+    setupManualSearch();
+}
 
-        // Refresh stats every 60 seconds
-        setInterval(function() {
-            // Optional: Add auto-refresh functionality here
-            console.log('Dashboard stats are up to date');
-        }, 60000);
-
-        // Update page title based on current page
-        const pageTitles = {
-            'admin_dashboard.php': 'Dashboard Overview',
-            'admin_students.php': 'Student Management',
-            'admin_id.php': 'ID Card Management',
-            'admin_user.php': 'User Management',
-            'admin_reports.php': 'Reports & Analytics',
-            'admin_logs.php': 'System Logs'
-        };
-
-        const currentPage = '<?= basename($_SERVER['PHP_SELF']) ?>';
-        if (pageTitles[currentPage]) {
-            document.getElementById('pageTitle').textContent = pageTitles[currentPage];
+function switchMode(mode) {
+    // Update active button
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-secondary');
+    });
+    
+    if (mode === 'camera') {
+        document.getElementById('camera-mode').classList.add('active', 'btn-primary');
+        document.getElementById('camera-mode').classList.remove('btn-secondary');
+        document.getElementById('camera-container').style.display = 'block';
+        document.getElementById('file-container').style.display = 'none';
+        
+        // Stop file scanner if running
+        if (html5QrcodeScanner && document.getElementById('start-scanner').style.display === 'none') {
+            document.getElementById('stop-scanner').click();
         }
-    </script>
+    } else {
+        document.getElementById('file-mode').classList.add('active', 'btn-primary');
+        document.getElementById('file-mode').classList.remove('btn-secondary');
+        document.getElementById('camera-container').style.display = 'none';
+        document.getElementById('file-container').style.display = 'block';
+        
+        // Stop camera scanner if running
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear().catch(error => {
+                console.log("Scanner cleanup:", error);
+            });
+            document.getElementById('stop-scanner').style.display = 'none';
+            document.getElementById('start-scanner').style.display = 'inline-block';
+        }
+    }
+}
+
+// Camera Management
+async function populateCameras() {
+    try {
+        const devices = await Html5Qrcode.getCameras();
+        const cameraSelect = document.getElementById('camera-select');
+        
+        if (!cameraSelect) {
+            console.error('Camera select element not found');
+            return;
+        }
+        
+        cameraSelect.innerHTML = '';
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.id;
+            option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+            cameraSelect.appendChild(option);
+        });
+        
+        if (devices.length > 0) {
+            currentCameraId = devices[0].id;
+        } else {
+            showResult('error', 'No cameras found. Please check your device permissions.');
+        }
+    } catch (error) {
+        console.error('Error getting cameras:', error);
+        showResult('error', 'Could not access camera. Please check permissions.');
+    }
+}
+
+// Initialize Camera Scanner
+function initializeCameraScanner(cameraId = null) {
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_QR_CODE]
+    };
+
+    // Clear any existing scanner
+    const qrReaderElement = document.getElementById("qr-reader");
+    if (!qrReaderElement) {
+        showResult('error', 'QR reader element not found.');
+        return;
+    }
+    
+    qrReaderElement.innerHTML = '';
+    
+    html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", config, false);
+    
+    const cameraIdToUse = cameraId || currentCameraId;
+    
+    html5QrcodeScanner.render(
+        onScanSuccess, 
+        onScanFailure
+    ).catch(error => {
+        console.error('Scanner initialization failed:', error);
+        showResult('error', 'Failed to start camera scanner: ' + error.message);
+        document.getElementById('stop-scanner').style.display = 'none';
+        document.getElementById('start-scanner').style.display = 'inline-block';
+    });
+}
+
+function setupFileHandlers() {
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const previewImage = document.getElementById('preview-image');
+    const filePreview = document.getElementById('file-preview');
+    const scanFileBtn = document.getElementById('scan-file');
+    const clearFileBtn = document.getElementById('clear-file');
+
+    if (!fileDropZone || !fileInput || !scanFileBtn || !clearFileBtn) {
+        console.error('File handler elements not found');
+        return;
+    }
+
+    // Click to select file
+    fileDropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag and drop events
+    fileDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileDropZone.style.borderColor = 'var(--school-green)';
+        fileDropZone.style.background = 'var(--school-gray)';
+    });
+
+    fileDropZone.addEventListener('dragleave', () => {
+        fileDropZone.style.borderColor = 'var(--school-gray)';
+        fileDropZone.style.background = 'var(--school-gray-light)';
+    });
+
+    fileDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropZone.style.borderColor = 'var(--school-gray)';
+        fileDropZone.style.background = 'var(--school-gray-light)';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    // Scan file button
+    scanFileBtn.addEventListener('click', async () => {
+        if (!currentFile) {
+            showResult('error', 'Please select an image file first.');
+            return;
+        }
+
+        showResult('info', 'Scanning image for QR code...');
+
+        try {
+            // Use HTML5Qrcode for file scanning
+            const html5QrCode = new Html5Qrcode("qr-reader-results");
+            const decodedText = await html5QrCode.scanFile(currentFile, false);
+            
+            if (decodedText) {
+                onScanSuccess(decodedText);
+            } else {
+                showResult('error', 'No QR code found in the image.');
+            }
+        } catch (error) {
+            console.error('QR scan error:', error);
+            showResult('error', 'Could not read QR code from image. Please try another image.');
+        }
+    });
+
+    // Clear file button
+    clearFileBtn.addEventListener('click', () => {
+        currentFile = null;
+        fileInput.value = '';
+        if (filePreview) filePreview.style.display = 'none';
+        if (fileDropZone) fileDropZone.style.display = 'block';
+        document.getElementById('qr-reader-results').innerHTML = '';
+    });
+}
+
+function handleFileSelect(file) {
+    const filePreview = document.getElementById('file-preview');
+    const fileDropZone = document.getElementById('file-drop-zone');
+    const previewImage = document.getElementById('preview-image');
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+        showResult('error', 'Please select a valid image file (JPG, PNG, GIF, WebP).');
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showResult('error', 'File size too large. Maximum size is 5MB.');
+        return;
+    }
+
+    currentFile = file;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        if (previewImage) previewImage.src = e.target.result;
+        if (filePreview) filePreview.style.display = 'block';
+        if (fileDropZone) fileDropZone.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+function setupCameraControls() {
+    const startScannerBtn = document.getElementById('start-scanner');
+    const stopScannerBtn = document.getElementById('stop-scanner');
+    const restartScannerBtn = document.getElementById('restart-scanner');
+
+    if (startScannerBtn) {
+        startScannerBtn.addEventListener('click', function() {
+            const cameraId = document.getElementById('camera-select').value;
+            if (!cameraId) {
+                showResult('error', 'Please select a camera first.');
+                return;
+            }
+            initializeCameraScanner(cameraId);
+            this.style.display = 'none';
+            if (stopScannerBtn) stopScannerBtn.style.display = 'inline-block';
+        });
+    }
+
+    if (stopScannerBtn) {
+        stopScannerBtn.addEventListener('click', function() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(error => {
+                    console.log("Scanner stop error:", error);
+                });
+            }
+            this.style.display = 'none';
+            if (startScannerBtn) startScannerBtn.style.display = 'inline-block';
+        });
+    }
+
+    if (restartScannerBtn) {
+        restartScannerBtn.addEventListener('click', function() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(error => {
+                    console.log("Scanner clear error:", error);
+                });
+            }
+            const cameraId = document.getElementById('camera-select').value;
+            if (cameraId) {
+                initializeCameraScanner(cameraId);
+                if (stopScannerBtn) stopScannerBtn.style.display = 'inline-block';
+                if (startScannerBtn) startScannerBtn.style.display = 'none';
+            }
+        });
+    }
+}
+
+function setupManualSearch() {
+    const manualForm = document.getElementById('manual-search-form');
+    if (manualForm) {
+        manualForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const studentIdInput = document.getElementById('student-id-input');
+            const studentId = studentIdInput ? studentIdInput.value.trim() : '';
+            
+            if (studentId) {
+                window.location.href = `student_details.php?id=${encodeURIComponent(studentId)}`;
+            } else {
+                showResult('error', 'Please enter a student ID.');
+            }
+        });
+    }
+}
+
+// Scanner Success Handler
+function onScanSuccess(decodedText, decodedResult) {
+    console.log('QR Code scanned:', decodedText);
+    
+    // Stop camera scanner if running
+    if (html5QrcodeScanner && document.getElementById('camera-container').style.display !== 'none') {
+        html5QrcodeScanner.clear().catch(error => {
+            console.log("Scanner cleanup:", error);
+        });
+        document.getElementById('stop-scanner').style.display = 'none';
+        document.getElementById('start-scanner').style.display = 'inline-block';
+    }
+
+    showResult('success', 'QR Code scanned successfully! Processing...');
+    
+    // Process the scanned data
+    processScannedData(decodedText);
+}
+
+function onScanFailure(error) {
+    // Don't show errors for normal operation
+}
+
+function processScannedData(scannedData) {
+    let studentId = null;
+    
+    // Try to extract ID from URL (if QR contains a URL)
+    try {
+        const url = new URL(scannedData);
+        const urlParams = new URLSearchParams(url.search);
+        studentId = urlParams.get('id') || urlParams.get('student_id') || urlParams.get('student');
+    } catch (e) {
+        // If it's not a URL, try direct number extraction
+        console.log('Not a URL, trying direct extraction');
+    }
+    
+    // If direct ID was scanned or extraction from URL failed
+    if (!studentId) {
+        // Try to extract numbers from the scanned data
+        const numbers = scannedData.match(/\d+/g);
+        if (numbers && numbers.length > 0) {
+            // Use the longest number sequence as potential ID
+            studentId = numbers.reduce((longest, current) => 
+                current.length > longest.length ? current : longest, '');
+        }
+    }
+    
+    // If we still don't have an ID, use the raw data (might be direct ID)
+    if (!studentId && scannedData.trim().length > 0) {
+        studentId = scannedData.trim();
+    }
+    
+    if (studentId) {
+        // Show success and redirect after short delay
+        showResult('success', `Student ID found: ${studentId}. Redirecting...`);
+        setTimeout(() => {
+            window.location.href = `student_details.php?id=${encodeURIComponent(studentId)}`;
+        }, 1500);
+    } else {
+        showResult('error', 'Invalid QR code. Could not extract student information.');
+    }
+}
+
+// Result Display Function
+function showResult(type, message) {
+    const resultsDiv = document.getElementById('qr-reader-results');
+    if (!resultsDiv) return;
+    
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                 type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-error' : 'alert-info';
+    
+    resultsDiv.innerHTML = `
+        <div class="alert-banner ${alertClass}">
+            <i class="fas ${icon}"></i>
+            <div>${message}</div>
+        </div>
+    `;
+}
+</script>
 </body>
 </html>

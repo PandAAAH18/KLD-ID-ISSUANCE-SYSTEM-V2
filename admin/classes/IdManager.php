@@ -291,7 +291,7 @@ public function getIssuedByStatus(string $filter): array
 
 
     /* 3. QR code ------------------------------------------------------------- */
-    $verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
+    $verifyUrl = APP_URL . '/admin/student_details.php?id=' . $studentId;
     error_log("DEBUG generateId: verifyUrl={$verifyUrl}");
 
     $qrName = $idNumber.'.png';          // file name we will store & reference
@@ -326,6 +326,15 @@ public function getIssuedByStatus(string $filter): array
 
     $result = $writer->write($qrCode, $logo);
     $result->saveToFile($qrPath);
+    
+    // DEBUG: QR file info
+    if (file_exists($qrPath)) {
+        $size = filesize($qrPath);
+        $dims = getimagesize($qrPath);
+        error_log("DEBUG QR GENERATED: {$qrPath}, size={$size}, dims=" . json_encode($dims) . ", data='{$verifyUrl}'");
+    } else {
+        error_log("DEBUG QR FAILED: {$qrPath} not created");
+    }
 
     /* 3.5 Save QR code location to student table */
     $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
@@ -363,7 +372,7 @@ public function getIssuedByStatus(string $filter): array
     $dompdf->loadHtml($html);
     $dompdf->setPaper('CR80', 'landscape');
     $dompdf->render();
-    error_log("DEBUG generateId: Dompdf render COMPLETE");
+    error_log("DEBUG generateId: Dompdf render COMPLETE, QR in PDF: " . APP_URL.'/uploads/qr/'.$qrName);
 
     /* 5.  save PDF */
     $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
@@ -433,7 +442,7 @@ public function getIssuedByStatus(string $filter): array
         }
 
         // 3. Regenerate QR code
-        $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
+        $verifyUrl = APP_URL . '/admin/student_details.php?id=' . $studentId;
         error_log("DEBUG regenerateId: verifyUrl={$verifyUrl}");
 
         if (!is_dir(dirname($qrPath))) {
@@ -458,6 +467,15 @@ public function getIssuedByStatus(string $filter): array
 
         $result = $writer->write($qrCode, $logo);
         $result->saveToFile($qrPath);
+        
+        // DEBUG: QR file info
+        if (file_exists($qrPath)) {
+            $size = filesize($qrPath);
+            $dims = getimagesize($qrPath);
+            error_log("DEBUG QR REGEN: {$qrPath}, size={$size}, dims=" . json_encode($dims) . ", data='{$verifyUrl}'");
+        } else {
+            error_log("DEBUG QR REGEN FAILED: {$qrPath} not created");
+        }
 
         // 3.5 Update QR code location in student table
         $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
@@ -494,7 +512,7 @@ public function getIssuedByStatus(string $filter): array
         $dompdf->loadHtml($html);
         $dompdf->setPaper('CR80', 'landscape');
         $dompdf->render();
-        error_log("DEBUG regenerateId: Dompdf render COMPLETE");
+        error_log("DEBUG regenerateId: Dompdf render COMPLETE, QR in PDF: " . APP_URL.'/uploads/qr/'.$qrName);
 
         // 5. Save new PDF
         $newFileName = $row['email'] . '_' . date('YmdHis') . '.pdf';
@@ -690,7 +708,7 @@ $updateStmt->execute([$requestId]);
     private function generateQRCode(string $idNumber, int $studentId): array
 {
     try {
-        $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
+        $verifyUrl = APP_URL . '/admin/student_details.php?id=' . $studentId;
         $qrName = $idNumber . '.png';
         $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
@@ -719,6 +737,15 @@ $updateStmt->execute([$requestId]);
 
         $result = $writer->write($qrCode, $logo);
         $result->saveToFile($qrPath);
+        
+        // DEBUG: QR bulk file info
+        if (file_exists($qrPath)) {
+            $size = filesize($qrPath);
+            $dims = getimagesize($qrPath);
+            error_log("DEBUG QR BULK: {$qrPath}, size={$size}, dims=" . json_encode($dims) . ", data='{$verifyUrl}'");
+        } else {
+            error_log("DEBUG QR BULK FAILED: {$qrPath} not created");
+        }
 
         // Save QR code location to student table
         $updateStudent = $this->db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
