@@ -97,58 +97,120 @@ class UserManager extends User
         return true;
     }
 
-    public function getUsers(array $filters): array
-    {
-        $whereConditions = [];
-        $parameters = [];
-        
-        $filterConfig = [
-            'name' => ['column' => 'u.full_name', 'type' => 'like'],
-            'email' => ['column' => 'u.email', 'type' => 'like'],
-            'role' => ['column' => 'u.role', 'type' => 'exact'],
-            'status' => ['column' => 'u.status', 'type' => 'exact'],
-            'verified' => ['column' => 'u.is_verified', 'type' => 'boolean']
-        ];
-        
-        foreach ($filterConfig as $key => $config) {
-            $value = $filters[$key] ?? '';
-            if ($value === '') {
-                continue;
-            }
-            
-            $column = $config['column'];
-            
-            switch ($config['type']) {
-                case 'like':
-                    $whereConditions[] = "$column LIKE :$key";
-                    $parameters[":$key"] = "%$value%";
-                    break;
-                case 'boolean':
-                    $whereConditions[] = "$column = :$key";
-                    $parameters[":$key"] = (int)$value;
-                    break;
-                case 'exact':
-                default:
-                    $whereConditions[] = "$column = :$key";
-                    $parameters[":$key"] = $value;
-                    break;
-            }
+    public function getUsers(array $filters, int $page = 1, int $perPage = 50): array
+{
+    $whereConditions = [];
+    $parameters = [];
+    
+    $filterConfig = [
+        'name'      => ['column' => 'u.full_name', 'type' => 'like'],
+        'email'     => ['column' => 'u.email', 'type' => 'like'],
+        'role'      => ['column' => 'u.role', 'type' => 'exact'],
+        'status'    => ['column' => 'u.status', 'type' => 'exact'],
+        'verified'  => ['column' => 'u.is_verified', 'type' => 'boolean']
+    ];
+    
+    foreach ($filterConfig as $key => $config) {
+        $value = $filters[$key] ?? '';
+        if ($value === '') {
+            continue;
         }
         
-        $whereClause = $whereConditions ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+        $column = $config['column'];
         
-        $sql = "SELECT u.user_id, u.full_name, u.email, u.role, u.status, u.is_verified, u.created_at
-                FROM users u
-                $whereClause
-                ORDER BY u.user_id DESC
-                LIMIT 1000";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($parameters);
-        
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        switch ($config['type']) {
+            case 'like':
+                $whereConditions[] = "$column LIKE :$key";
+                $parameters[":$key"] = "%$value%";
+                break;
+            case 'boolean':
+                $whereConditions[] = "$column = :$key";
+                $parameters[":$key"] = (int)$value;
+                break;
+            case 'exact':
+            default:
+                $whereConditions[] = "$column = :$key";
+                $parameters[":$key"] = $value;
+                break;
+        }
     }
+    
+    $whereClause = $whereConditions ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+    
+    // Calculate offset for pagination
+    $offset = ($page - 1) * $perPage;
+    
+    $sql = "SELECT u.user_id, u.full_name, u.email, u.role, u.status, u.is_verified, u.created_at
+            FROM users u
+            $whereClause
+            ORDER BY u.user_id DESC
+            LIMIT :offset, :per_page";
+    
+    $stmt = $this->db->prepare($sql);
+    
+    // Bind pagination parameters
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->bindValue(':per_page', $perPage, PDO::PARAM_INT);
+    
+    // Bind filter parameters
+    foreach ($parameters as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
+public function countUsers(array $filters = []): int
+{
+    $whereConditions = [];
+    $parameters = [];
+    
+    $filterConfig = [
+        'name'      => ['column' => 'u.full_name', 'type' => 'like'],
+        'email'     => ['column' => 'u.email', 'type' => 'like'],
+        'role'      => ['column' => 'u.role', 'type' => 'exact'],
+        'status'    => ['column' => 'u.status', 'type' => 'exact'],
+        'verified'  => ['column' => 'u.is_verified', 'type' => 'boolean']
+    ];
+    
+    foreach ($filterConfig as $key => $config) {
+        $value = $filters[$key] ?? '';
+        if ($value === '') {
+            continue;
+        }
+        
+        $column = $config['column'];
+        
+        switch ($config['type']) {
+            case 'like':
+                $whereConditions[] = "$column LIKE :$key";
+                $parameters[":$key"] = "%$value%";
+                break;
+            case 'boolean':
+                $whereConditions[] = "$column = :$key";
+                $parameters[":$key"] = (int)$value;
+                break;
+            case 'exact':
+            default:
+                $whereConditions[] = "$column = :$key";
+                $parameters[":$key"] = $value;
+                break;
+        }
+    }
+    
+    $whereClause = $whereConditions ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+    
+    $sql = "SELECT COUNT(*) as total
+            FROM users u
+            $whereClause";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute($parameters);
+    
+    return (int) $stmt->fetchColumn();
+}
     public function getUserById(int $id): ?array
     {
         $sql = "SELECT * FROM users WHERE user_id = :id LIMIT 1";

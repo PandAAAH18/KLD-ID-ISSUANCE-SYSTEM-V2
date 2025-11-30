@@ -1067,5 +1067,135 @@ public function getPrintedIds(): array
     
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+/**
+ * Get requests by status with pagination
+ */
+public function getRequestsByStatusPaginated(string $status, int $page = 1, int $perPage = 50): array
+{
+    $offset = ($page - 1) * $perPage;
+    
+    $sql = "SELECT r.*, s.first_name, s.last_name, s.email
+            FROM id_requests r
+            JOIN student s ON s.id = r.student_id
+            WHERE r.status = ?
+            ORDER BY r.created_at DESC
+            LIMIT ? OFFSET ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(1, $status, PDO::PARAM_STR);
+    $stmt->bindValue(2, $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(3, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Count requests by status
+ */
+public function countRequestsByStatus(string $status): int
+{
+    $sql = "SELECT COUNT(*) as total
+            FROM id_requests r
+            JOIN student s ON s.id = r.student_id
+            WHERE r.status = ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$status]);
+    
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * Get issued IDs by status with pagination
+ */
+public function getIssuedByStatusPaginated(string $filter, int $page = 1, int $perPage = 50): array
+{
+    $statusMap = [
+        'generated' => 'generated', 
+        'printed' => 'printed',
+        'completed' => 'delivered'
+    ];
+    $targetStatus = $statusMap[$filter] ?? $filter;
+    
+    $offset = ($page - 1) * $perPage;
+    
+    $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level
+            FROM issued_ids i
+            JOIN student s ON s.id = i.user_id
+            WHERE i.status = ?
+            ORDER BY i.issue_date DESC
+            LIMIT ? OFFSET ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(1, $targetStatus, PDO::PARAM_STR);
+    $stmt->bindValue(2, $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(3, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Count issued IDs by status
+ */
+public function countIssuedByStatus(string $filter): int
+{
+    $statusMap = [
+        'generated' => 'generated', 
+        'printed' => 'printed',
+        'completed' => 'delivered'
+    ];
+    $targetStatus = $statusMap[$filter] ?? $filter;
+    
+    $sql = "SELECT COUNT(*) as total
+            FROM issued_ids i
+            JOIN student s ON s.id = i.user_id
+            WHERE i.status = ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([$targetStatus]);
+    
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * Get approved requests for bulk processing with pagination
+ */
+public function getApprovedIdRequestsPaginated(int $page = 1, int $perPage = 50): array
+{
+    $offset = ($page - 1) * $perPage;
+    
+    $sql = "SELECT r.id as request_id, r.*, s.id as student_id, s.first_name, s.last_name, s.email, s.course, s.year_level
+            FROM id_requests r
+            JOIN student s ON s.id = r.student_id
+            WHERE r.status = 'approved'
+            ORDER BY r.created_at ASC
+            LIMIT ? OFFSET ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindValue(1, $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Count approved requests for bulk processing
+ */
+public function countApprovedIdRequests(): int
+{
+    $sql = "SELECT COUNT(*) as total
+            FROM id_requests r
+            JOIN student s ON s.id = r.student_id
+            WHERE r.status = 'approved'";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+    
+    return (int) $stmt->fetchColumn();
+}
     
 }

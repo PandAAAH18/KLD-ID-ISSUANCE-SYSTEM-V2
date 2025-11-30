@@ -8,15 +8,19 @@ if (($_SESSION['user_type'] ?? '') !== 'admin') {
     exit('Access denied');
 }
 
-
 $adminModel = new Admin();
 $db = $adminModel->getDb();
 
-/* ----------  CAPTURE FILTERS  ---------- */
+/* ----------  CAPTURE FILTERS & PAGINATION  ---------- */
 $search   = $_GET['search']   ?? '';          // free text (admin name or target id)
 $action   = $_GET['action']   ?? '';          // insert/update/delete/import...
 $dateFrom = $_GET['date_from'] ?? '';
 $dateTo   = $_GET['date_to']   ?? '';
+
+// Pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$perPage = 10; // Number of records per page
+$offset = ($page - 1) * $perPage;
 
 /* ----------  BUILD WHERE CLAUSE  ---------- */
 $where = [];
@@ -50,7 +54,7 @@ if ($dateTo !== '') {
 
 $sqlWhere = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-/* ----------  COUNT + FETCH (500 max)  ---------- */
+/* ----------  COUNT + FETCH WITH PAGINATION  ---------- */
 $countSql = "SELECT COUNT(*) 
              FROM audit_logs al
              LEFT JOIN users u ON u.user_id = al.user_id
@@ -59,14 +63,27 @@ $countStmt = $db->prepare($countSql);
 $countStmt->execute($params);
 $totalRows = (int) $countStmt->fetchColumn();
 
+// Calculate total pages
+$totalPages = ceil($totalRows / $perPage);
+
 $dataSql = "SELECT al.*, u.full_name AS admin_name
             FROM audit_logs al
             LEFT JOIN users u ON u.user_id = al.user_id
             $sqlWhere
             ORDER BY al.created_at DESC
-            LIMIT 500";
+            LIMIT :offset, :per_page";
 $dataStmt = $db->prepare($dataSql);
-$dataStmt->execute($params);
+
+// Bind pagination parameters
+$dataStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$dataStmt->bindValue(':per_page', $perPage, PDO::PARAM_INT);
+
+// Merge existing params with pagination params
+foreach ($params as $key => $value) {
+    $dataStmt->bindValue($key, $value);
+}
+
+$dataStmt->execute();
 $logs = $dataStmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* ----------  HANDLE CSV EXPORT  ---------- */
@@ -163,42 +180,102 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-.audit-details {
-    display: none;
-    position: absolute;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 12px;
-    max-width: 350px;
-    z-index: 1000; /* Increased z-index */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    margin-top: 5px;
-    right: 10px;
-    top: 100%;
-}
+    .audit-details {
+        display: none;
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 12px;
+        max-width: 350px;
+        z-index: 1000;
+        /* Increased z-index */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-top: 5px;
+        right: 10px;
+        top: 100%;
+    }
 
-/* Ensure the table cell has proper positioning */
-.admin-table td {
-    position: relative;
-}
+    /* Ensure the table cell has proper positioning */
+    .admin-table td {
+        position: relative;
+    }
 
-/* Style for the details button */
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    transition: background 0.3s;
-}
+    /* Style for the details button */
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        transition: background 0.3s;
+    }
 
-.btn-sm:hover {
-    background: #0056b3;
-}
-</style>
+    .btn-sm:hover {
+        background: #0056b3;
+    }
+
+    /* Pagination Styles */
+    .pagination {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-right: 15px;
+    }
+
+    .pagination-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        color: #007bff;
+        text-decoration: none;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        min-width: 32px;
+    }
+
+    .pagination-btn:hover:not(.disabled) {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .pagination-btn.disabled {
+        background: #f8f9fa;
+        color: #6c757d;
+        border-color: #dee2e6;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .pagination-info {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    /* Results per page selector */
+    .results-per-page {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: 15px;
+    }
+
+    .results-per-page select {
+        padding: 4px 8px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    </style>
 </head>
 
 <body class="admin-body">
@@ -244,9 +321,8 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                     <div class="form-row">
                         <div class="form-group">
                             <label>Search</label>
-                            <input type="text" name="search" class="form-input" 
-                                   value="<?= html($search) ?>" 
-                                   placeholder="Admin name or record ID">
+                            <input type="text" name="search" class="form-input" value="<?= html($search) ?>"
+                                placeholder="Admin name or record ID">
                         </div>
                         <div class="form-group">
                             <label>Action Type</label>
@@ -262,7 +338,7 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>Date From</label>
@@ -317,22 +393,6 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
         </div>
         <?php endif; ?>
 
-        <!-- ========== RESULTS SUMMARY ========== -->
-        <div class="bulk-section">
-            <div class="bulk-actions">
-                <span style="font-weight: 600;">
-                    <i class="fas fa-database"></i> 
-                    Showing <?= min(500, count($logs)) ?> of <?= $totalRows ?> log entries
-                    <?php if ($totalRows > 500): ?>
-                        <span style="color: #666; font-weight: normal;">(max 500 displayed)</span>
-                    <?php endif; ?>
-                </span>
-                <button type="button" class="btn btn-export" onclick="exportLogs()">
-                    <i class="fas fa-download"></i> Export Logs
-                </button>
-            </div>
-        </div>
-
         <!-- ========== LOGS TABLE ========== -->
         <div class="admin-card">
             <div class="admin-card-header">
@@ -341,42 +401,43 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
             </div>
             <div class="admin-card-body">
                 <?php if (empty($logs)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <h4>No Logs Found</h4>
-                        <p>No audit logs match your current filter criteria</p>
-                    </div>
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h4>No Logs Found</h4>
+                    <p>No audit logs match your current filter criteria</p>
+                </div>
                 <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="admin-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Timestamp</th>
-                                    <th>Admin</th>
-                                    <th>Action</th>
-                                    <th>Table</th>
-                                    <th>Record ID</th>
-                                    <th>Changes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($logs as $row): ?>
-                                <tr>
-                                    <td><strong>#<?= html($row['id']) ?></strong></td>
-                                    <td style="font-size: 0.9rem;">
-                                        <div><?= date('M d', strtotime($row['created_at'])) ?></div>
-                                        <div style="font-size: 0.8rem; color: #666;"><?= date('H:i', strtotime($row['created_at'])) ?></div>
-                                    </td>
-                                    <td style="font-size: 0.9rem;">
-                                        <?php if ($row['admin_name']): ?>
-                                            <div><?= substr(html($row['admin_name']), 0, 12) ?></div>
-                                        <?php else: ?>
-                                            <span style="color: #666;">System</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <span class="action-badge 
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Timestamp</th>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Table</th>
+                                <th>Record ID</th>
+                                <th>Changes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($logs as $row): ?>
+                            <tr>
+                                <td><strong>#<?= html($row['id']) ?></strong></td>
+                                <td style="font-size: 0.9rem;">
+                                    <div><?= date('M d', strtotime($row['created_at'])) ?></div>
+                                    <div style="font-size: 0.8rem; color: #666;">
+                                        <?= date('H:i', strtotime($row['created_at'])) ?></div>
+                                </td>
+                                <td style="font-size: 0.9rem;">
+                                    <?php if ($row['admin_name']): ?>
+                                    <div><?= substr(html($row['admin_name']), 0, 12) ?></div>
+                                    <?php else: ?>
+                                    <span style="color: #666;">System</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="action-badge 
                                             <?= match($row['action']) {
                                                 'insert' => 'status-approved',
                                                 'update' => 'status-pending',
@@ -388,55 +449,125 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                                                 'export' => 'status-registered',
                                                 default => 'status-unregistered'
                                             } ?>">
-                                            <?= html(ucfirst(str_replace('_', ' ', $row['action']))) ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem;">
+                                        <?= html(ucfirst(str_replace('_', ' ', $row['action']))) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <code
+                                        style="background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-size: 0.75rem;">
                                             <?= html($row['table_name']) ?>
                                         </code>
-                                    </td>
-                                    <td>
-                                        <?php if ($row['record_id']): ?>
-                                            <strong><?= html($row['record_id']) ?></strong>
-                                        <?php else: ?>
-                                            <span style="color: #666;">-</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="position: relative;">
-    <?php 
+                                </td>
+                                <td>
+                                    <?php if ($row['record_id']): ?>
+                                    <strong><?= html($row['record_id']) ?></strong>
+                                    <?php else: ?>
+                                    <span style="color: #666;">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="position: relative;">
+                                    <?php 
         $oldData = formatAuditData($row['old_data']);
         $newData = formatAuditData($row['new_data']);
         $hasChanges = ($oldData !== '-' || $newData !== '-');
     ?>
-    <?php if ($hasChanges): ?>
-<button class="btn-audit-details" style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px;" onclick="toggleAuditDetails(this)" title="View changes">            <i class="fas fa-eye"></i> Details
-        </button>
-        <div class="audit-details" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-width: 350px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; right: 10px; top: 100%;">
-            <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px;">Old Data:</strong>
-            <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0 0 8px 0; white-space: pre-wrap; word-wrap: break-word;"><?= $oldData ?></pre>
-            <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px; margin-top: 8px;">New Data:</strong>
-            <pre style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><?= $newData ?></pre>
-            <button class="btn-sm" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 8px; cursor: pointer;" onclick="this.closest('.audit-details').style.display='none';">Close</button>
-        </div>
-    <?php else: ?>
-        <span style="color: #999; font-size: 0.9rem;">-</span>
-    <?php endif; ?>
-</td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                                    <?php if ($hasChanges): ?>
+                                    <button class="btn-audit-details"
+                                        style="padding: 4px 8px; font-size: 0.75rem; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px;"
+                                        onclick="toggleAuditDetails(this)" title="View changes"> <i
+                                            class="fas fa-eye"></i> Details
+                                    </button>
+                                    <div class="audit-details"
+                                        style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 12px; max-width: 350px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15); margin-top: 5px; right: 10px; top: 100%;">
+                                        <strong style="font-size: 0.85rem; display: block; margin-bottom: 8px;">Old
+                                            Data:</strong>
+                                        <pre
+                                            style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0 0 8px 0; white-space: pre-wrap; word-wrap: break-word;"><?= $oldData ?></pre>
+                                        <strong
+                                            style="font-size: 0.85rem; display: block; margin-bottom: 8px; margin-top: 8px;">New
+                                            Data:</strong>
+                                        <pre
+                                            style="font-size: 0.75rem; background: #f5f5f5; padding: 6px; border-radius: 4px; max-height: 120px; overflow-y: auto; margin: 0; white-space: pre-wrap; word-wrap: break-word;"><?= $newData ?></pre>
+                                        <button class="btn-sm"
+                                            style="padding: 4px 8px; font-size: 0.75rem; margin-top: 8px; cursor: pointer;"
+                                            onclick="this.closest('.audit-details').style.display='none';">Close</button>
+                                    </div>
+                                    <?php else: ?>
+                                    <span style="color: #999; font-size: 0.9rem;">-</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- ========== RESULTS SUMMARY & PAGINATION ========== -->
+<div class="bulk-section">
+    <div class="bulk-actions">
+        <span style="font-weight: 600;">
+            <i class="fas fa-database"></i> 
+            Showing <?= min($perPage, count($logs)) ?> of <?= $totalRows ?> log entries
+            (Page <?= $page ?> of <?= $totalPages ?>)
+        </span>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Pagination Controls -->
+            <div class="pagination">
+                <?php if ($page > 1): ?>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" class="pagination-btn" title="First Page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" class="pagination-btn" title="Previous Page">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-double-left"></i>
+                    </span>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-left"></i>
+                    </span>
+                <?php endif; ?>
+
+                <span class="pagination-info">
+                    Page <?= $page ?> of <?= $totalPages ?>
+                </span>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" class="pagination-btn" title="Next Page">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" class="pagination-btn" title="Last Page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-right"></i>
+                    </span>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-double-right"></i>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <button type="button" class="btn btn-export" onclick="exportLogs()">
+                <i class="fas fa-download"></i> Export Logs
+            </button>
+        </div>
+    </div>
+</div>
     </div>
 
-<script>
+    <script>
     // Back to top functionality
     function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
     }
 
     window.addEventListener('scroll', function() {
@@ -451,11 +582,11 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
     // Toggle audit details popup - FIXED VERSION
     function toggleAuditDetails(button) {
         console.log('Button clicked'); // Debug log
-        
+
         // Find the details div - next sibling
         const detailsDiv = button.nextElementSibling;
         console.log('Details div found:', detailsDiv); // Debug log
-        
+
         if (detailsDiv && detailsDiv.classList.contains('audit-details')) {
             // Close all other details first
             document.querySelectorAll('.audit-details').forEach(d => {
@@ -463,21 +594,21 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                     d.style.display = 'none';
                 }
             });
-            
+
             // Toggle current details
             if (detailsDiv.style.display === 'none' || detailsDiv.style.display === '') {
                 detailsDiv.style.display = 'block';
-                
+
                 // Position the details popup properly
                 const buttonRect = button.getBoundingClientRect();
                 const detailsRect = detailsDiv.getBoundingClientRect();
-                
+
                 // Check if it would go off-screen to the right
                 if (buttonRect.right + detailsRect.width > window.innerWidth) {
                     detailsDiv.style.right = '0';
                     detailsDiv.style.left = 'auto';
                 }
-                
+
                 // Check if it would go off-screen to the bottom
                 if (buttonRect.bottom + detailsRect.height > window.innerHeight) {
                     detailsDiv.style.bottom = '100%';
@@ -491,10 +622,10 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
 
     // Close details when clicking outside - FIXED VERSION
     document.addEventListener('click', function(e) {
-        const isDetailsButton = e.target.closest('button') && 
-                               (e.target.closest('button').textContent.includes('Details') || 
-                                e.target.closest('button').querySelector('.fa-eye'));
-        
+        const isDetailsButton = e.target.closest('button') &&
+            (e.target.closest('button').textContent.includes('Details') ||
+                e.target.closest('button').querySelector('.fa-eye'));
+
         if (!e.target.closest('.audit-details') && !isDetailsButton) {
             document.querySelectorAll('.audit-details').forEach(d => {
                 d.style.display = 'none';
@@ -513,7 +644,7 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
     document.addEventListener('DOMContentLoaded', function() {
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
-        
+
         if (mobileMenuBtn) {
             mobileMenuBtn.addEventListener('click', function() {
                 document.getElementById('adminSidebar').classList.toggle('mobile-open');
@@ -522,7 +653,7 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
                 }
             });
         }
-        
+
         if (sidebarOverlay) {
             sidebarOverlay.addEventListener('click', function() {
                 document.getElementById('adminSidebar').classList.remove('mobile-open');
@@ -546,6 +677,7 @@ $monthCount = $db->query("SELECT COUNT(*) FROM audit_logs WHERE created_at >= DA
             pageTitleElement.textContent = pageTitles[currentPage];
         }
     });
-</script>
+    </script>
 </body>
+
 </html>

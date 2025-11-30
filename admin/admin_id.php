@@ -6,7 +6,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type']!=='admin'){
     header('Location: ../index.php'); exit();
 }
 
-
 $adm = new IdManager();
 
 /* ---------- 1.  actions ---------- */
@@ -58,7 +57,6 @@ if (isset($_POST['bulk_generate_ids']) && isset($_POST['request_ids'])){
     exit();
 }
 
-/* ---------- BULK PRINT ---------- */
 /* ---------- BULK PRINT ---------- */
 if (isset($_POST['bulk_print']) && isset($_POST['selected_issued_ids'])) {
     try {
@@ -112,19 +110,34 @@ if (isset($_POST['cancel_print'])) {
     exit();
 }
 
-/* ---------- 2.  filter ---------- */
+/* ---------- 2.  filter & pagination ---------- */
 $filter = $_GET['filter'] ?? 'pending';
 $filter = in_array($filter,['pending','approved','rejected','generated','printed'],true) ? $filter : 'pending';
 
+// Pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$perPage = isset($_GET['per_page']) ? max(10, min(100, intval($_GET['per_page']))) : 50;
+
 /* requests list only for pending/approved/rejected */
-$requests = in_array($filter,['pending','approved','rejected']) ? $adm->getRequestsByStatus($filter) : [];
+$requests = in_array($filter,['pending','approved','rejected']) ? 
+    $adm->getRequestsByStatusPaginated($filter, $page, $perPage) : [];
 
 /* issued list for generated/completed */
-$issued   = in_array($filter,['generated','printed']) ? $adm->getIssuedByStatus($filter) : [];
+$issued   = in_array($filter,['generated','printed']) ? 
+    $adm->getIssuedByStatusPaginated($filter, $page, $perPage) : [];
 
+// Get counts for pagination
+$totalRequests = in_array($filter,['pending','approved','rejected']) ? 
+    $adm->countRequestsByStatus($filter) : 0;
+$totalIssued = in_array($filter,['generated','printed']) ? 
+    $adm->countIssuedByStatus($filter) : 0;
+$totalItems = $totalRequests + $totalIssued;
+$totalPages = ceil($totalItems / $perPage);
 
 /* Get approved requests for bulk operations */
-$approvedRequests = ($filter === 'approved') ? $adm->getApprovedIdRequests() : [];
+$approvedRequests = ($filter === 'approved') ? $adm->getApprovedIdRequestsPaginated($page, $perPage) : [];
+$totalApprovedRequests = ($filter === 'approved') ? $adm->countApprovedIdRequests() : 0;
+$totalApprovedPages = ($filter === 'approved') ? ceil($totalApprovedRequests / $perPage) : 0;
 
 /* Display bulk operation results if available */
 $bulkResult = null;
@@ -140,11 +153,11 @@ unset($_SESSION['error_msg']);
         require_once 'admin_header.php';
 
         // Get counts for statistics
-        $pendingCount = count($adm->getRequestsByStatus('pending'));
-$approvedCount = count($adm->getRequestsByStatus('approved'));
-$rejectedCount = count($adm->getRequestsByStatus('rejected'));
-$generatedCount = count($adm->getIssuedByStatus('generated'));
-$printedCount = count($adm->getIssuedByStatus('printed'));
+        $pendingCount = $adm->countRequestsByStatus('pending');
+$approvedCount = $adm->countRequestsByStatus('approved');
+$rejectedCount = $adm->countRequestsByStatus('rejected');
+$generatedCount = $adm->countIssuedByStatus('generated');
+$printedCount = $adm->countIssuedByStatus('printed');
 ?>
 <!doctype html>
 <html>
@@ -155,6 +168,65 @@ $printedCount = count($adm->getIssuedByStatus('printed'));
     <title>ID Management - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 15px;
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            min-width: 32px;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .pagination-btn.disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            border-color: #dee2e6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination-info {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .results-per-page {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 15px;
+        }
+
+        .results-per-page select {
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 
 <body class="admin-body">
@@ -284,6 +356,69 @@ $printedCount = count($adm->getIssuedByStatus('printed'));
     <?php endif; ?>
 </a>
         </div>
+
+        <!-- ========== PAGINATION CONTROLS ========== -->
+        <?php if ($totalItems > 0): ?>
+        <div class="bulk-section">
+            <div class="bulk-actions">
+                <span style="font-weight: 600;">
+                    <i class="fas fa-database"></i> 
+                    Showing <?= min($perPage, count($requests) + count($issued)) ?> of <?= $totalItems ?> items
+                    (Page <?= $page ?> of <?= $totalPages ?>)
+                </span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- Results per page selector -->
+                    <div class="results-per-page">
+                        <span style="font-size: 0.8rem; color: #666;">Show:</span>
+                        <select onchange="changePerPage(this.value)">
+                            <option value="25" <?= $perPage == 25 ? 'selected' : '' ?>>25</option>
+                            <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50</option>
+                            <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100</option>
+                        </select>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div class="pagination">
+                        <?php if ($page > 1): ?>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" class="pagination-btn" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" class="pagination-btn" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-left"></i>
+                            </span>
+                        <?php endif; ?>
+
+                        <span class="pagination-info">
+                            Page <?= $page ?> of <?= $totalPages ?>
+                        </span>
+
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" class="pagination-btn" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" class="pagination-btn" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- BULK ACTIONS SECTION FOR APPROVED REQUESTS -->
         <?php if ($filter === 'approved' && !empty($approvedRequests)): ?>
@@ -730,6 +865,49 @@ $printedCount = count($adm->getIssuedByStatus('printed'));
     </div>
 <?php endif; ?>
 
+        <!-- ========== BOTTOM PAGINATION ========== -->
+        <?php if ($totalPages > 1): ?>
+        <div style="margin-top: 20px; display: flex; justify-content: center;">
+            <div class="pagination">
+                <?php if ($page > 1): ?>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" class="pagination-btn" title="First Page">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" class="pagination-btn" title="Previous Page">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-double-left"></i>
+                    </span>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-left"></i>
+                    </span>
+                <?php endif; ?>
+
+                <span class="pagination-info">
+                    Page <?= $page ?> of <?= $totalPages ?>
+                </span>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" class="pagination-btn" title="Next Page">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" class="pagination-btn" title="Last Page">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-right"></i>
+                    </span>
+                    <span class="pagination-btn disabled">
+                        <i class="fas fa-angle-double-right"></i>
+                    </span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
     </div>
 <?php if (isset($_SESSION['pending_print_ids']) && isset($_SESSION['show_print_modal'])): ?>
 <div id="printConfirmationModal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
@@ -936,6 +1114,14 @@ if (bulkPrintBtn) {
             e.preventDefault();
         }
     });
+}
+
+// Change results per page
+function changePerPage(perPage) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('per_page', perPage);
+    params.delete('page'); // Go back to first page
+    window.location.href = '?' + params.toString();
 }
 
 // Initial count update for bulk print

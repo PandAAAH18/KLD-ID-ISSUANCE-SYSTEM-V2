@@ -141,6 +141,11 @@ $filters = [
     'account_status' => $_GET['account_status'] ?? $_POST['account_status'] ?? ''
 ];
 
+// Pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$perPage = 10; // Number of records per page
+$offset = ($page - 1) * $perPage;
+
 // Get students based on filters or search
 $hasSearch = isset($_GET['search_keyword']) && !empty($_GET['search_keyword']);
 $hasFilters = isset($_GET['course']) && $_GET['course'] !== '' || 
@@ -149,7 +154,10 @@ $hasFilters = isset($_GET['course']) && $_GET['course'] !== '' ||
               isset($_GET['account_status']) && $_GET['account_status'] !== '';
 
 if ($hasSearch) {
-    $students = $studentModel->searchStudents($_GET['search_keyword']);
+    // For search, we need to get all results first to count them, then apply pagination
+    $allStudents = $studentModel->searchStudents($_GET['search_keyword']);
+    $totalRows = count($allStudents);
+    $students = array_slice($allStudents, $offset, $perPage);
 } else if ($hasFilters) {
     // Separate account_status from other filters
     $otherFilters = [
@@ -166,14 +174,24 @@ if ($hasSearch) {
     
     if ($onlyAccountStatus) {
         // If ONLY account_status is filtered, get all students first
-        $students = $studentModel->getAllStudents();
+        $allStudents = $studentModel->getAllStudents();
+        $totalRows = count($allStudents);
+        $students = array_slice($allStudents, $offset, $perPage);
     } else {
         // Otherwise, apply other filters first
-        $students = $studentModel->filterStudents($otherFilters);
+        $allStudents = $studentModel->filterStudents($otherFilters);
+        $totalRows = count($allStudents);
+        $students = array_slice($allStudents, $offset, $perPage);
     }
 } else {
-    $students = $studentModel->getAllStudents();
+    // Get all students with pagination
+    $allStudents = $studentModel->getAllStudents();
+    $totalRows = count($allStudents);
+    $students = array_slice($allStudents, $offset, $perPage);
 }
+
+// Calculate total pages
+$totalPages = ceil($totalRows / $perPage);
 
 // Check account status for each student
 foreach ($students as &$student) {
@@ -227,6 +245,64 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
         <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    .pagination {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-right: 15px;
+    }
+
+    .pagination-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        color: #007bff;
+        text-decoration: none;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+        min-width: 32px;
+    }
+
+    .pagination-btn:hover:not(.disabled) {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .pagination-btn.disabled {
+        background: #f8f9fa;
+        color: #6c757d;
+        border-color: #dee2e6;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .pagination-info {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .results-per-page {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-right: 15px;
+    }
+
+    .results-per-page select {
+        padding: 4px 8px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    </style>
 </head>
 
 <body>
@@ -339,8 +415,6 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                         <i class="fas fa-times"></i> Clear
                     </a>
                 </form>
-
-                
 
                 <!-- Filter Form -->
                 <form method="GET" class="filter-form">
@@ -506,6 +580,57 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                         </table>
                     </div>
                 </form>
+
+                <!-- ========== RESULTS SUMMARY & PAGINATION ========== -->
+                <div class="bulk-section">
+                    <div class="bulk-actions">
+                        <span style="font-weight: 600;">
+                            <i class="fas fa-database"></i> 
+                            Showing <?= min($perPage, count($students)) ?> of <?= $totalRows ?> students
+                            (Page <?= $page ?> of <?= $totalPages ?>)
+                        </span>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <!-- Pagination Controls -->
+                            <div class="pagination">
+                                <?php if ($page > 1): ?>
+                                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" class="pagination-btn" title="First Page">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </a>
+                                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" class="pagination-btn" title="Previous Page">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="pagination-btn disabled">
+                                        <i class="fas fa-angle-double-left"></i>
+                                    </span>
+                                    <span class="pagination-btn disabled">
+                                        <i class="fas fa-angle-left"></i>
+                                    </span>
+                                <?php endif; ?>
+
+                                <span class="pagination-info">
+                                    Page <?= $page ?> of <?= $totalPages ?>
+                                </span>
+
+                                <?php if ($page < $totalPages): ?>
+                                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" class="pagination-btn" title="Next Page">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                    <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" class="pagination-btn" title="Last Page">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="pagination-btn disabled">
+                                        <i class="fas fa-angle-right"></i>
+                                    </span>
+                                    <span class="pagination-btn disabled">
+                                        <i class="fas fa-angle-double-right"></i>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

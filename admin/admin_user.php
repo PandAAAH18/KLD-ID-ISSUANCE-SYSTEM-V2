@@ -75,7 +75,11 @@ if (isset($_POST['bulk_action']) && isset($_POST['user_ids'])) {
     }
 }
 
-/* =================  READ DATA  ================= */
+/* =================  READ DATA WITH PAGINATION  ================= */
+// Pagination parameters
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$perPage = isset($_GET['per_page']) ? max(5, min(100, intval($_GET['per_page']))) : 50;
+
 $filters = [
     'name'      => $_GET['name']      ?? '',
     'email'     => $_GET['email']     ?? '',
@@ -84,23 +88,86 @@ $filters = [
     'verified'  => $_GET['verified']  ?? '',
 ];
 
-$users = $adminModel->getUsers($filters);
+// Get paginated users and total count
+$users = $adminModel->getUsers($filters, $page, $perPage);
+$totalUsers = $adminModel->countUsers($filters);
+$totalPages = ceil($totalUsers / $perPage);
+
 $roles = ['admin','student','staff'];
 
-// Get user counts for statistics
-$totalUsers = count($adminModel->getUsers([]));
-$adminUsers = count($adminModel->getUsers(['role' => 'admin']));
-$studentUsers = count($adminModel->getUsers(['role' => 'student']));
-$verifiedUsers = count(array_filter($users, fn($u) => $u['is_verified']));
+// Get user counts for statistics (without filters for stats)
+$totalUsersAll = $adminModel->countUsers([]);
+$adminUsers = $adminModel->countUsers(['role' => 'admin']);
+$studentUsers = $adminModel->countUsers(['role' => 'student']);
+$verifiedUsers = $adminModel->countUsers(['verified' => 1]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>User Management - Admin Panel</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 15px;
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            min-width: 32px;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .pagination-btn.disabled {
+            background: #f8f9fa;
+            color: #6c757d;
+            border-color: #dee2e6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination-info {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .results-per-page {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 15px;
+        }
+
+        .results-per-page select {
+            padding: 4px 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -134,7 +201,7 @@ $verifiedUsers = count(array_filter($users, fn($u) => $u['is_verified']));
         <!-- ========== STATISTICS DASHBOARD ========== -->
         <div class="stats-dashboard">
             <div class="stat-card">
-                <div class="stat-number"><?= $totalUsers ?></div>
+                <div class="stat-number"><?= $totalUsersAll ?></div>
                 <div class="stat-label">Total Users</div>
             </div>
             <div class="stat-card">
@@ -189,6 +256,67 @@ $verifiedUsers = count(array_filter($users, fn($u) => $u['is_verified']));
             </div>
         </div>
         <?php endif; ?>
+
+        <!-- ========== PAGINATION CONTROLS ========== -->
+        <div class="bulk-section">
+            <div class="bulk-actions">
+                <span style="font-weight: 600;">
+                    <i class="fas fa-database"></i> 
+                    Showing <?= count($users) ?> of <?= $totalUsers ?> users
+                    (Page <?= $page ?> of <?= $totalPages ?>)
+                </span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <!-- Results per page selector -->
+                    <div class="results-per-page">
+                        <span style="font-size: 0.8rem; color: #666;">Show:</span>
+                        <select onchange="changePerPage(this.value)">
+                            <option value="5" <?= $perPage == 5 ? 'selected' : '' ?>>5</option>
+                            <option value="10" <?= $perPage == 10 ? 'selected' : '' ?>>10</option>
+                            <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50</option>
+                        </select>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div class="pagination">
+                        <?php if ($page > 1): ?>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" class="pagination-btn" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" class="pagination-btn" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-left"></i>
+                            </span>
+                        <?php endif; ?>
+
+                        <span class="pagination-info">
+                            Page <?= $page ?> of <?= $totalPages ?>
+                        </span>
+
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" class="pagination-btn" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" class="pagination-btn" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-right"></i>
+                            </span>
+                            <span class="pagination-btn disabled">
+                                <i class="fas fa-angle-double-right"></i>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- ========== MAIN USER TABLE ========== -->
         <div class="admin-card">
@@ -279,6 +407,49 @@ $verifiedUsers = count(array_filter($users, fn($u) => $u['is_verified']));
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- ========== BOTTOM PAGINATION ========== -->
+                    <?php if ($totalPages > 1): ?>
+                    <div style="margin-top: 20px; display: flex; justify-content: center;">
+                        <div class="pagination">
+                            <?php if ($page > 1): ?>
+                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => 1])) ?>" class="pagination-btn" title="First Page">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page - 1])) ?>" class="pagination-btn" title="Previous Page">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="pagination-btn disabled">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </span>
+                                <span class="pagination-btn disabled">
+                                    <i class="fas fa-angle-left"></i>
+                                </span>
+                            <?php endif; ?>
+
+                            <span class="pagination-info">
+                                Page <?= $page ?> of <?= $totalPages ?>
+                            </span>
+
+                            <?php if ($page < $totalPages): ?>
+                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => $page + 1])) ?>" class="pagination-btn" title="Next Page">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                                <a href="?<?= http_build_query(array_merge($_GET, ['page' => $totalPages])) ?>" class="pagination-btn" title="Last Page">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            <?php else: ?>
+                                <span class="pagination-btn disabled">
+                                    <i class="fas fa-angle-right"></i>
+                                </span>
+                                <span class="pagination-btn disabled">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -556,6 +727,14 @@ $verifiedUsers = count(array_filter($users, fn($u) => $u['is_verified']));
             }
         });
     });
+
+    // Change results per page
+    function changePerPage(perPage) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('per_page', perPage);
+        params.delete('page'); // Go back to first page
+        window.location.href = '?' + params.toString();
+    }
 
     // Back to top functionality
     function scrollToTop() {
