@@ -7,6 +7,17 @@ if (($_SESSION['user_type'] ?? '') !== 'admin') {
 }
 $studentModel = new StudentManager();
 
+if (isset($_GET['error'])) {
+    switch($_GET['error']) {
+        case 'no_student_found':
+            $error = 'No student found with the provided ID. Please check the ID and try again.';
+            break;
+        case 'no_student':
+            $error = 'No student selected.';
+            break;
+    }
+}
+
 if (isset($_GET['action']) && $_GET['action'] === 'get_student' && isset($_GET['id'])) {
     $student = $studentModel->getStudentById($_GET['id']);
     header('Content-Type: application/json');

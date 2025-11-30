@@ -10,20 +10,48 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 
 $studentModel = new StudentManager();
 
-// Validate student ID
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: admin_students.php');
-    exit;
+// Log for debugging (remove after verification)
+error_log("student_details.php GET params: " . print_r($_GET, true));
+
+$studentId = null;
+$student = null;
+
+// Handle ?id=NUMERIC (from admin_students.php links)
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $studentId = (int)$_GET['id'];
+    $student = $studentModel->getStudentById($studentId);
+}
+// Handle ?student_id= (from dashboard/QR/manual search) - supports both internal ID (numeric) and business student_id (string)
+elseif (isset($_GET['student_id']) && !empty(trim($_GET['student_id']))) {
+    $inputId = trim($_GET['student_id']);
+    
+    if (is_numeric($inputId)) {
+        // Treat as internal DB id
+        $tempStudent = $studentModel->getStudentById((int)$inputId);
+    } else {
+        // Treat as business student_id
+        $tempStudent = $studentModel->getStudentByStudentId($inputId);
+    }
+    
+    if ($tempStudent) {
+        $studentId = $tempStudent['id'];
+        $student = $tempStudent;
+        error_log("Resolved student_id '$inputId' to DB id $studentId");
+    } else {
+        error_log("No student found for input: $inputId");
+        header('Location: admin_students.php?error=no_student_found');
+        exit;
+    }
 }
 
-$studentId = (int)$_GET['id'];
-$student = $studentModel->getStudentById($studentId);
-
-// If student not found
 if (!$student) {
-    header('Location: admin_students.php');
+    error_log("No valid student found (final check)");
+    header('Location: admin_students.php?error=no_student_found');
     exit;
 }
+
+error_log("Student loaded successfully: id=$studentId, name=" . $student['first_name'] . ' ' . $student['last_name']);
+
 
 // Handle form submission
 $message = '';

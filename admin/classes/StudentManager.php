@@ -31,9 +31,18 @@ public function getAllStudents(): array
 
 public function getStudentById(int $studentId): ?array
 {
-    $sql = "SELECT * FROM student WHERE id = :id LIMIT 1";
+    $sql = "SELECT * FROM student WHERE id = :id AND deleted_at IS NULL LIMIT 1";
     $stmt = $this->db->prepare($sql);
     $stmt->execute([':id' => $studentId]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+public function getStudentByStudentId(string $studentId): ?array
+{
+    $sql = "SELECT * FROM student WHERE student_id = :student_id AND deleted_at IS NULL LIMIT 1";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute([':student_id' => $studentId]);
 
     return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 }

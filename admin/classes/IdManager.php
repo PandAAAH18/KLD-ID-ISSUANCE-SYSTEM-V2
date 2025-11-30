@@ -291,7 +291,7 @@ public function getIssuedByStatus(string $filter): array
 
 
     /* 3. QR code ------------------------------------------------------------- */
-    $verifyUrl = APP_URL . '/admin/student_details.php?id=' . $studentId;
+    $verifyUrl = APP_URL . '/admin/student_details.php?student_id=' . $studentId;
     error_log("DEBUG generateId: verifyUrl={$verifyUrl}");
 
     $qrName = $idNumber.'.png';          // file name we will store & reference
@@ -336,9 +336,9 @@ public function getIssuedByStatus(string $filter): array
         error_log("DEBUG QR FAILED: {$qrPath} not created");
     }
 
-    /* 3.5 Save QR code location to student table */
-    $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
-    $updateStudent->execute([$qrName, $studentId]);
+    /* 3.5 Save QR code location to student table + set student_id if missing */
+    $updateStudent = $db->prepare("UPDATE student SET qr_code = ?, student_id = COALESCE(student_id, ?) WHERE id = ?");
+    $updateStudent->execute([$qrName, $idNumber, $studentId]);
 
     $options = new Options();
     $options->set('isRemoteEnabled', true);
@@ -442,7 +442,7 @@ public function getIssuedByStatus(string $filter): array
         }
 
         // 3. Regenerate QR code
-        $verifyUrl = APP_URL . '/admin/student_details.php?id=' . $studentId;
+        $verifyUrl = APP_URL . '/admin/student_details.php?student_id=' . $studentId;
         error_log("DEBUG regenerateId: verifyUrl={$verifyUrl}");
 
         if (!is_dir(dirname($qrPath))) {
@@ -477,9 +477,9 @@ public function getIssuedByStatus(string $filter): array
             error_log("DEBUG QR REGEN FAILED: {$qrPath} not created");
         }
 
-        // 3.5 Update QR code location in student table
-        $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
-        $updateStudent->execute([$qrName, $studentId]);
+        // 3.5 Update QR code location in student table + set student_id if missing
+        $updateStudent = $db->prepare("UPDATE student SET qr_code = ?, student_id = COALESCE(student_id, ?) WHERE id = ?");
+        $updateStudent->execute([$qrName, $idNumber, $studentId]);
 
         // Rest of your existing code remains the same...
         $options = new Options();
@@ -706,9 +706,9 @@ $updateStmt->execute([$requestId]);
     }
 
     private function generateQRCode(string $idNumber, int $studentId): array
-{
-    try {
-        $verifyUrl = APP_URL . '/admin/student_details.php?id=' . $studentId;
+    {
+        try {
+            $verifyUrl = APP_URL . '/admin/student_details.php?student_id=' . $studentId;
         $qrName = $idNumber . '.png';
         $qrPath = __DIR__ . '/../../uploads/qr/' . $qrName;
 
@@ -747,9 +747,9 @@ $updateStmt->execute([$requestId]);
             error_log("DEBUG QR BULK FAILED: {$qrPath} not created");
         }
 
-        // Save QR code location to student table
-        $updateStudent = $this->db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
-        $updateStudent->execute([$qrName, $studentId]);
+        // Save QR code location to student table + set student_id if missing
+        $updateStudent = $this->db->prepare("UPDATE student SET qr_code = ?, student_id = COALESCE(student_id, ?) WHERE id = ?");
+        $updateStudent->execute([$qrName, $idNumber, $studentId]);
 
         return [
             'success' => true,

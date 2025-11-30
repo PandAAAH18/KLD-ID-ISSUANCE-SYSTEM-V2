@@ -437,8 +437,7 @@ require_once 'admin_header.php';
 
    <!-- Scripts -->
 <script src="../assets/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
-<script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 // Mobile menu toggle and basic dashboard functionality
 document.addEventListener('DOMContentLoaded', function() {
@@ -776,7 +775,7 @@ function setupManualSearch() {
             const studentId = studentIdInput ? studentIdInput.value.trim() : '';
             
             if (studentId) {
-                window.location.href = `student_details.php?id=${encodeURIComponent(studentId)}`;
+                window.location.href = `student_details.php?student_id=${encodeURIComponent(studentId)}`;
             } else {
                 showResult('error', 'Please enter a student ID.');
             }
@@ -840,7 +839,7 @@ function processScannedData(scannedData) {
         // Show success and redirect after short delay
         showResult('success', `Student ID found: ${studentId}. Redirecting...`);
         setTimeout(() => {
-            window.location.href = `student_details.php?id=${encodeURIComponent(studentId)}`;
+            window.location.href = `student_details.php?student_id=${encodeURIComponent(studentId)}`;
         }, 1500);
     } else {
         showResult('error', 'Invalid QR code. Could not extract student information.');
