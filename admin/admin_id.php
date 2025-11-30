@@ -114,13 +114,14 @@ if (isset($_POST['cancel_print'])) {
 
 /* ---------- 2.  filter ---------- */
 $filter = $_GET['filter'] ?? 'pending';
-$filter = in_array($filter,['pending','approved','rejected','generated'],true) ? $filter : 'pending';
+$filter = in_array($filter,['pending','approved','rejected','generated','printed'],true) ? $filter : 'pending';
 
 /* requests list only for pending/approved/rejected */
 $requests = in_array($filter,['pending','approved','rejected']) ? $adm->getRequestsByStatus($filter) : [];
 
 /* issued list for generated/completed */
-$issued   = in_array($filter,['generated']) ? $adm->getIssuedByStatus($filter) : [];
+$issued   = in_array($filter,['generated','printed']) ? $adm->getIssuedByStatus($filter) : [];
+
 
 /* Get approved requests for bulk operations */
 $approvedRequests = ($filter === 'approved') ? $adm->getApprovedIdRequests() : [];
@@ -143,6 +144,7 @@ unset($_SESSION['error_msg']);
 $approvedCount = count($adm->getRequestsByStatus('approved'));
 $rejectedCount = count($adm->getRequestsByStatus('rejected'));
 $generatedCount = count($adm->getIssuedByStatus('generated'));
+$printedCount = count($adm->getIssuedByStatus('printed'));
 ?>
 <!doctype html>
 <html>
@@ -169,19 +171,38 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
         </div>
 
         <!-- Display messages -->
-        <?php if ($success_msg): ?>
-            <div class="alert-banner alert-success">
-                <i class="fas fa-check-circle"></i>
-                <?= htmlspecialchars($success_msg) ?>
-            </div>
-        <?php endif; ?>
+<?php if ($success_msg): ?>
+    <div class="alert-banner alert-success">
+        <i class="fas fa-check-circle"></i>
+        <?= htmlspecialchars($success_msg) ?>
+    </div>
+<?php endif; ?>
 
-        <?php if ($error_msg): ?>
-            <div class="alert-banner alert-error">
-                <i class="fas fa-exclamation-triangle"></i>
-                <?= htmlspecialchars($error_msg) ?>
-            </div>
-        <?php endif; ?>
+<?php if ($error_msg): ?>
+    <div class="alert-banner alert-error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <?= htmlspecialchars($error_msg) ?>
+    </div>
+<?php endif; ?>
+
+<!-- Warning for students with existing IDs -->
+<?php if ($filter === 'approved'): ?>
+    <?php
+    // Get all approved requests including those with conflicts
+    $allApprovedRequests = $adm->getRequestsByStatus('approved');
+    $displayedRequests = $adm->getApprovedIdRequests(); // This already filters out conflicts
+    
+    // If there's a difference, some requests are hidden due to conflicts
+    if (count($allApprovedRequests) > count($displayedRequests)): ?>
+    <div class="alert-banner alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Note:</strong> Some approved requests are not shown because the students already have generated IDs.
+        <div style="margin-top: 10px;">
+            <strong>Affected requests:</strong> <?= count($allApprovedRequests) - count($displayedRequests) ?> request(s) hidden
+        </div>
+    </div>
+    <?php endif; ?>
+<?php endif; ?>
 
         <!-- Display bulk operation results -->
         <?php if ($bulkResult): ?>
@@ -224,6 +245,10 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
                 <div class="stat-number"><?= $generatedCount ?></div>
                 <div class="stat-label">Generated IDs</div>
             </div>
+            <div class="stat-card">
+    <div class="stat-number"><?= $printedCount ?></div>
+    <div class="stat-label">Printed IDs</div>
+</div>
         </div>
 
         <!-- Filter Navigation -->
@@ -252,6 +277,12 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
                     <span class="badge"><?= $generatedCount ?></span>
                 <?php endif; ?>
             </a>
+            <a href="?filter=printed" class="filter-btn <?= $filter === 'printed' ? 'active' : '' ?>">
+    <i class="fas fa-print"></i> Printed IDs
+    <?php if ($printedCount > 0): ?>
+        <span class="badge"><?= $printedCount ?></span>
+    <?php endif; ?>
+</a>
         </div>
 
         <!-- BULK ACTIONS SECTION FOR APPROVED REQUESTS -->
@@ -601,6 +632,99 @@ $generatedCount = count($adm->getIssuedByStatus('generated'));
                         </table>
                     </div>
                 </form>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($filter === 'printed'): ?>
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <span>
+                <i class="fas fa-print"></i>
+                Printed ID Cards
+            </span>
+            <span class="badge"><?= count($issued) ?></span>
+        </div>
+        <div class="admin-card-body">
+            <?php if (empty($issued)): ?>
+                <div class="empty-state">
+                    <i class="fas fa-print"></i>
+                    <h4>No printed IDs</h4>
+                    <p>There are currently no printed ID cards in the system.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID Number</th>
+                                <th>Student Information</th>
+                                <th>Academic Details</th>
+                                <th>Issue Date</th>
+                                <th>Expiry Date</th>
+                                <th>Print Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($issued as $row): 
+                                $name = htmlspecialchars($row['first_name'].' '.$row['last_name']);
+                            ?>
+                            <tr>
+                                <td><strong><?= htmlspecialchars($row['id_number']) ?></strong></td>
+                                <td>
+                                    <div style="font-weight: 600;"><?= $name ?></div>
+                                    <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($row['email']) ?></div>
+                                </td>
+                                <td>
+                                    <div><?= htmlspecialchars($row['course'] ?? 'Not specified') ?></div>
+                                    <div style="font-size: 0.85rem; color: #666;"><?= htmlspecialchars($row['year_level'] ?? 'Not specified') ?></div>
+                                </td>
+                                <td><?= date('M d, Y', strtotime($row['issue_date'])) ?></td>
+                                <td><?= date('M d, Y', strtotime($row['expiry_date'])) ?></td>
+                                <td>
+                                    <?php 
+                                    // Use updated_at as print date, or issue_date if not available
+                                    $printDate = !empty($row['updated_at']) && $row['updated_at'] != '0000-00-00 00:00:00' 
+                                        ? $row['updated_at'] 
+                                        : $row['issue_date'];
+                                    echo date('M d, Y', strtotime($printDate));
+                                    ?>
+                                </td>
+                                <td>
+                                    <span class="status-badge status-printed">
+                                        <?= ucfirst($row['status']) ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <?php
+                                        $file = $row['digital_id_file'] ?? null;
+                                        if ($file && file_exists(__DIR__.'/../uploads/digital_id/'.$file)):
+                                            $safe = htmlspecialchars($file);
+                                            $jsSafe = addslashes($safe);
+                                        ?>
+                                            <a href="../uploads/digital_id/<?= $safe ?>" target="_blank" class="btn-admin btn-view" title="View ID">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="../uploads/digital_id/<?= $safe ?>" download class="btn-admin btn-generate" title="Download ID">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" onclick="window.open('../uploads/digital_id/<?= $jsSafe ?>', '_blank').print();" class="btn-admin" title="Print ID">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <span class="text-muted" style="font-size: 0.85rem;">File missing</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             <?php endif; ?>
         </div>
     </div>
