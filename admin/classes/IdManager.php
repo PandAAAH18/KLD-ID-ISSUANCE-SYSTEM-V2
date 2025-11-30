@@ -5,7 +5,7 @@ require_once __DIR__ . '/AuditLogger.php';
 require_once __DIR__.'/../../vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use Endroid\QrCode\src\Writer\PngWriter;
+use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
@@ -237,8 +237,9 @@ public function getIssuedByStatus(string $filter): array
     }
 
     public function generateId(int $requestId): void
-{
-    $db = $this->getDb();
+    {
+        error_log("DEBUG generateId START: requestId={$requestId}, APP_URL=" . APP_URL);
+        $db = $this->getDb();
 
     /* 1.  pull request + student */
     $stmt = $db->prepare("SELECT r.student_id, s.email, s.first_name, s.last_name,
@@ -249,7 +250,11 @@ public function getIssuedByStatus(string $filter): array
                           WHERE  r.id = ? AND r.status = 'approved'");
     $stmt->execute([$requestId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row) return;
+    if (!$row) {
+        error_log("DEBUG generateId: No row for requestId={$requestId}");
+        return;
+    }
+    error_log("DEBUG generateId: student photo={$row['photo']}, signature={$row['signature']}, photo_exists=" . (file_exists(__DIR__.'/../../uploads/student_photos/'.$row['photo']) ? 'YES' : 'NO'));
 
     $studentId = $row['student_id'];
 
@@ -257,7 +262,7 @@ public function getIssuedByStatus(string $filter): array
     $checkStmt = $db->prepare("
         SELECT COUNT(*) as existing_count 
         FROM issued_ids 
-        WHERE user_id = ? AND status IN ('generated', 'printed')
+        WHERE user_id = ? AND status IN ('generated')
     ");
     $checkStmt->execute([$studentId]);
     $existingCount = $checkStmt->fetch(PDO::FETCH_ASSOC)['existing_count'];
@@ -287,27 +292,32 @@ public function getIssuedByStatus(string $filter): array
 
     /* 3. QR code ------------------------------------------------------------- */
     $verifyUrl = APP_URL.'/verify_id.php?n='.$idNumber;
+    error_log("DEBUG generateId: verifyUrl={$verifyUrl}");
 
     $qrName = $idNumber.'.png';          // file name we will store & reference
     $qrPath = __DIR__.'/../../uploads/qr/'.$qrName;
 
-    /* -------  Endroid QrCode  ------- */
-    $writer = new \Endroid\QrCode\Writer\PngWriter();
+    if (!is_dir(dirname($qrPath))) {
+        mkdir(dirname($qrPath), 0755, true);
+    }
 
-    $qrCode = new \Endroid\QrCode\QrCode(
+    /* -------  Endroid QrCode  ------- */
+    $writer = new PngWriter();
+
+    $qrCode = new QrCode(
         data: $verifyUrl,
-        encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-        errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+        encoding: new Encoding('UTF-8'),
+        errorCorrectionLevel: ErrorCorrectionLevel::Low,
         size: 300,
         margin: 10,
-        foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-        backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+        foregroundColor: new Color(0, 0, 0),
+        backgroundColor: new Color(255, 255, 255)
     );
 
     // optional logo – comment out if you don't want it
     $logoPath = __DIR__.'/../../assets/images/kldlogo.png';
     $logo = file_exists($logoPath) 
-        ? new \Endroid\QrCode\Logo\Logo(
+        ? new Logo(
             path: $logoPath,
             resizeToWidth: 50,
             punchoutBackground: true
@@ -321,9 +331,9 @@ public function getIssuedByStatus(string $filter): array
     $updateStudent = $db->prepare("UPDATE student SET qr_code = ? WHERE id = ?");
     $updateStudent->execute([$qrName, $studentId]);
 
-    $options = new \Dompdf\Options();
+    $options = new Options();
     $options->set('isRemoteEnabled', true);
-    $dompdf = new \Dompdf\Dompdf($options);
+    $dompdf = new Dompdf($options);
 
     // Rest of your existing code remains the same...
     $cardHeight = '300px';
@@ -346,10 +356,14 @@ public function getIssuedByStatus(string $filter): array
 
     // Wrap both divs in a container
     $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
+    error_log("DEBUG generateId: HTML length=" . strlen($html) . ", sample_front=" . substr($front, 0, 200));
+    error_log("DEBUG generateId: front_img_src=" . APP_URL.'/uploads/student_photos/'.$row['photo']);
+    error_log("DEBUG generateId: bg_front=" . APP_URL.'/assets/images/id_front.png');
 
     $dompdf->loadHtml($html);
     $dompdf->setPaper('CR80', 'landscape');
     $dompdf->render();
+    error_log("DEBUG generateId: Dompdf render COMPLETE");
 
     /* 5.  save PDF */
     $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
@@ -378,8 +392,8 @@ public function getIssuedByStatus(string $filter): array
 }
 
    public function regenerateId(string $idNumber): bool
-{
-    error_log("DEBUG regenerateId: called with idNumber='{$idNumber}' (type: " . gettype($idNumber) . ")");
+   {
+       error_log("DEBUG regenerateId START: idNumber={$idNumber}, APP_URL=" . APP_URL);
 
     try {
         $db = $this->db;
@@ -396,9 +410,10 @@ public function getIssuedByStatus(string $filter): array
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$row) {
-            error_log("DEBUG regenerateId: No row found for id_number '{$idNumber}'");
+            error_log("DEBUG regenerateId: No row for idNumber={$idNumber}");
             return false;
         }
+        error_log("DEBUG regenerateId: student photo={$row['photo']}, signature={$row['signature']}, photo_exists=" . (file_exists(__DIR__.'/../../uploads/student_photos/'.$row['photo']) ? 'YES' : 'NO'));
 
         $studentId = $row['user_id'];
         $oldDigitalFile = $row['digital_id_file'];
@@ -419,25 +434,26 @@ public function getIssuedByStatus(string $filter): array
 
         // 3. Regenerate QR code
         $verifyUrl = APP_URL . '/verify_id.php?n=' . $idNumber;
+        error_log("DEBUG regenerateId: verifyUrl={$verifyUrl}");
 
         if (!is_dir(dirname($qrPath))) {
             mkdir(dirname($qrPath), 0755, true);
         }
 
-        $writer = new \Endroid\QrCode\Writer\PngWriter();
-        $qrCode = new \Endroid\QrCode\QrCode(
+        $writer = new PngWriter();
+        $qrCode = new QrCode(
             data: $verifyUrl,
-            encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
-            errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::Low,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::Low,
             size: 300,
             margin: 10,
-            foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
-            backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+            foregroundColor: new Color(0, 0, 0),
+            backgroundColor: new Color(255, 255, 255)
         );
 
         $logoPath = __DIR__ . '/../../assets/images/kldlogo.png';
         $logo     = file_exists($logoPath)
-            ? new \Endroid\QrCode\Logo\Logo(path: $logoPath, resizeToWidth: 50, punchoutBackground: true)
+            ? new Logo(path: $logoPath, resizeToWidth: 50, punchoutBackground: true)
             : null;
 
         $result = $writer->write($qrCode, $logo);
@@ -448,9 +464,9 @@ public function getIssuedByStatus(string $filter): array
         $updateStudent->execute([$qrName, $studentId]);
 
         // Rest of your existing code remains the same...
-        $options = new \Dompdf\Options();
+        $options = new Options();
         $options->set('isRemoteEnabled', true);
-        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf = new Dompdf($options);
 
         $cardHeight = '300px';
 
@@ -471,10 +487,14 @@ public function getIssuedByStatus(string $filter): array
         </div>';
 
         $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
+        error_log("DEBUG regenerateId: HTML length=" . strlen($html) . ", sample_front=" . substr($front, 0, 200));
+        error_log("DEBUG regenerateId: front_img_src=" . APP_URL.'/uploads/student_photos/'.$row['photo']);
+        error_log("DEBUG regenerateId: bg_front=" . APP_URL.'/assets/images/id_front.png');
 
         $dompdf->loadHtml($html);
         $dompdf->setPaper('CR80', 'landscape');
         $dompdf->render();
+        error_log("DEBUG regenerateId: Dompdf render COMPLETE");
 
         // 5. Save new PDF
         $newFileName = $row['email'] . '_' . date('YmdHis') . '.pdf';
@@ -489,6 +509,7 @@ public function getIssuedByStatus(string $filter): array
                                 SET digital_id_file = ?, issue_date = NOW()
                                 WHERE id_number = ?");
         $update->execute([$newFileName, $idNumber]);
+        error_log("DEBUG regenerateId END: SUCCESS newFile={$newFileName}");
 
         // 7. Audit log
         if (method_exists($this, 'auditLogger') && $this->auditLogger) {
