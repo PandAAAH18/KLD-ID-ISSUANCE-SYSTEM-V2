@@ -331,8 +331,8 @@ require_once 'admin_header.php';
                     </div>
                     <div class="admin-card-body" style="text-align: center;">
                         <div id="photoContainer">
-                            <?php if (!empty($student['photo_path'])): ?>
-                            <img src="../uploads/student_photos/<?= htmlspecialchars($student['photo_path']) ?>" 
+                            <?php if (!empty($student['photo'])): ?>
+                            <img src="../uploads/student_photos/<?= htmlspecialchars($student['photo']) ?>" 
                                  alt="Student Photo" style="max-width: 100%; height: auto; border-radius: 8px; max-height: 250px; margin-bottom: 15px;">
                             <?php else: ?>
                             <div style="width: 100%; padding: 40px 20px; background: #f0f0f0; border-radius: 8px; color: #999; margin-bottom: 15px;">
