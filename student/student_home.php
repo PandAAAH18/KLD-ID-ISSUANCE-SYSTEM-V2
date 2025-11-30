@@ -1,6 +1,6 @@
-<?php
+<<?php
 require_once '../includes/config.php';
-require_once 'student_header.php'; // Include the header
+require_once 'student_header.php';
 require_once 'student.php';
 
 // Check if user is logged in as student
@@ -19,6 +19,11 @@ if (!$student) {
     exit();
 }
 
+// Check if user is approved using the new function
+$studentObj = new Student();
+$can_view_digital_id = $studentObj->isUserApproved((int)$_SESSION['user_id']);
+$user_status = $studentObj->getUserStatus((int)$_SESSION['user_id']);
+
 // Fetch ID request status
 $idRequest = (new Student())->getLatestIdRequest((int)$_SESSION['student_id']);
 $idStatus = $idRequest ? $idRequest['status'] : 'Not Applied';
@@ -28,8 +33,8 @@ $idUpdateDate = $idRequest ? date('M d, Y h:i A', strtotime($idRequest['updated_
 // Fetch ID request history
 $idHistory = (new Student())->getIdRequestHistory((int)$_SESSION['student_id']);
 
-// Fetch issued ID data
-$issuedId = (new Student())->getIssuedId((int)$_SESSION['student_id']);
+// Fetch issued ID data only if user is approved
+$issuedId = $can_view_digital_id ? (new Student())->getIssuedId((int)$_SESSION['student_id']) : null;
 $digitalIdFile = ($issuedId && !empty($issuedId['digital_id_file'])) ? $issuedId['digital_id_file'] : null;
 
 // Prepare data
@@ -72,57 +77,268 @@ $qrcode = "../uploads/sample_qr.png";
 
 <link href="../assets/css/student.css" rel="stylesheet">
 <style>
-    .avatar-placeholder {
-        background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
-        color: #757575;
-        display: flex;
+.avatar-placeholder {
+    background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
+    color: #757575;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-placeholder::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(224, 224, 224, 0.8), rgba(189, 189, 189, 0.8));
+    z-index: 1;
+}
+
+.avatar-placeholder i {
+    position: relative;
+    z-index: 2;
+    font-size: 2em;
+    opacity: 0.8;
+}
+
+.student-photo.avatar-placeholder {
+    width: 80px;
+    height: 80px;
+}
+
+.student-photo.avatar-placeholder i {
+    font-size: 2.5em;
+}
+
+.welcome-avatar.avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    border: 3px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.welcome-box:hover .welcome-avatar.avatar-placeholder {
+    transform: scale(1.05);
+    border-color: #bdbdbd;
+}
+
+.emergency-contact-section {
+    text-align: center;
+    color: #333;
+}
+
+.emergency-contact-info {
+    line-height: 1.4;
+    margin-top: 5vw;
+    font-weight: bold;
+}
+
+.contact-name {
+    margin: 0.5rem 0;
+    font-size: clamp(16px, 5vw, 20px);
+}
+
+.contact-number {
+    margin: 0.5rem 0;
+    font-size: clamp(14px, 4vw, 15px);
+}
+
+.id-card-display {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    margin: 20px auto;
+    overflow: hidden;
+    max-width: 95%;
+    transition: all 0.3s ease;
+}
+
+.id-card-display:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.display-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.header-content p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.display-body {
+    padding: 30px 25px;
+    transition: all 0.3s ease;
+}
+
+.display-body.collapsed {
+    display: none;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #1b5e20 0%, #0d3817 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(27, 94, 32, 0.2);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(27, 94, 32, 0.3);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+.pending-message {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 16px;
+    margin: 20px auto;
+    overflow: hidden;
+    max-width: 95%;
+}
+
+.pending-header {
+    background: #f39c12;
+    color: white;
+    padding: 20px 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pending-body {
+    text-align: center;
+    padding: 40px;
+    color: #856404;
+}
+
+.pending-icon {
+    font-size: 48px;
+    color: #f39c12;
+    margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .id-card-display {
+        margin: 15px auto;
+        border-radius: 12px;
+    }
+    
+    .display-header {
+        padding: 15px 20px;
+    }
+    
+    .header-content h3 {
+        font-size: 18px;
+    }
+    
+    .display-body {
+        padding: 20px;
+    }
+    
+    .card-actions {
+        flex-direction: column;
         align-items: center;
+    }
+    
+    .action-btn {
+        width: 200px;
         justify-content: center;
-        border-radius: 50%;
-        border: 2px solid #e0e0e0;
-        position: relative;
-        overflow: hidden;
+    }
+    
+    .pending-body {
+        padding: 30px 20px;
+    }
+    
+    .pending-icon {
+        font-size: 36px;
+    }
+}
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .emergency-contact-info {
+        margin-top: 4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .emergency-contact-info {
+        margin-top: 3rem;
     }
 
-    .avatar-placeholder::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(224, 224, 224, 0.8), rgba(189, 189, 189, 0.8));
-        z-index: 1;
+    .contact-name {
+        font-size: 18px;
     }
 
-    .avatar-placeholder i {
-        position: relative;
-        z-index: 2;
-        font-size: 2em;
-        opacity: 0.8;
+    .contact-number {
+        font-size: 14px;
     }
-
-    .student-photo.avatar-placeholder {
-        width: 80px;
-        height: 80px;
-    }
-
-    .student-photo.avatar-placeholder i {
-        font-size: 2.5em;
-    }
-
-    .welcome-avatar.avatar-placeholder {
-        width: 80px;
-        height: 80px;
-        border: 3px solid #e0e0e0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .welcome-box:hover .welcome-avatar.avatar-placeholder {
-        transform: scale(1.05);
-        border-color: #bdbdbd;
-    }
+}
 </style>
 
 <!-- BACK-TO-TOP BUTTON -->
@@ -130,77 +346,15 @@ $qrcode = "../uploads/sample_qr.png";
     <i class="fas fa-arrow-up"></i>
 </button>
 
-<div class="portrait-id-container">
-    <div class="portrait-id-card">
-        <div class="portrait-side portrait-front"
-            style="background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: inherit; background-repeat: round;">
-            <div
-                style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
-                <div class="photo-container">
-                    <?php if ($use_initials): ?>
-                        <div class="student-photo avatar-placeholder">
-                            <i class="fas fa-user"></i>
-                        </div>
-                    <?php else: ?>
-                        <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
-                    <?php endif; ?>
-                </div>
-                <div class="student-info">
-                    <p class="student-name"><?php echo $studentName; ?></p>
-                    <p class="student-course"><?php echo $course; ?></p>
-                    <p class="student-id-number"><?php echo $studentID; ?></p>
-                </div>
-            </div>
-            <div class="signature-section">
-                <?php if ($signature): ?>
-                    <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
-                <?php else: ?>
-                    <div class="signature-placeholder"></div>
-                <?php endif; ?>
-            </div>
-        </div>
-        <div class="portrait-side portrait-back"
-            style="background-image: url('../assets/images/id_back.png'); background-size: contain; background-position: inherit; background-repeat: round; padding: 0;">
-            <div
-                style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; box-sizing: border-box;">
-                <!-- Emergency Contact Information -->
-                <div class="emergency-contact-section" style="text-align: center; color: #333;">
-                    <div class="emergency-contact-info" style="line-height: 1.4; margin-top: 80px; font-weight: bold;">
-                        <p style="margin: 5px 0; font-size: 20px; "><strong></strong>
-                            <?php echo $emergency_contact_name; ?></p>
-                        <p style="margin: 5px 0; font-size: 15px; "><strong></strong> <?php echo $emergency_contact; ?>
-                        </p>
-                    </div>
-                </div>
-                <!-- QR Code Section -->
-                <div class="qr-code-section" style="margin-bottom: 20px; margin-left: 60%;">
-                    <?php
-                    // Update QR code path
-                    $qrcode_path = "../uploads/qr/" . htmlspecialchars($student['qr_code'] ?? $studentID . '.png');
-                    if (file_exists($qrcode_path)):
-                    ?>
-                        <img src="<?php echo $qrcode_path; ?>" alt="Student QR Code" class="qr-code-image"
-                            style="width: 120px; height: 120px; border: 2px solid #333;">
-                    <?php else: ?>
-                        <div class="qr-code-placeholder"
-                            style="width: 120px; height: 120px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc;">
-                            <span style="color: #666; font-size: 12px;">QR Code</span>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
+
 
 <div class="welcome-box">
     <?php if ($use_initials): ?>
-        <div class="welcome-avatar avatar-placeholder">
-            <i class="fas fa-user"></i>
-        </div>
+    <div class="welcome-avatar avatar-placeholder">
+        <i class="fas fa-user"></i>
+    </div>
     <?php else: ?>
-        <img src="<?php echo $avatar; ?>" alt="Avatar">
+    <img src="<?php echo $avatar; ?>" alt="Avatar">
     <?php endif; ?>
     <div class="welcome-content-wrapper">
         <div class="welcome-info">
@@ -216,25 +370,33 @@ $qrcode = "../uploads/sample_qr.png";
         </div>
         <div class="welcome-nav">
             <a href="edit_profile.php">Edit Profile</a>
-            <?php if ($digitalIdFile && file_exists('../uploads/digital_id/' . $digitalIdFile)): ?>
-            <button onclick="toggleDownloadMenu()" style="background: #ff9800; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <?php if ($can_view_digital_id && $digitalIdFile && file_exists('../uploads/digital_id/' . $digitalIdFile)): ?>
+            <button onclick="toggleDownloadMenu()"
+                style="background: #ff9800; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-id-card"></i> Generated IDs
                 <i class="fas fa-chevron-down" style="font-size: 0.8em;"></i>
             </button>
-            <div id="downloadMenu" style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px #f57c00 ; border-radius: 8px; margin-top: 8px; z-index: 1000; min-width: 180px;">
-                <a href="../uploads/digital_id/<?php echo htmlspecialchars($digitalIdFile); ?>" target="_blank" style="display: block; padding: 12px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
+            <div id="downloadMenu"
+                style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px #f57c00 ; border-radius: 8px; margin-top: 8px; z-index: 1000; min-width: 180px;">
+                <a href="../uploads/digital_id/<?php echo htmlspecialchars($digitalIdFile); ?>" target="_blank"
+                    style="display: block; padding: 12px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
                     <i class="fas fa-eye" style="color: #007bff; margin-right: 8px;"></i> View ID
                 </a>
-                <a href="../uploads/digital_id/<?php echo htmlspecialchars($digitalIdFile); ?>" download style="display: block; padding: 12px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
+                <a href="../uploads/digital_id/<?php echo htmlspecialchars($digitalIdFile); ?>" download
+                    style="display: block; padding: 12px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
                     <i class="fas fa-download" style="color: #28a745; margin-right: 8px;"></i> Download PDF
                 </a>
-                <a href="#" onclick="window.open('../uploads/digital_id/<?php echo addslashes(htmlspecialchars($digitalIdFile)); ?>', '_blank').print(); return false;" style="display: block; padding: 12px 20px; color: #333; text-decoration: none;">
+                <a href="#"
+                    onclick="window.open('../uploads/digital_id/<?php echo addslashes(htmlspecialchars($digitalIdFile)); ?>', '_blank').print(); return false;"
+                    style="display: block; padding: 12px 20px; color: #333; text-decoration: none;">
                     <i class="fas fa-print" style="color: #6c757d; margin-right: 8px;"></i> Print ID
                 </a>
             </div>
             <?php else: ?>
-            <span style="background: #e0e0e0; color: #666; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-id-card"></i> No Generated ID
+            <span
+                style="background: #e0e0e0; color: #666; padding: 12px 24px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-id-card"></i>
+                <?php echo $can_view_digital_id ? 'No Generated ID' : 'Account Pending Approval'; ?>
             </span>
             <?php endif; ?>
         </div>
@@ -282,36 +444,36 @@ $qrcode = "../uploads/sample_qr.png";
         <div class="history-content">
             <div class="history-table-content">
                 <?php if (count($idHistory) > 0): ?>
-                    <div class="history-table-wrapper">
-                        <table class="history-table">
-                            <thead>
-                                <tr>
-                                    <th>Request Date</th>
-                                    <th>Request Type</th>
-                                    <th>Reason</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($idHistory as $record): ?>
-                                    <tr>
-                                        <td><?php echo date('M d, Y h:i A', strtotime($record['created_at'])); ?></td>
-                                        <td><span
-                                                class="type-badge type-<?php echo strtolower(str_replace(' ', '-', $record['request_type'])); ?>"><?php echo htmlspecialchars($record['request_type']); ?></span>
-                                        </td>
-                                        <td><?php echo htmlspecialchars($record['reason']); ?></td>
-                                        <td><span
-                                                class="status-badge-small status-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>"><?php echo htmlspecialchars($record['status']); ?></span>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="history-table-wrapper">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Request Date</th>
+                                <th>Request Type</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($idHistory as $record): ?>
+                            <tr>
+                                <td><?php echo date('M d, Y h:i A', strtotime($record['created_at'])); ?></td>
+                                <td><span
+                                        class="type-badge type-<?php echo strtolower(str_replace(' ', '-', $record['request_type'])); ?>"><?php echo htmlspecialchars($record['request_type']); ?></span>
+                                </td>
+                                <td><?php echo htmlspecialchars($record['reason']); ?></td>
+                                <td><span
+                                        class="status-badge-small status-<?php echo strtolower(str_replace(' ', '-', $record['status'])); ?>"><?php echo htmlspecialchars($record['status']); ?></span>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
                 <?php else: ?>
-                    <div class="empty-history">
-                        <p>No past ID requests found.</p>
-                    </div>
+                <div class="empty-history">
+                    <p>No past ID requests found.</p>
+                </div>
                 <?php endif; ?>
             </div>
             <div class="history-empty-state">
@@ -328,6 +490,105 @@ $qrcode = "../uploads/sample_qr.png";
     </div>
 </div>
 
+<?php if ($can_view_digital_id): ?>
+<div class="id-card-display">
+    <div class="display-header">
+        <div class="header-content">
+            <h3>Student ID Card</h3>
+            <p>Digital Identification</p>
+        </div>
+        <button class="toggle-btn" onclick="toggleCardDisplay()">
+            <span class="toggle-icon">−</span>
+        </button>
+    </div>
+    
+    <div class="display-body" id="cardDisplayBody">
+        <div class="portrait-id-container">
+            <div class="portrait-id-card">
+                <div class="portrait-side portrait-front"
+                    style="background-image: url('../assets/images/id_front.png'); background-size: contain; background-position: inherit; background-repeat: round;">
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; margin-top: 35px;">
+                        <div class="photo-container">
+                            <?php if ($use_initials): ?>
+                            <div class="student-photo avatar-placeholder">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <?php else: ?>
+                            <img src="<?php echo $avatar; ?>" alt="Student Photo" class="student-photo">
+                            <?php endif; ?>
+                        </div>
+                        <div class="student-info">
+                            <p class="student-name"><?php echo $studentName; ?></p>
+                            <p class="student-course"><?php echo $course; ?></p>
+                            <p class="student-id-number"><?php echo $studentID; ?></p>
+                        </div>
+                    </div>
+                    <div class="signature-section">
+                        <?php if ($signature): ?>
+                        <img src="<?php echo $signature; ?>" alt="Student Signature" class="id-signature-image">
+                        <?php else: ?>
+                        <div class="signature-placeholder"></div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="portrait-side portrait-back"
+                    style="background-image: url('../assets/images/id_back.png'); background-size: contain; background-position: inherit; background-repeat: round; padding: 0;">
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; box-sizing: border-box;">
+                        <!-- Emergency Contact Information -->
+                        <div class="emergency-contact-section" style="margin-bottom: 10px;">
+                            <div class="emergency-contact-info">
+                                <p class="contact-name"><?php echo $emergency_contact_name; ?></p>
+                                <p class="contact-number"><?php echo $emergency_contact; ?></p>
+                            </div>
+                        </div>
+
+                        <!-- QR Code Section -->
+                        <div class="qr-code-section" style="margin-left: 60%;">
+                            <?php
+                        $qrcode_path = "../uploads/qr/" . htmlspecialchars($student['qr_code'] ?? $studentID . '.png');
+                        if (file_exists($qrcode_path)):
+                    ?>
+                            <img src="<?php echo $qrcode_path; ?>" alt="Student QR Code" class="qr-code-image"
+                                style="width: 100%; max-width: 120px; height: auto; border: 2px solid #333;">
+                            <?php else: ?>
+                            <div class="qr-code-placeholder"
+                                style="width: 120px; height: 120px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 2px dashed #ccc;">
+                                <span style="color: #666; font-size: 12px;">QR Code</span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-actions">
+            <button class="action-btn flip-btn" onclick="flipCard()">
+                <i class="fas fa-sync-alt"></i>
+                Flip Card
+            </button>
+        </div>
+    </div>
+</div>
+<?php else: ?>
+<!-- Show message if account is pending -->
+<div class="pending-message">
+    <div class="pending-header">
+        <div class="header-content">
+            <h3>Account Pending Approval</h3>
+            <p>Digital ID Access Restricted</p>
+        </div>
+    </div>
+    <div class="pending-body">
+        <i class="fas fa-clock pending-icon"></i>
+        <h4 style="color: #856404; margin-bottom: 10px;">Your account is pending approval</h4>
+        <p style="color: #856404;">You will be able to view and download your digital ID once your account has been approved by the administrator.</p>
+    </div>
+</div>
+<?php endif; ?>
+
 </div>
 </main>
 </div>
@@ -336,40 +597,40 @@ $qrcode = "../uploads/sample_qr.png";
 </html>
 
 <script>
-    function toggleHistorySection(headerElement) {
-        const section = headerElement.closest('.id-history-header') ? headerElement.closest('.id-history-header').closest(
-            '.id-history-section') : headerElement.closest('.id-history-section');
-        section.classList.toggle('collapsed');
-    }
+function toggleHistorySection(headerElement) {
+    const section = headerElement.closest('.id-history-header') ? headerElement.closest('.id-history-header').closest(
+        '.id-history-section') : headerElement.closest('.id-history-section');
+    section.classList.toggle('collapsed');
+}
 
-    function cleanHistoryDisplay(event) {
-        event.stopPropagation();
-        const historySection = event.target.closest('.id-history-section');
-        const tableContent = historySection.querySelector('.history-table-content');
-        const emptyState = historySection.querySelector('.history-empty-state');
-        tableContent.style.animation = 'fadeOut 0.3s ease-out forwards';
-        setTimeout(() => {
-            tableContent.style.display = 'none';
-            emptyState.classList.add('active');
-            emptyState.style.animation = 'fadeIn 0.3s ease-out';
-        }, 300);
-    }
+function cleanHistoryDisplay(event) {
+    event.stopPropagation();
+    const historySection = event.target.closest('.id-history-section');
+    const tableContent = historySection.querySelector('.history-table-content');
+    const emptyState = historySection.querySelector('.history-empty-state');
+    tableContent.style.animation = 'fadeOut 0.3s ease-out forwards';
+    setTimeout(() => {
+        tableContent.style.display = 'none';
+        emptyState.classList.add('active');
+        emptyState.style.animation = 'fadeIn 0.3s ease-out';
+    }, 300);
+}
 
-    function restoreHistoryDisplay(event) {
-        event.stopPropagation();
-        const historySection = event.target.closest('.id-history-section');
-        const tableContent = historySection.querySelector('.history-table-content');
-        const emptyState = historySection.querySelector('.history-empty-state');
-        emptyState.style.animation = 'fadeOut 0.3s ease-out forwards';
-        setTimeout(() => {
-            emptyState.classList.remove('active');
-            tableContent.style.display = 'block';
-            tableContent.style.animation = 'fadeIn 0.3s ease-out';
-        }, 300);
-    }
+function restoreHistoryDisplay(event) {
+    event.stopPropagation();
+    const historySection = event.target.closest('.id-history-section');
+    const tableContent = historySection.querySelector('.history-table-content');
+    const emptyState = historySection.querySelector('.history-empty-state');
+    emptyState.style.animation = 'fadeOut 0.3s ease-out forwards';
+    setTimeout(() => {
+        emptyState.classList.remove('active');
+        tableContent.style.display = 'block';
+        tableContent.style.animation = 'fadeIn 0.3s ease-out';
+    }, 300);
+}
 
-    const style = document.createElement('style');
-    style.textContent = `
+const style = document.createElement('style');
+style.textContent = `
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -379,51 +640,69 @@ $qrcode = "../uploads/sample_qr.png";
             to { opacity: 0; }
         }
     `;
-    document.head.appendChild(style);
+document.head.appendChild(style);
 
-    const backToTopBtn = document.getElementById('backToTopBtn');
-    window.addEventListener('scroll', function() {
-        if (window.scrollY > 300) {
-            backToTopBtn.style.display = 'flex';
-        } else {
-            backToTopBtn.style.display = 'none';
-        }
+const backToTopBtn = document.getElementById('backToTopBtn');
+window.addEventListener('scroll', function() {
+    if (window.scrollY > 300) {
+        backToTopBtn.style.display = 'flex';
+    } else {
+        backToTopBtn.style.display = 'none';
+    }
+});
+
+function toggleDownloadMenu() {
+    const menu = document.getElementById('downloadMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('downloadMenu');
+    if (menu && !event.target.closest('.welcome-nav')) {
+        menu.style.display = 'none';
+    }
+});
+
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
     });
+}
 
-    function toggleDownloadMenu() {
-        const menu = document.getElementById('downloadMenu');
-        if (menu) {
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-        }
-    }
+document.querySelector('.portrait-id-card').addEventListener('click', function() {
+    this.classList.toggle('flipped');
+});
 
-    document.addEventListener('click', function(event) {
-        const menu = document.getElementById('downloadMenu');
-        if (menu && !event.target.closest('.welcome-nav')) {
-            menu.style.display = 'none';
-        }
-    });
+function downloadVisualID(e) {
+    e.stopPropagation();
+    alert('Visual ID download feature coming soon!');
+}
 
-    function scrollToTop() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    }
+function scanQRCode(e) {
+    e.stopPropagation();
+    alert('QR Code scanner feature coming soon!');
+}
 
-    document.querySelector('.portrait-id-card').addEventListener('click', function() {
-        this.classList.toggle('flipped');
-    });
+function toggleCardDisplay() {
+    const body = document.getElementById('cardDisplayBody');
+    const toggleIcon = document.querySelector('.toggle-icon');
+    
+    body.classList.toggle('collapsed');
+    toggleIcon.textContent = body.classList.contains('collapsed') ? '+' : '−';
+}
 
-    function downloadVisualID(e) {
-        e.stopPropagation();
-        alert('Visual ID download feature coming soon!');
-    }
+function flipCard() {
+    const card = document.querySelector('.portrait-id-card');
+    card.classList.toggle('flipped');
+}
 
-    function scanQRCode(e) {
-        e.stopPropagation();
-        alert('QR Code scanner feature coming soon!');
-    }
+// Optional: Auto-flip on card click
+document.querySelector('.portrait-id-card').addEventListener('click', function() {
+    this.classList.toggle('flipped');
+});
 </script>
 
 </div><!-- End admin-content -->

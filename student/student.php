@@ -509,4 +509,36 @@ public function saveUploadedFile(array $file, string $subFolder): string
             'errors' => $errors
         ];
     }
+
+    public function isUserApproved(int $user_id): bool {
+        try {
+            $db = $this->getDb();
+            $stmt = $db->prepare("SELECT status FROM users WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return ($user && $user['status'] === 'approved');
+        } catch (Throwable $e) {
+            error_log(__METHOD__ . ' : ' . $e->getMessage());
+            return false; // Default to false on error for security
+        }
+    }
+
+    /**
+     * Get user status from users table
+     * Returns the status string or 'pending' if not found
+     */
+    public function getUserStatus(int $user_id): string {
+        try {
+            $db = $this->getDb();
+            $stmt = $db->prepare("SELECT status FROM users WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return $user['status'] ?? 'pending';
+        } catch (Throwable $e) {
+            error_log(__METHOD__ . ' : ' . $e->getMessage());
+            return 'pending'; // Default to pending on error for security
+        }
+    }
 }
