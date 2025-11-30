@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             error_log('Profile photo upload error code: ' . $_FILES['profile_photo']['error']);
         }
 
-        // Signature Upload
+        // Signature Upload with automatic background removal
         if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK) {
             error_log('Processing signature upload: ' . print_r($_FILES['signature'], true));
             $validation = $stuObj->validateFile($_FILES['signature'], [
@@ -127,8 +127,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log('Signature validation failed: ' . print_r($validation['errors'], true));
             } else {
                 try {
-                    $data['signature'] = $stuObj->saveUploadedFile($_FILES['signature'], 'student_signatures');
-                    error_log('Signature uploaded successfully: ' . $data['signature']);
+                    // Process signature to remove white background
+                    $tmpFile = $_FILES['signature']['tmp_name'];
+                    $ext = strtolower(pathinfo($_FILES['signature']['name'], PATHINFO_EXTENSION));
+                    
+                    // Load image based on type
+                    if ($ext === 'png') {
+                        $source = imagecreatefrompng($tmpFile);
+                    } elseif (in_array($ext, ['jpg', 'jpeg'])) {
+                        $source = imagecreatefromjpeg($tmpFile);
+                    } else {
+                        throw new Exception('Unsupported image format for background removal');
+                    }
+                    
+                    if ($source === false) {
+                        throw new Exception('Failed to load signature image');
+                    }
+                    
+                    // Get dimensions
+                    $width = imagesx($source);
+                    $height = imagesy($source);
+                    
+                    // Create a new transparent image
+                    $output = imagecreatetruecolor($width, $height);
+                    imagesavealpha($output, true);
+                    $transparent = imagecolorallocatealpha($output, 0, 0, 0, 127);
+                    imagefill($output, 0, 0, $transparent);
+                    
+                    // Copy pixels, making white/near-white pixels transparent
+                    for ($y = 0; $y < $height; $y++) {
+                        for ($x = 0; $x < $width; $x++) {
+                            $rgb = imagecolorat($source, $x, $y);
+                            $r = ($rgb >> 16) & 0xFF;
+                            $g = ($rgb >> 8) & 0xFF;
+                            $b = $rgb & 0xFF;
+                            
+                            // If pixel is white or light-colored (threshold 180), make it transparent
+                            // This removes white, off-white, light gray, beige, and medium gray backgrounds
+                            if ($r >= 180 && $g >= 180 && $b >= 180) {
+                                continue; // Skip light pixels (already transparent)
+                            }
+                            
+                            // Copy non-white pixels
+                            $color = imagecolorallocate($output, $r, $g, $b);
+                            imagesetpixel($output, $x, $y, $color);
+                        }
+                    }
+                    
+                    // Prepare destination directory and filename
+                    $dir = __DIR__ . '/../uploads/student_signatures/';
+                    if (!is_dir($dir)) {
+                        mkdir($dir, 0755, true);
+                    }
+                    
+                    $filename = uniqid() . '_' . time() . '.png';
+                    $finalPath = $dir . $filename;
+                    
+                    // Save processed image directly to final destination
+                    if (!imagepng($output, $finalPath, 9)) {
+                        imagedestroy($source);
+                        imagedestroy($output);
+                        throw new Exception('Failed to save processed signature image');
+                    }
+                    
+                    // Clean up image resources
+                    imagedestroy($source);
+                    imagedestroy($output);
+                    
+                    // Verify file was created
+                    if (!file_exists($finalPath)) {
+                        throw new Exception('Processed signature file not found at destination');
+                    }
+                    
+                    $data['signature'] = $filename;
+                    error_log('Signature uploaded successfully with background removed: ' . $data['signature']);
                 } catch (Throwable $e) {
                     $fileUploadErrors['signature'] = [$e->getMessage()];
                     error_log('Signature upload error: ' . $e->getMessage());
@@ -548,7 +620,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 .signature-preview {
-                    background: white;
+                    background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%), linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%);
+                    background-size: 20px 20px;
+                    background-position: 0 0, 10px 10px;
                     border: 1px solid #e0e0e0;
                     padding: 10px;
                 }
@@ -1210,7 +1284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php if (!empty($stu['signature'])): ?>
                                     <div class="file-status-box">
                                         <div class="file-status-indicator">File Uploaded</div>
-                                        <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Current Signature" class="file-preview-image signature-preview">
+                                        <img src="../uploads/student_signatures/<?= htmlspecialchars($stu['signature']) ?>" alt="Current Signature" class="file-preview-image signature-preview" crossorigin="anonymous">
                                         <p class="file-name">Current: <?= htmlspecialchars($stu['signature']) ?></p>
                                         <button type="button" class="btn-replace" onclick="toggleFileInput(this)">
                                             <i class="fas fa-sync-alt"></i> Replace File
@@ -1673,6 +1747,134 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (pageTitleEl) pageTitleEl.textContent = pageTitlesData[editCurrentPage].title;
             if (breadcrumbEl) breadcrumbEl.textContent = pageTitlesData[editCurrentPage].breadcrumb;
         }
+    </script>
+
+    <script>
+        // Automatic Background Removal for Signature Images (with Debug Logging)
+        (function() {
+            'use strict';
+            const THRESHOLD = 180; // Lowered threshold to catch more background colors
+            
+            function removeWhiteBg(img, returnUrl = false) {
+                console.log('removeWhiteBg called:', img.src, 'returnUrl:', returnUrl);
+                
+                if (!returnUrl && img.dataset.bgRemoved) {
+                    console.log('Already processed, skipping');
+                    return;
+                }
+                
+                const w = img.naturalWidth || img.width;
+                const h = img.naturalHeight || img.height;
+                console.log('Image dimensions:', w, 'x', h);
+                
+                if (!w || !h) {
+                    console.warn('Invalid dimensions');
+                    return returnUrl ? img.src : null;
+                }
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = w;
+                canvas.height = h;
+                
+                try {
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const imgData = ctx.getImageData(0, 0, w, h);
+                    const data = imgData.data;
+                    
+                    let pixelsChanged = 0;
+                    for (let i = 0; i < data.length; i += 4) {
+                        if (data[i] >= THRESHOLD && data[i+1] >= THRESHOLD && data[i+2] >= THRESHOLD) {
+                            data[i+3] = 0;
+                            pixelsChanged++;
+                        }
+                    }
+                    
+                    console.log('Pixels made transparent:', pixelsChanged);
+                    
+                    ctx.putImageData(imgData, 0, 0);
+                    const result = canvas.toDataURL('image/png');
+                    
+                    if (returnUrl) return result;
+                    
+                    img.src = result;
+                    img.dataset.bgRemoved = 'true';
+                    console.log('Background removed successfully!');
+                } catch(e) {
+                    console.error('Background removal failed:', e);
+                    console.error('Error details:', e.name, e.message);
+                    return returnUrl ? img.src : null;
+                }
+            }
+            
+            function processExisting() {
+                console.log('processExisting called');
+                const images = document.querySelectorAll('.file-preview-image.signature-preview');
+                console.log('Found signature images:', images.length);
+                
+                images.forEach((img, index) => {
+                    console.log(`Processing image ${index}:`, img.src);
+                    
+                    if (!img.crossOrigin) {
+                        console.log('Setting crossOrigin=anonymous');
+                        img.crossOrigin = 'anonymous';
+                    }
+                    
+                    if (img.complete && img.naturalWidth) {
+                        console.log('Image already loaded, processing now');
+                        removeWhiteBg(img);
+                    } else {
+                        console.log('Image not loaded yet, waiting for load event');
+                        img.addEventListener('load', () => {
+                            console.log('Load event fired');
+                            removeWhiteBg(img);
+                        }, {once: true});
+                    }
+                });
+            }
+            
+            function setupUploadHandler() {
+                document.querySelectorAll('input[name="signature"]').forEach(input => {
+                    input.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (!file || !file.type.startsWith('image/')) return;
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(evt) {
+                            const img = new Image();
+                            img.onload = function() {
+                                const processed = removeWhiteBg(img, true);
+                                if (!processed) return;
+                                
+                                const wrapper = input.closest('.file-input-wrapper');
+                                let preview = wrapper.querySelector('.temp-preview');
+                                
+                                if (!preview) {
+                                    preview = document.createElement('div');
+                                    preview.className = 'temp-preview';
+                                    preview.style.cssText = 'margin-top:12px;padding:12px;background:linear-gradient(45deg,#f0f0f0 25%,transparent 25%,transparent 75%,#f0f0f0 75%),linear-gradient(45deg,#f0f0f0 25%,transparent 25%,transparent 75%,#f0f0f0 75%);background-size:20px 20px;background-position:0 0,10px 10px;border-radius:8px;border:2px solid #4caf50';
+                                    wrapper.appendChild(preview);
+                                }
+                                
+                                preview.innerHTML = '<p style="margin:0 0 8px;font-weight:600;color:#2e7d32;font-size:0.85rem"><i class="fas fa-check-circle"></i> Preview (background removed):</p><img src="' + processed + '" style="max-width:100%;max-height:200px;border-radius:4px" alt="Preview">';
+                            };
+                            img.src = evt.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    processExisting();
+                    setupUploadHandler();
+                });
+            } else {
+                processExisting();
+                setupUploadHandler();
+            }
+        })();
     </script>
 
     <script src="../assets/js/bootstrap.bundle.min.js"></script>

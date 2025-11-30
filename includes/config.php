@@ -7,7 +7,7 @@ ini_set('display_errors', 1);
 // Start session once
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-define('APP_URL', 'http://localhost/school_id_practice');
+define('APP_URL', 'http://localhost/KLD-ID-ISSUANCE-SYSTEM-V2');
 
 // ==================== EMAIL CONFIGURATION ====================
 // Configure your email settings here
@@ -26,6 +26,9 @@ define('MAIL_ENCRYPTION', 'tls');               // 'tls' or 'ssl'
 define('VERIFICATION_TOKEN_EXPIRY', 24);        // Hours until verification token expires
 define('SEND_VERIFICATION_EMAIL', true);        // Set to false to disable email verification during dev
 define('REQUIRE_EMAIL_VERIFICATION', true);    // Set to false to allow login without verification (dev mode)
+
+// ==================== DEBUG SETTINGS ====================
+define('APP_DEBUG', true);                      // Set to false in production to hide detailed error messages
 
 // Helper: redirect
 function redirect(string $url): void

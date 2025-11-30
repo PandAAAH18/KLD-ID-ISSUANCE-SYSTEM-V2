@@ -1,21 +1,240 @@
 <?php
 require_once 'includes/config.php';
-require_once 'includes/user.php';
+require_once 'includes/db.php';
+require_once 'admin/classes/EmailVerification.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 $message = '';
 $error = '';
+$email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check if this is an AJAX request
+    $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+              strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+    
     $student_number = $_POST['student_number'] ?? '';
     $date_of_birth = $_POST['date_of_birth'] ?? '';
     
     if (empty($student_number) || empty($date_of_birth)) {
         $error = 'Please fill in all required fields.';
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $error]);
+            exit;
+        }
     } else {
-        // Here you would normally verify the student number and date of birth
-        // For now, we'll simulate a successful verification
-        $message = 'Please check your registered email address (palcecathlyn20@gmail.com) to change your password';
+        try {
+            // Connect to database
+            $database = new Database();
+            $db = $database->getConnection();
+            
+            // Create password_resets table if it doesn't exist
+            $createTableSql = "CREATE TABLE IF NOT EXISTS password_resets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                token VARCHAR(64) NOT NULL UNIQUE,
+                expires_at DATETIME NOT NULL,
+                created_at DATETIME NOT NULL,
+                INDEX idx_user_id (user_id),
+                INDEX idx_token (token),
+                INDEX idx_expires_at (expires_at),
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            
+            $db->exec($createTableSql);
+            
+            // Find user by student ID and date of birth
+            $sql = "SELECT u.user_id, u.email, u.full_name, s.dob 
+                    FROM users u 
+                    INNER JOIN student s ON u.email = s.email 
+                    WHERE s.student_id = :student_id 
+                    AND s.dob = :dob 
+                    AND u.deleted_at IS NULL 
+                    LIMIT 1";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([
+                ':student_id' => $student_number,
+                ':dob' => $date_of_birth
+            ]);
+            
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($user) {
+                // Generate password reset token
+                $token = bin2hex(random_bytes(32));
+                $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour')); // Token expires in 1 hour
+                
+                // Store reset token in database
+                $insertSql = "INSERT INTO password_resets (user_id, token, expires_at, created_at) 
+                             VALUES (:user_id, :token, :expires_at, NOW())
+                             ON DUPLICATE KEY UPDATE token = :token, expires_at = :expires_at, created_at = NOW()";
+                
+                $insertStmt = $db->prepare($insertSql);
+                $insertStmt->execute([
+                    ':user_id' => $user['user_id'],
+                    ':token' => $token,
+                    ':expires_at' => $expiresAt
+                ]);
+                
+                // Send password reset email
+                $emailVerification = new EmailVerification($db);
+                if (sendPasswordResetEmail($user['email'], $token, $user['full_name'], $emailVerification)) {
+                    $email = $user['email'];
+                    // Mask email for privacy
+                    $emailParts = explode('@', $email);
+                    $maskedEmail = substr($emailParts[0], 0, 3) . '***@' . $emailParts[1];
+                    $message = "Password reset link has been sent to $maskedEmail";
+                    
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => true, 'message' => $message]);
+                        exit;
+                    }
+                } else {
+                    $error = 'Failed to send password reset email. Please try again later.';
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'error' => $error]);
+                        exit;
+                    }
+                }
+            } else {
+                // Don't reveal whether the user exists or not for security
+                $error = 'Invalid student number or date of birth. Please check your information and try again.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'error' => $error]);
+                    exit;
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Forgot password error: " . $e->getMessage());
+            
+            // In development, show the actual error
+            if (defined('APP_DEBUG') && APP_DEBUG) {
+                $error = 'An error occurred: ' . $e->getMessage();
+            } else {
+                $error = 'An error occurred. Please try again later.';
+            }
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'error' => $error]);
+                exit;
+            }
+        }
     }
+}
+
+/**
+ * Send password reset email
+ */
+function sendPasswordResetEmail($email, $token, $userName, $emailVerification) {
+    try {
+        $mail = new PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = defined('MAIL_HOST') ? MAIL_HOST : 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = defined('MAIL_USERNAME') ? MAIL_USERNAME : '';
+        $mail->Password = defined('MAIL_PASSWORD') ? MAIL_PASSWORD : '';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = defined('MAIL_PORT') ? MAIL_PORT : 587;
+        
+        // Recipients
+        $senderEmail = defined('MAIL_FROM_ADDRESS') ? MAIL_FROM_ADDRESS : 'noreply@kldschool.com';
+        $senderName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'KLD School Portal';
+        $mail->setFrom($senderEmail, $senderName);
+        $mail->addAddress($email, $userName);
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Password Reset - KLD School Portal';
+        
+        // Generate reset link
+        $resetUrl = APP_URL . '/resend_verification.php?action=reset&token=' . urlencode($token);
+        
+        // HTML email body
+        $displayName = !empty($userName) ? htmlspecialchars($userName) : 'User';
+        $mail->Body = getPasswordResetEmailTemplate($displayName, $resetUrl);
+        $mail->AltBody = "Please reset your password by clicking this link: $resetUrl";
+        
+        return $mail->send();
+    } catch (Exception $e) {
+        error_log("Password reset email error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Get password reset email template
+ */
+function getPasswordResetEmailTemplate($userName, $resetUrl) {
+    return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(90deg, #2e7d32, #1b5e20); color: #ffffff; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .greeting { color: #333; margin-bottom: 20px; }
+        .message { color: #666; line-height: 1.6; margin-bottom: 30px; }
+        .button-container { text-align: center; margin: 30px 0; }
+        .reset-btn { background-color: #2e7d32; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold; }
+        .reset-btn:hover { background-color: #1b5e20; }
+        .link-alternative { color: #666; margin-top: 20px; font-size: 12px; word-break: break-all; }
+        .footer { background-color: #f4f4f4; padding: 20px; text-align: center; color: #999; font-size: 12px; border-radius: 0 0 8px 8px; }
+        .warning { color: #d32f2f; font-size: 12px; margin-top: 20px; padding: 15px; background-color: #ffebee; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Password Reset Request</h1>
+            <p>KLD School Portal</p>
+        </div>
+        
+        <div class="content">
+            <p class="greeting">Hello <strong>$userName</strong>,</p>
+            
+            <p class="message">
+                We received a request to reset your password for your KLD School Portal account. 
+                Click the button below to create a new password.
+            </p>
+            
+            <div class="button-container">
+                <a href="$resetUrl" class="reset-btn">Reset Password</a>
+            </div>
+            
+            <p class="link-alternative">
+                If the button above doesn't work, copy and paste this link into your browser:<br>
+                <code>$resetUrl</code>
+            </p>
+            
+            <div class="warning">
+                ⚠️ <strong>Important Security Information:</strong><br>
+                • This link will expire in 1 hour<br>
+                • If you didn't request a password reset, please ignore this email<br>
+                • Never share your password reset link with anyone
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; KLD School Portal. All rights reserved.</p>
+            <p>This is an automated email. Please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
 }
 ?>
 <!doctype html>
@@ -64,7 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     <div class="card-body p-4">
                         <!-- Forgot Password Form -->
-                        <form id="forgot-password-form" class="login-form">
+                        <form id="forgot-password-form" class="login-form" method="POST" action="">
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control school-input" id="student_number" name="student_number" placeholder="Student Number" required>
                                 <label for="student_number"><i class="fas fa-id-card me-2"></i>Student Number</label>
@@ -77,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <div class="d-grid mb-3">
-                                <button type="button" id="verify-btn" class="btn school-btn btn-enhanced">
+                                <button type="submit" class="btn school-btn btn-enhanced">
                                     <i class="fas fa-key me-2"></i> Reset Password
                                     <span class="btn-ripple" aria-hidden="true"></span>
                                 </button>
@@ -156,32 +375,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 });
             });
             
-            // Verify button click handler with SweetAlert
-            document.getElementById('verify-btn').addEventListener('click', function() {
-                const studentNumber = document.getElementById('student_number').value.trim();
-                const dateOfBirth = document.getElementById('date_of_birth').value;
-                
-                // Check if fields are filled
-                if (!studentNumber || !dateOfBirth) {
+            // Handle form submission
+            const form = document.getElementById('forgot-password-form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const studentNumber = document.getElementById('student_number').value.trim();
+                    const dateOfBirth = document.getElementById('date_of_birth').value;
+                    
+                    // Check if fields are filled
+                    if (!studentNumber || !dateOfBirth) {
+                        Swal.fire({
+                            title: "Missing Information!",
+                            text: "Please fill in all required fields.",
+                            icon: "info",
+                            confirmButtonColor: "#3085d6",
+                            confirmButtonText: "OK"
+                        });
+                        return;
+                    }
+                    
+                    // Show loading
                     Swal.fire({
-                        title: "Missing Information!",
-                        text: "Please fill in all required fields.",
-                        icon: "info",
-                        confirmButtonColor: "#3085d6",
-                        confirmButtonText: "OK"
+                        title: 'Processing...',
+                        text: 'Please wait while we verify your information',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
                     });
-                    return;
-                }
-                
-                // Show success confirmation
+                    
+                    // Send AJAX request
+                    const formData = new FormData();
+                    formData.append('student_number', studentNumber);
+                    formData.append('date_of_birth', dateOfBirth);
+                    
+                    fetch('forget_pass.php', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        // Check if response is ok
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        // Try to parse as JSON
+                        return response.text().then(text => {
+                            try {
+                                return JSON.parse(text);
+                            } catch (e) {
+                                console.error('Response is not valid JSON:', text);
+                                throw new Error('Server returned invalid response');
+                            }
+                        });
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: "Success!",
+                                text: data.message,
+                                icon: "success",
+                                confirmButtonColor: "#2e7d32",
+                                confirmButtonText: "OK"
+                            }).then(() => {
+                                // Clear the form
+                                document.getElementById('student_number').value = '';
+                                document.getElementById('date_of_birth').value = '';
+                            });
+                        } else {
+                            Swal.fire({
+                                title: "Error",
+                                text: data.error,
+                                icon: "error",
+                                confirmButtonColor: "#d32f2f",
+                                confirmButtonText: "Try Again"
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: "Connection Error",
+                            text: error.message || "Failed to connect to server. Please check your internet connection and try again.",
+                            icon: "error",
+                            confirmButtonColor: "#d32f2f",
+                            confirmButtonText: "OK"
+                        });
+                    });
+                });
+            }
+            
+            // Show PHP messages on page load
+            <?php if ($message): ?>
                 Swal.fire({
                     title: "Success!",
-                    text: "Password reset link has been sent to your registered email address.",
+                    text: "<?= addslashes($message) ?>",
                     icon: "success",
                     confirmButtonColor: "#2e7d32",
                     confirmButtonText: "OK"
                 });
-            });
+            <?php endif; ?>
+            
+            <?php if ($error): ?>
+                Swal.fire({
+                    title: "Error",
+                    text: "<?= addslashes($error) ?>",
+                    icon: "error",
+                    confirmButtonColor: "#d32f2f",
+                    confirmButtonText: "Try Again"
+                });
+            <?php endif; ?>
         });
     </script>
 </body>
