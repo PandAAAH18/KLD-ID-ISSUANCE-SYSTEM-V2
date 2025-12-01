@@ -46,7 +46,8 @@ class IdManager extends User
     {
         $sql = "SELECT i.*, s.first_name, s.last_name, s.email
                 FROM issued_ids i
-                JOIN student s ON s.id = i.user_id
+                JOIN users u ON u.user_id = i.user_id
+                JOIN student s ON s.email = u.email
                 ORDER BY i.issue_date DESC";
         
         $stmt = $this->db->prepare($sql);
@@ -76,11 +77,22 @@ class IdManager extends User
             $idNumber = date('Y').str_pad($next, 6, '0', STR_PAD_LEFT);
             $expiry = date('Y-m-d', strtotime('+4 years'));
 
+            // Get user_id from users table via student email
+            $studentData = $this->db->prepare("SELECT u.user_id FROM student s JOIN users u ON u.email = s.email WHERE s.id = ?");
+            $studentData->execute([$row['student_id']]);
+            $userId = $studentData->fetchColumn();
+            
+            if (!$userId) {
+                $this->db->rollBack();
+                error_log("ERROR: No user_id found for student_id={$row['student_id']}");
+                return false;
+            }
+
             // Create issued row
             $ins = $this->db->prepare("INSERT INTO issued_ids
                                 (user_id, id_number, issue_date, expiry_date, status)
                                 VALUES (?, ?, NOW(), ?, 'pending')");
-            $ins->execute([$row['student_id'], $idNumber, $expiry]);
+            $ins->execute([$userId, $idNumber, $expiry]);
 
             $issuedId = $this->db->lastInsertId();
 
@@ -195,7 +207,8 @@ public function getIssuedByStatus(string $filter): array
     
     $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level
             FROM issued_ids i
-            JOIN student s ON s.id = i.user_id
+            JOIN users u ON u.user_id = i.user_id
+            JOIN student s ON s.email = u.email
             WHERE i.status = ?
             ORDER BY i.issue_date DESC";
     
@@ -241,12 +254,14 @@ public function getIssuedByStatus(string $filter): array
         error_log("DEBUG generateId START: requestId={$requestId}, APP_URL=" . APP_URL);
         $db = $this->getDb();
 
-    /* 1.  pull request + student */
+    /* 1.  pull request + student + user_id */
     $stmt = $db->prepare("SELECT r.student_id, s.email, s.first_name, s.last_name,
                                  s.course, s.year_level, s.photo, s.signature,
-                                 s.emergency_contact, s.blood_type, s.emergency_contact_name
+                                 s.emergency_contact, s.blood_type, s.emergency_contact_name,
+                                 u.user_id
                           FROM   id_requests r
                           JOIN   student      s ON s.id = r.student_id
+                          LEFT JOIN users     u ON u.email = s.email
                           WHERE  r.id = ? AND r.status = 'approved'");
     $stmt->execute([$requestId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -254,9 +269,14 @@ public function getIssuedByStatus(string $filter): array
         error_log("DEBUG generateId: No row for requestId={$requestId}");
         return;
     }
+    if (!$row['user_id']) {
+        error_log("ERROR generateId: No user_id found for student email={$row['email']}");
+        throw new Exception("Student must have a user account to generate ID");
+    }
     error_log("DEBUG generateId: student photo={$row['photo']}, signature={$row['signature']}, photo_exists=" . (file_exists(__DIR__.'/../../uploads/student_photos/'.$row['photo']) ? 'YES' : 'NO'));
 
     $studentId = $row['student_id'];
+    $userId = $row['user_id'];
 
     /* 1.5 Check if student already has a generated ID */
     $checkStmt = $db->prepare("
@@ -264,7 +284,7 @@ public function getIssuedByStatus(string $filter): array
         FROM issued_ids 
         WHERE user_id = ? AND status IN ('generated')
     ");
-    $checkStmt->execute([$studentId]);
+    $checkStmt->execute([$userId]);
     $existingCount = $checkStmt->fetch(PDO::FETCH_ASSOC)['existing_count'];
     
     if ($existingCount > 0) {
@@ -384,7 +404,7 @@ public function getIssuedByStatus(string $filter): array
     $ins = $db->prepare("INSERT INTO issued_ids
                         (user_id, id_number, issue_date, expiry_date, status, digital_id_file)
                         VALUES (?, ?, NOW(), ?, 'generated', ?)");
-    $ins->execute([$studentId, $idNumber, $expiry, $fileName]);
+    $ins->execute([$userId, $idNumber, $expiry, $fileName]);
 
     /* 7.  close request - UPDATE STATUS FROM 'approved' TO 'generated' */
     $updateRequest = $db->prepare("UPDATE id_requests SET status='generated', updated_at=NOW() WHERE id=?");
@@ -409,11 +429,12 @@ public function getIssuedByStatus(string $filter): array
 
         // 1. Get existing issued ID + student data
         $stmt = $db->prepare("SELECT i.id_number, i.digital_id_file, i.user_id,
-                                     s.email, s.first_name, s.last_name,
+                                     s.id as student_table_id, s.email, s.first_name, s.last_name,
                                      s.course, s.year_level, s.photo, s.signature,
                                      s.emergency_contact, s.blood_type, s.student_id, s.emergency_contact_name
                               FROM issued_ids i
-                              JOIN student s ON s.id = i.user_id
+                              JOIN users u ON u.user_id = i.user_id
+                              JOIN student s ON s.email = u.email
                               WHERE i.id_number = ?");
         $stmt->execute([$idNumber]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -424,7 +445,8 @@ public function getIssuedByStatus(string $filter): array
         }
         error_log("DEBUG regenerateId: student photo={$row['photo']}, signature={$row['signature']}, photo_exists=" . (file_exists(__DIR__.'/../../uploads/student_photos/'.$row['photo']) ? 'YES' : 'NO'));
 
-        $studentId = $row['user_id'];
+        $userId = $row['user_id'];
+        $studentId = $row['student_table_id'];
         $oldDigitalFile = $row['digital_id_file'];
 
         // 2. Delete old files
@@ -571,9 +593,10 @@ public function getIssuedByStatus(string $filter): array
                     $stmt = $this->db->prepare("
                         SELECT r.student_id, s.email, s.first_name, s.last_name,
                                      s.course, s.year_level, s.photo, s.signature,
-                                     s.emergency_contact, s.blood_type
+                                     s.emergency_contact, s.blood_type, u.user_id
                               FROM   id_requests r
                               JOIN   student      s ON s.id = r.student_id
+                              LEFT JOIN users     u ON u.email = s.email
                               WHERE  r.id = ? AND r.status = 'approved'
                     ");
                     $stmt->execute([$requestId]);
@@ -583,15 +606,21 @@ public function getIssuedByStatus(string $filter): array
                         $errors[] = "Request ID {$requestId} not found or not approved";
                         continue;
                     }
+                    
+                    if (!$request['user_id']) {
+                        $errors[] = "Student {$request['first_name']} {$request['last_name']} has no user account";
+                        continue;
+                    }
 
                     $studentId = $request['student_id'];
+                    $userId = $request['user_id'];
 
                     // Check if ID already exists for this student
                     $checkStmt = $this->db->prepare("
                         SELECT id_number FROM issued_ids 
                         WHERE user_id = ? AND status != 'revoked'
                     ");
-                    $checkStmt->execute([$studentId]);
+                    $checkStmt->execute([$userId]);
                     
                     if ($checkStmt->rowCount() > 0) {
                         $errors[] = "Student {$request['first_name']} {$request['last_name']} already has an ID";
@@ -634,7 +663,7 @@ public function getIssuedByStatus(string $filter): array
                     ");
                     
                     $insertSuccess = $insertStmt->execute([
-                        $studentId,
+                        $userId,
                         $idNumber,
                         $expiry,
                         $pdfResult['filename']
@@ -1082,7 +1111,8 @@ private function getIssuedIdDataByNumber(string $idNumber): ?array
                    s.photo, s.signature, s.emergency_contact, s.blood_type, 
                    s.student_id, s.emergency_contact_name
             FROM issued_ids i
-            JOIN student s ON s.id = i.user_id
+            JOIN users u ON u.user_id = i.user_id
+            JOIN student s ON s.email = u.email
             WHERE i.id_number = ?";
     
     $stmt = $this->db->prepare($sql);
@@ -1106,7 +1136,8 @@ public function getPrintedIds(): array
 {
     $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level
             FROM issued_ids i
-            JOIN student s ON s.id = i.user_id
+            JOIN users u ON u.user_id = i.user_id
+            JOIN student s ON s.email = u.email
             WHERE i.status = 'printed'
             ORDER BY i.issue_date DESC";
     
@@ -1171,7 +1202,8 @@ public function getIssuedByStatusPaginated(string $filter, int $page = 1, int $p
     
     $sql = "SELECT i.*, s.first_name, s.last_name, s.email, s.course, s.year_level
             FROM issued_ids i
-            JOIN student s ON s.id = i.user_id
+            JOIN users u ON u.user_id = i.user_id
+            JOIN student s ON s.email = u.email
             WHERE i.status = ?
             ORDER BY i.issue_date DESC
             LIMIT ? OFFSET ?";
@@ -1199,7 +1231,8 @@ public function countIssuedByStatus(string $filter): int
     
     $sql = "SELECT COUNT(*) as total
             FROM issued_ids i
-            JOIN student s ON s.id = i.user_id
+            JOIN users u ON u.user_id = i.user_id
+            JOIN student s ON s.email = u.email
             WHERE i.status = ?";
     
     $stmt = $this->db->prepare($sql);

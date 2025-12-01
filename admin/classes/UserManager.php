@@ -425,6 +425,94 @@ public function countUsers(array $filters = []): int
         }
     }
 
+    /* ====================  ARCHIVE FUNCTIONS  ==================== */
+
+    public function getArchivedUsers(): array
+    {
+        $sql = "SELECT * FROM users WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function restoreUser(int $userId): bool
+    {
+        $sql = "UPDATE users SET deleted_at = NULL WHERE user_id = :id";
+        $stmt = $this->db->prepare($sql);
+        $ok = $stmt->execute([':id' => $userId]);
+        
+        if ($ok) {
+            $user = $this->getUserById($userId);
+            $this->auditLogger->logAction('restore', $userId, 'user', [], $user ?: []);
+        }
+        
+        return $ok;
+    }
+
+    public function permanentlyDeleteUser(int $userId): bool
+    {
+        try {
+            // Get user data before deletion for audit log
+            $sql = "SELECT * FROM users WHERE user_id = :id AND deleted_at IS NOT NULL";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':id' => $userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user) {
+                return false; // Only allow permanent deletion of already soft-deleted users
+            }
+            
+            // Permanently delete from database
+            $sql = "DELETE FROM users WHERE user_id = :id AND deleted_at IS NOT NULL";
+            $stmt = $this->db->prepare($sql);
+            $ok = $stmt->execute([':id' => $userId]);
+            
+            if ($ok) {
+                $this->auditLogger->logAction('permanent_delete', $userId, 'user', $user, []);
+            }
+            
+            return $ok;
+            
+        } catch (PDOException $e) {
+            error_log("Error permanently deleting user: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function bulkRestoreUsers(array $userIds): bool
+    {
+        if (empty($userIds)) {
+            return false;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $sql = "UPDATE users SET deleted_at = NULL WHERE user_id IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute($userIds);
+    }
+
+    public function bulkPermanentlyDeleteUsers(array $userIds): bool
+    {
+        if (empty($userIds)) {
+            return false;
+        }
+
+        try {
+            // Permanently delete from database
+            $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+            $sql = "DELETE FROM users WHERE user_id IN ($placeholders) AND deleted_at IS NOT NULL";
+            $stmt = $this->db->prepare($sql);
+            
+            return $stmt->execute($userIds);
+            
+        } catch (PDOException $e) {
+            error_log("Error bulk permanently deleting users: " . $e->getMessage());
+            return false;
+        }
+    }
+
     /* ====================  PRIVATE HELPER METHODS  ==================== */
 
     private function outputUserCSV(array $users): void

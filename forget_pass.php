@@ -68,10 +68,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $token = bin2hex(random_bytes(32));
                 $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour')); // Token expires in 1 hour
                 
+                // Delete any existing reset tokens for this user
+                $deleteSql = "DELETE FROM password_resets WHERE user_id = :user_id";
+                $deleteStmt = $db->prepare($deleteSql);
+                $deleteStmt->execute([':user_id' => $user['user_id']]);
+                
                 // Store reset token in database
                 $insertSql = "INSERT INTO password_resets (user_id, token, expires_at, created_at) 
-                             VALUES (:user_id, :token, :expires_at, NOW())
-                             ON DUPLICATE KEY UPDATE token = :token, expires_at = :expires_at, created_at = NOW()";
+                             VALUES (:user_id, :token, :expires_at, NOW())";
                 
                 $insertStmt = $db->prepare($insertSql);
                 $insertStmt->execute([

@@ -1,4 +1,4 @@
-<<?php
+<?php
 require_once '../includes/config.php';
 require_once 'student_header.php';
 require_once 'student.php';

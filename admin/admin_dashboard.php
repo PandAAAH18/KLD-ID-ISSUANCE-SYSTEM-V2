@@ -535,7 +535,9 @@ function switchMode(mode) {
         
         // Stop camera scanner if running
         if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(error => {
+            html5QrcodeScanner.stop().then(() => {
+                console.log("Scanner stopped on mode change");
+            }).catch(error => {
                 console.log("Scanner cleanup:", error);
             });
             document.getElementById('stop-scanner').style.display = 'none';
@@ -578,8 +580,7 @@ async function populateCameras() {
 function initializeCameraScanner(cameraId = null) {
     const config = {
         fps: 10,
-        qrbox: { width: 250, height: 250 },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_QR_CODE]
+        qrbox: { width: 250, height: 250 }
     };
 
     // Clear any existing scanner
@@ -591,16 +592,28 @@ function initializeCameraScanner(cameraId = null) {
     
     qrReaderElement.innerHTML = '';
     
-    html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", config, false);
+    // Use Html5Qrcode for manual camera control
+    html5QrcodeScanner = new Html5Qrcode("qr-reader");
     
     const cameraIdToUse = cameraId || currentCameraId;
     
-    html5QrcodeScanner.render(
-        onScanSuccess, 
+    if (!cameraIdToUse) {
+        showResult('error', 'No camera selected or available.');
+        return;
+    }
+    
+    // Start the camera
+    html5QrcodeScanner.start(
+        cameraIdToUse,
+        config,
+        onScanSuccess,
         onScanFailure
-    ).catch(error => {
+    ).then(() => {
+        console.log('Camera scanner started successfully');
+        showResult('success', 'Camera scanner started. Point at a QR code to scan.');
+    }).catch(error => {
         console.error('Scanner initialization failed:', error);
-        showResult('error', 'Failed to start camera scanner: ' + error.message);
+        showResult('error', 'Failed to start camera: ' + error);
         document.getElementById('stop-scanner').style.display = 'none';
         document.getElementById('start-scanner').style.display = 'inline-block';
     });
@@ -740,7 +753,10 @@ function setupCameraControls() {
     if (stopScannerBtn) {
         stopScannerBtn.addEventListener('click', function() {
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch(error => {
+                html5QrcodeScanner.stop().then(() => {
+                    console.log("Scanner stopped successfully");
+                    showResult('info', 'Camera scanner stopped.');
+                }).catch(error => {
                     console.log("Scanner stop error:", error);
                 });
             }
@@ -752,15 +768,26 @@ function setupCameraControls() {
     if (restartScannerBtn) {
         restartScannerBtn.addEventListener('click', function() {
             if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch(error => {
-                    console.log("Scanner clear error:", error);
+                html5QrcodeScanner.stop().then(() => {
+                    console.log("Scanner stopped for restart");
+                    // Reinitialize after stopping
+                    const cameraId = document.getElementById('camera-select').value;
+                    if (cameraId) {
+                        initializeCameraScanner(cameraId);
+                        if (stopScannerBtn) stopScannerBtn.style.display = 'inline-block';
+                        if (startScannerBtn) startScannerBtn.style.display = 'none';
+                    }
+                }).catch(error => {
+                    console.log("Scanner restart error:", error);
                 });
-            }
-            const cameraId = document.getElementById('camera-select').value;
-            if (cameraId) {
-                initializeCameraScanner(cameraId);
-                if (stopScannerBtn) stopScannerBtn.style.display = 'inline-block';
-                if (startScannerBtn) startScannerBtn.style.display = 'none';
+            } else {
+                // If no scanner running, just start it
+                const cameraId = document.getElementById('camera-select').value;
+                if (cameraId) {
+                    initializeCameraScanner(cameraId);
+                    if (stopScannerBtn) stopScannerBtn.style.display = 'inline-block';
+                    if (startScannerBtn) startScannerBtn.style.display = 'none';
+                }
             }
         });
     }
@@ -789,7 +816,9 @@ function onScanSuccess(decodedText, decodedResult) {
     
     // Stop camera scanner if running
     if (html5QrcodeScanner && document.getElementById('camera-container').style.display !== 'none') {
-        html5QrcodeScanner.clear().catch(error => {
+        html5QrcodeScanner.stop().then(() => {
+            console.log("Scanner stopped after successful scan");
+        }).catch(error => {
             console.log("Scanner cleanup:", error);
         });
         document.getElementById('stop-scanner').style.display = 'none';

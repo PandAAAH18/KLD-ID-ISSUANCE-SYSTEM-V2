@@ -520,6 +520,124 @@ public function checkStudentHasAccount(string $email): array|bool
     }
 }
 
+/* ====================  ARCHIVE FUNCTIONS  ==================== */
+
+public function getArchivedStudents(): array
+{
+    $sql = "SELECT * FROM student WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+public function restoreStudent(int $studentId): bool
+{
+    $sql = "UPDATE student SET deleted_at = NULL WHERE id = :id";
+    $stmt = $this->db->prepare($sql);
+    $ok = $stmt->execute([':id' => $studentId]);
+    
+    if ($ok) {
+        $student = $this->getStudentById($studentId);
+        $this->auditLogger->logAction('restore', $studentId, 'student', [], $student ?: []);
+    }
+    
+    return $ok;
+}
+
+public function permanentlyDeleteStudent(int $studentId): bool
+{
+    try {
+        // Get student data before deletion for audit log
+        $sql = "SELECT * FROM student WHERE id = :id AND deleted_at IS NOT NULL";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $studentId]);
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$student) {
+            return false; // Only allow permanent deletion of already soft-deleted students
+        }
+        
+        // Delete associated files
+        if (!empty($student['photo_path'])) {
+            $this->deletePhotoFile('../uploads/student_photos/' . $student['photo_path']);
+        }
+        if (!empty($student['signature_path'])) {
+            $this->deletePhotoFile('../uploads/student_signatures/' . $student['signature_path']);
+        }
+        if (!empty($student['cor_path'])) {
+            $this->deletePhotoFile('../uploads/student_cor/' . $student['cor_path']);
+        }
+        
+        // Permanently delete from database
+        $sql = "DELETE FROM student WHERE id = :id AND deleted_at IS NOT NULL";
+        $stmt = $this->db->prepare($sql);
+        $ok = $stmt->execute([':id' => $studentId]);
+        
+        if ($ok) {
+            $this->auditLogger->logAction('permanent_delete', $studentId, 'student', $student, []);
+        }
+        
+        return $ok;
+        
+    } catch (PDOException $e) {
+        error_log("Error permanently deleting student: " . $e->getMessage());
+        return false;
+    }
+}
+
+public function bulkRestoreStudents(array $studentIds): bool
+{
+    if (empty($studentIds)) {
+        return false;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
+    $sql = "UPDATE student SET deleted_at = NULL WHERE id IN ($placeholders)";
+    $stmt = $this->db->prepare($sql);
+
+    return $stmt->execute($studentIds);
+}
+
+public function bulkPermanentlyDeleteStudents(array $studentIds): bool
+{
+    if (empty($studentIds)) {
+        return false;
+    }
+
+    try {
+        // Get all students to delete their files
+        $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
+        $sql = "SELECT * FROM student WHERE id IN ($placeholders) AND deleted_at IS NOT NULL";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($studentIds);
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Delete associated files
+        foreach ($students as $student) {
+            if (!empty($student['photo_path'])) {
+                $this->deletePhotoFile('../uploads/student_photos/' . $student['photo_path']);
+            }
+            if (!empty($student['signature_path'])) {
+                $this->deletePhotoFile('../uploads/student_signatures/' . $student['signature_path']);
+            }
+            if (!empty($student['cor_path'])) {
+                $this->deletePhotoFile('../uploads/student_cor/' . $student['cor_path']);
+            }
+        }
+        
+        // Permanently delete from database
+        $sql = "DELETE FROM student WHERE id IN ($placeholders) AND deleted_at IS NOT NULL";
+        $stmt = $this->db->prepare($sql);
+        
+        return $stmt->execute($studentIds);
+        
+    } catch (PDOException $e) {
+        error_log("Error bulk permanently deleting students: " . $e->getMessage());
+        return false;
+    }
+}
+
 /* ====================  PRIVATE HELPER METHODS  ==================== */
 
 private function updateStudentPhotoPath(int $studentId, ?string $filename): bool

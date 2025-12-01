@@ -735,6 +735,13 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'admin_archived.php' ? 'active' : '' ?>" href="admin_archived.php">
+                        <i class="fas fa-archive"></i>
+                        <span>Archive</span>
+                        <span class="tooltip-text">Archive</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'admin_id.php' ? 'active' : '' ?>" href="admin_id.php">
                         <i class="fas fa-id-card"></i>
                         <span>ID Management</span>
@@ -872,6 +879,10 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
                         'admin_students.php': {
                             title: 'Student Management',
                             breadcrumb: 'Students'
+                        },
+                        'admin_archived.php': {
+                            title: 'Archived Records',
+                            breadcrumb: 'Archive'
                         },
                         'admin_id.php': {
                             title: 'ID Card Management',

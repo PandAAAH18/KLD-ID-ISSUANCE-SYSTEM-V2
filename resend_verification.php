@@ -48,11 +48,12 @@ if ($action === 'reset') {
             $db = $database->getConnection();
 
             // Check if token exists and is not expired
-            $sql = "SELECT pr.user_id, pr.expires_at, u.email, u.full_name 
+            $sql = "SELECT pr.user_id, pr.expires_at, pr.created_at, u.email, u.full_name,
+                    NOW() as server_time,
+                    TIMESTAMPDIFF(MINUTE, NOW(), pr.expires_at) as minutes_remaining
                     FROM password_resets pr
                     INNER JOIN users u ON pr.user_id = u.user_id
                     WHERE pr.token = :token 
-                    AND pr.expires_at > NOW()
                     AND u.deleted_at IS NULL
                     LIMIT 1";
 
@@ -61,11 +62,18 @@ if ($action === 'reset') {
             $resetData = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($resetData) {
-                $validToken = true;
-                $userEmail = $resetData['email'];
-                $userId = $resetData['user_id'];
+                // Check if token is expired
+                if (strtotime($resetData['expires_at']) > time()) {
+                    $validToken = true;
+                    $userEmail = $resetData['email'];
+                    $userId = $resetData['user_id'];
+                } else {
+                    error_log("Password reset token expired. Expires: " . $resetData['expires_at'] . ", Server: " . $resetData['server_time']);
+                    $error = 'This password reset link has expired. Please request a new one.';
+                }
             } else {
-                $error = 'Invalid or expired password reset link. Please request a new one.';
+                error_log("Password reset token not found: " . $token);
+                $error = 'Invalid password reset link. Please request a new one.';
             }
         } catch (Exception $e) {
             error_log("Reset password token validation error: " . $e->getMessage());
