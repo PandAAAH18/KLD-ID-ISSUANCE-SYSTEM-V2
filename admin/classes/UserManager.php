@@ -307,6 +307,94 @@ public function countUsers(array $filters = []): int
         return $ok;
     }
 
+    public function bulkUserAction(string $action, array $userIds, array $postData): array
+    {
+        if (empty($userIds)) {
+            return ['success' => false, 'message' => 'No users selected'];
+        }
+
+        try {
+            switch ($action) {
+                case 'delete':
+                    $success = $this->bulkDeleteUsers($userIds);
+                    $message = $success 
+                        ? 'Successfully deleted ' . count($userIds) . ' user(s)' 
+                        : 'Failed to delete users';
+                    break;
+
+                case 'change_role':
+                    if (empty($postData['bulk_role'])) {
+                        return ['success' => false, 'message' => 'No role specified'];
+                    }
+                    $success = $this->bulkChangeRole($userIds, $postData['bulk_role']);
+                    $message = $success 
+                        ? 'Successfully changed role for ' . count($userIds) . ' user(s)' 
+                        : 'Failed to change role';
+                    break;
+
+                case 'change_status':
+                    if (empty($postData['bulk_status'])) {
+                        return ['success' => false, 'message' => 'No status specified'];
+                    }
+                    $success = $this->bulkChangeStatus($userIds, $postData['bulk_status']);
+                    $message = $success 
+                        ? 'Successfully changed status for ' . count($userIds) . ' user(s)' 
+                        : 'Failed to change status';
+                    break;
+
+                case 'export':
+                    $data = $this->bulkExportUsers($userIds);
+                    if (!empty($data)) {
+                        // Generate CSV
+                        $filename = 'users_export_' . date('YmdHis') . '.csv';
+                        $filepath = __DIR__ . '/../../uploads/exports/' . $filename;
+                        
+                        if (!is_dir(dirname($filepath))) {
+                            mkdir(dirname($filepath), 0755, true);
+                        }
+                        
+                        $fp = fopen($filepath, 'w');
+                        if ($fp) {
+                            // Write headers
+                            fputcsv($fp, ['User ID', 'Full Name', 'Email', 'Role', 'Status', 'Verified', 'Created At']);
+                            
+                            // Write data
+                            foreach ($data as $row) {
+                                fputcsv($fp, [
+                                    $row['user_id'],
+                                    $row['full_name'],
+                                    $row['email'],
+                                    $row['role'],
+                                    $row['status'],
+                                    $row['verified'] ? 'Yes' : 'No',
+                                    $row['created_at']
+                                ]);
+                            }
+                            fclose($fp);
+                            
+                            // Trigger download
+                            header('Content-Type: text/csv');
+                            header('Content-Disposition: attachment; filename="' . $filename . '"');
+                            header('Content-Length: ' . filesize($filepath));
+                            readfile($filepath);
+                            unlink($filepath);
+                            exit;
+                        }
+                    }
+                    return ['success' => false, 'message' => 'Export failed'];
+
+                default:
+                    return ['success' => false, 'message' => 'Invalid action'];
+            }
+
+            return ['success' => $success, 'message' => $message];
+
+        } catch (Exception $e) {
+            error_log("Bulk user action error: " . $e->getMessage());
+            return ['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()];
+        }
+    }
+
     public function bulkDeleteUsers(array $ids): bool
     {
         if (empty($ids)) {

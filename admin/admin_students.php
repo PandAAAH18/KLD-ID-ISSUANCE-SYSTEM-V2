@@ -44,7 +44,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Update Student
     if (isset($_POST['update_student'])) {
-        $result = $studentModel->updateStudent($_POST['student_id'], $_POST);
+        // Ensure we pass the internal numeric ID and map the visible student ID field
+        $studentInternalId = isset($_POST['student_id']) ? (int) $_POST['student_id'] : 0;
+        $postData = $_POST;
+        // The edit form uses 'student_id_number' for the visible/student identifier to avoid name collision
+        if (isset($postData['student_id_number'])) {
+            // Map to DB column 'student_id'
+            $postData['student_id'] = $postData['student_id_number'];
+            unset($postData['student_id_number']);
+        }
+
+        $result = $studentModel->updateStudent($studentInternalId, $postData);
         if ($result) {
             $message = "Student updated successfully!";
         } else {
@@ -677,7 +687,7 @@ $incompleteProfiles = $studentModel->countStudentsByFilters(['profile_completed'
                 <div class="form-row">
                     <div class="form-group">
                         <label>Student ID</label>
-                        <input type="text" name="student_id" id="edit_student_id_field" class="form-input">
+                        <input type="text" name="student_id_number" id="edit_student_id_field" class="form-input">
                     </div>
                     <div class="form-group">
                         <label>Course</label>

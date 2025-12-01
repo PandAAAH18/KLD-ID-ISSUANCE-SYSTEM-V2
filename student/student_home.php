@@ -33,9 +33,14 @@ $idUpdateDate = $idRequest ? date('M d, Y h:i A', strtotime($idRequest['updated_
 // Fetch ID request history
 $idHistory = (new Student())->getIdRequestHistory((int)$_SESSION['student_id']);
 
-// Fetch issued ID data only if user is approved
-$issuedId = $can_view_digital_id ? (new Student())->getIssuedId((int)$_SESSION['student_id']) : null;
+// Fetch issued ID data only if user is approved - use user_id not student_id
+$issuedId = $can_view_digital_id ? (new Student())->getIssuedId((int)$_SESSION['user_id']) : null;
 $digitalIdFile = ($issuedId && !empty($issuedId['digital_id_file'])) ? $issuedId['digital_id_file'] : null;
+
+// Override idStatus if ID is already generated
+if ($issuedId && $issuedId['status']) {
+    $idStatus = $issuedId['status'];
+}
 
 // Prepare data
 $studentName = htmlspecialchars(($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? ''));
@@ -376,16 +381,16 @@ $qrcode = "../uploads/sample_qr.png";
             <div id="downloadMenu"
                 style="display: none; position: absolute; background: white; box-shadow: 0 4px 12px #f57c00 ; border-radius: 8px; margin-top: 8px; z-index: 1000; min-width: 180px;">
                 <a href="../uploads/digital_id/<?php echo htmlspecialchars($digitalIdFile); ?>" target="_blank"
-                    style="display: block; padding: 12px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
+                    style="display: block; padding: 12px 20px; color: #ffffffff; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
                     <i class="fas fa-eye" style="color: #007bff; margin-right: 8px;"></i> View ID
                 </a>
                 <a href="../uploads/digital_id/<?php echo htmlspecialchars($digitalIdFile); ?>" download
-                    style="display: block; padding: 12px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
+                    style="display: block; padding: 12px 20px; color: #ffffffff; text-decoration: none; border-bottom: 1px solid #f0f0f0;">
                     <i class="fas fa-download" style="color: #28a745; margin-right: 8px;"></i> Download PDF
                 </a>
                 <a href="#"
                     onclick="window.open('../uploads/digital_id/<?php echo addslashes(htmlspecialchars($digitalIdFile)); ?>', '_blank').print(); return false;"
-                    style="display: block; padding: 12px 20px; color: #333; text-decoration: none;">
+                    style="display: block; padding: 12px 20px; color: #ffffffff; text-decoration: none;">
                     <i class="fas fa-print" style="color: #6c757d; margin-right: 8px;"></i> Print ID
                 </a>
             </div>
@@ -414,17 +419,17 @@ $qrcode = "../uploads/sample_qr.png";
                 </div>
             </div>
             <div class="status-item">
-                <div class="status-label">Date Submitted</div>
-                <div class="status-value"><?php echo $idSubmitDate; ?></div>
+                <div class="status-label"><?php echo $issuedId ? 'ID Number' : 'Date Submitted'; ?></div>
+                <div class="status-value"><?php echo $issuedId && $issuedId['id_number'] ? htmlspecialchars($issuedId['id_number']) : $idSubmitDate; ?></div>
             </div>
             <div class="status-item">
-                <div class="status-label">Latest Update</div>
-                <div class="status-value"><?php echo $idUpdateDate; ?></div>
+                <div class="status-label"><?php echo $issuedId ? 'Issue Date' : 'Latest Update'; ?></div>
+                <div class="status-value"><?php echo $issuedId && $issuedId['issue_date'] ? date('M d, Y', strtotime($issuedId['issue_date'])) : $idUpdateDate; ?></div>
             </div>
             <div class="status-item">
-                <div class="status-label">Request Type</div>
+                <div class="status-label"><?php echo $issuedId ? 'Expiry Date' : 'Request Type'; ?></div>
                 <div class="status-value">
-                    <?php echo $idRequest ? htmlspecialchars($idRequest['request_type']) : 'N/A'; ?></div>
+                    <?php echo $issuedId && $issuedId['expiry_date'] ? date('M d, Y', strtotime($issuedId['expiry_date'])) : ($idRequest ? htmlspecialchars($idRequest['request_type']) : 'N/A'); ?></div>
             </div>
         </div>
     </div>
