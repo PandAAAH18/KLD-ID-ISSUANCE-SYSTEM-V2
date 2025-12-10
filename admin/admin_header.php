@@ -277,7 +277,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 16px;
+            padding: 8px 127px 12px 15px;
             background: #f8f9fa;
             border-radius: 25px;
             font-weight: 500;
@@ -300,7 +300,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'admin') {
 
         .user-name {
             white-space: nowrap;
-            overflow: hidden;
             text-overflow: ellipsis;
             max-width: 120px;
         }

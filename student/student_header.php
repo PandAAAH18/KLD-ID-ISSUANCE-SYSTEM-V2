@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="../assets/images/kldlogo.png" type="../assets/image/x-icon">                                                                                                                                                                                            
+    <link rel="shortcut icon" href="../assets/images/kldlogo.png" type="../assets/image/x-icon">
     <title>Student Portal | School Portal</title>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -297,7 +297,7 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 16px;
+            padding: 8px 127px 12px 15px;
             background: #f8f9fa;
             border-radius: 25px;
             font-weight: 500;
@@ -320,7 +320,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
 
         .user-name {
             white-space: nowrap;
-            overflow: hidden;
             text-overflow: ellipsis;
             max-width: 120px;
         }
