@@ -171,14 +171,25 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             padding: 5px;
             border-radius: 4px;
             transition: all var(--transition-speed) ease;
-            display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            display: none; /* Hidden by default on mobile */
         }
 
         .sidebar-toggle:hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Show sidebar toggle only on desktop */
+        @media (min-width: 1025px) {
+            .sidebar-toggle {
+                display: flex;
+            }
+            
+            .sidebar-close-btn {
+                display: none;
+            }
         }
 
         .sidebar-nav {
@@ -477,6 +488,10 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                 align-items: center;
                 justify-content: center;
             }
+            
+            .sidebar-toggle {
+                display: none !important;
+            }
 
             .admin-sidebar.collapsed {
                 transform: translateX(-100%);
@@ -538,10 +553,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             }
 
             .breadcrumb {
-                display: none;
-            }
-
-            .sidebar-toggle {
                 display: none;
             }
         }
