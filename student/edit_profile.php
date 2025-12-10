@@ -1,5 +1,10 @@
 <?php
 require_once __DIR__ . '/../includes/config.php';
+
+// Flag to prevent student_header.php's unwrapped sidebar scripts from running
+// This page uses its own properly wrapped DOMContentLoaded sidebar code
+echo '<script>window.SKIP_HEADER_SIDEBAR_INIT = true;</script>';
+
 require_once __DIR__ . '/student_header.php';
 require_once __DIR__ . '/student.php';
 

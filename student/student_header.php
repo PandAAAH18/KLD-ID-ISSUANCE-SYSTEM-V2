@@ -171,25 +171,14 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             padding: 5px;
             border-radius: 4px;
             transition: all var(--transition-speed) ease;
+            display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            display: none; /* Hidden by default on mobile */
         }
 
         .sidebar-toggle:hover {
             background: rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Show sidebar toggle only on desktop */
-        @media (min-width: 1025px) {
-            .sidebar-toggle {
-                display: flex;
-            }
-            
-            .sidebar-close-btn {
-                display: none;
-            }
         }
 
         .sidebar-nav {
@@ -488,10 +477,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                 align-items: center;
                 justify-content: center;
             }
-            
-            .sidebar-toggle {
-                display: none !important;
-            }
 
             .admin-sidebar.collapsed {
                 transform: translateX(-100%);
@@ -553,6 +538,10 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
             }
 
             .breadcrumb {
+                display: none;
+            }
+
+            .sidebar-toggle {
                 display: none;
             }
         }
@@ -823,54 +812,57 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'student') {
                 <!-- Page content will be inserted here -->
 
                 <script>
-                    // Mobile sidebar toggle
-                    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
-                        const sidebar = document.getElementById('adminSidebar');
-                        const overlay = document.getElementById('sidebarOverlay');
+                    // Skip sidebar initialization if page handles it separately
+                    if (!window.SKIP_HEADER_SIDEBAR_INIT) {
+                        // Mobile sidebar toggle
+                        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+                            const sidebar = document.getElementById('adminSidebar');
+                            const overlay = document.getElementById('sidebarOverlay');
 
-                        sidebar.classList.add('mobile-open');
-                        overlay.classList.add('active');
+                            sidebar.classList.add('mobile-open');
+                            overlay.classList.add('active');
 
-                        // Prevent body scroll when sidebar is open
-                        document.body.style.overflow = 'hidden';
-                    });
+                            // Prevent body scroll when sidebar is open
+                            document.body.style.overflow = 'hidden';
+                        });
 
-                    // Sidebar close button (mobile only)
-                    document.getElementById('sidebarCloseBtn').addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const sidebar = document.getElementById('adminSidebar');
-                        const overlay = document.getElementById('sidebarOverlay');
+                        // Sidebar close button (mobile only)
+                        document.getElementById('sidebarCloseBtn').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const sidebar = document.getElementById('adminSidebar');
+                            const overlay = document.getElementById('sidebarOverlay');
 
-                        sidebar.classList.remove('mobile-open');
-                        overlay.classList.remove('active');
-                        document.body.style.overflow = '';
-                    });
+                            sidebar.classList.remove('mobile-open');
+                            overlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        });
 
-                    document.getElementById('sidebarOverlay').addEventListener('click', function() {
-                        document.getElementById('adminSidebar').classList.remove('mobile-open');
-                        this.classList.remove('active');
-                        document.body.style.overflow = '';
-                    });
+                        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+                            document.getElementById('adminSidebar').classList.remove('mobile-open');
+                            this.classList.remove('active');
+                            document.body.style.overflow = '';
+                        });
 
-                    // Sidebar collapse/expand toggle (desktop only)
-                    document.getElementById('sidebarToggle').addEventListener('click', function() {
-                        const sidebar = document.getElementById('adminSidebar');
-                        const main = document.getElementById('adminMain');
+                        // Sidebar collapse/expand toggle (desktop only)
+                        document.getElementById('sidebarToggle').addEventListener('click', function() {
+                            const sidebar = document.getElementById('adminSidebar');
+                            const main = document.getElementById('adminMain');
 
-                        sidebar.classList.toggle('collapsed');
-                        main.classList.toggle('sidebar-collapsed');
+                            sidebar.classList.toggle('collapsed');
+                            main.classList.toggle('sidebar-collapsed');
 
-                        // Update toggle icon
-                        const icon = this.querySelector('i');
-                        if (sidebar.classList.contains('collapsed')) {
-                            icon.className = 'fas fa-chevron-right';
-                        } else {
-                            icon.className = 'fas fa-chevron-left';
-                        }
+                            // Update toggle icon
+                            const icon = this.querySelector('i');
+                            if (sidebar.classList.contains('collapsed')) {
+                                icon.className = 'fas fa-chevron-right';
+                            } else {
+                                icon.className = 'fas fa-chevron-left';
+                            }
 
-                        // Save state to localStorage
-                        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                    });
+                            // Save state to localStorage
+                            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                        });
+                    }
 
                     // User dropdown toggle
                     // REMOVED - logout moved to sidebar
