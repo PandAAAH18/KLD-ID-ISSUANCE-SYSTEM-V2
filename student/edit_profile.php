@@ -898,6 +898,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 /* Responsive Design */
                 @media (max-width: 1024px) {
+                    /* Hide collapse toggle on mobile - only show hamburger and close button */
+                    .sidebar-toggle {
+                        display: none !important;
+                    }
+
                     .form-body {
                         padding: 35px;
                     }
