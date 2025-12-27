@@ -380,7 +380,7 @@ public function getIssuedByStatus(string $filter): array
     $cardHeight = '300px';
 
     $front = '
-    <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idFrontUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+    <div style="width:340px;height:'.$cardHeight.';background-image:url('.$idFrontUri.');background-repeat:no-repeat;background-position:center;background-size:contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
         <img src="'.$photoUri.'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
         <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
         <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
@@ -389,10 +389,10 @@ public function getIssuedByStatus(string $filter): array
     </div>';
 
     $back = '
-    <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idBackUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+    <div style="width:340px;height:'.$cardHeight.';background-image:url('.$idBackUri.');background-repeat:no-repeat;background-position:center;background-size:contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
         <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
         <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
-        <img src="'.$qrUri.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+        <img src="'.$qrUri.'" style="width:70px;margin-top:40px;margin-left:95px;">
     </div>';
 
     $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
@@ -531,7 +531,7 @@ public function getIssuedByStatus(string $filter): array
         $cardHeight = '300px';
 
         $front = '
-        <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idFrontUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+        <div style="width:340px;height:'.$cardHeight.';background-image:url('.$idFrontUri.');background-repeat:no-repeat;background-position:center;background-size:contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
             <img src="'.$photoUri.'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
             <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
             <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
@@ -540,10 +540,10 @@ public function getIssuedByStatus(string $filter): array
         </div>';
 
         $back = '
-        <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idBackUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+        <div style="width:340px;height:'.$cardHeight.';background-image:url('.$idBackUri.');background-repeat:no-repeat;background-position:center;background-size:contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
             <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
             <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
-            <img src="'.$qrUri.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+            <img src="'.$qrUri.'" style="width:70px;margin-top:40px;margin-left:95px;">
         </div>';
 
         $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
