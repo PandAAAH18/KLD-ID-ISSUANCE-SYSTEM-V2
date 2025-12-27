@@ -801,30 +801,112 @@ $updateStmt->execute([$requestId]);
 {
     try {
         $options = new \Dompdf\Options();
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', false);
+        $options->set('isHtml5ParserEnabled', true);
         $dompdf = new \Dompdf\Dompdf($options);
 
-        // Increase the height of the ID cards
-        $cardHeight = '300px';
+        // Build file paths (use local filesystem paths, not URLs)
+        $photoPath = __DIR__ . '/../../uploads/student_photos/' . $studentData['photo'];
+        $signaturePath = __DIR__ . '/../../uploads/student_signatures/' . $studentData['signature'];
+        $qrPath = __DIR__ . '/../../uploads/qr/' . $qrFilename;
 
-        $front = '
-        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
-            <img src="'.APP_URL.'/uploads/student_photos/'.$studentData['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
-            <b style="font-size:12px;">'.$studentData['first_name'].' '.$studentData['last_name'].'</b><br>
-            <span style="font-size:10px;">'.$studentData['course'].' - '.$studentData['year_level'].'</span><br>
-            <span style="font-size:10px;">ID: '.$studentData['student_id'].'</span><br>
-            <img src="'.APP_URL.'/uploads/student_signatures/'.$studentData['signature'].'" style="width:100px;margin-top:50px;">
-        </div>';
+        // Create safe image data URIs if files exist
+        $photoUri = (file_exists($photoPath)) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photoPath)) : '';
+        $signatureUri = (file_exists($signaturePath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath)) : '';
+        $qrUri = (file_exists($qrPath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($qrPath)) : '';
 
-        $back = '
-        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
-            <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$studentData['emergency_contact_name'].'</span><br>
-            <span style="font-size:13px;display:inline-block;">'.$studentData['emergency_contact'].'</span><br>
-            <img src="'.APP_URL.'/uploads/qr/'.$qrFilename.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
-        </div>';
-
-        // Wrap both divs in a container
-        $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
+        $html = '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; }
+        .id-card { 
+            width: 340px; 
+            height: 215px; 
+            border: 1px solid #ccc;
+            display: inline-block;
+            vertical-align: top;
+            padding: 15px;
+            margin: 10px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+        }
+        .id-front { background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%); border: 2px solid #2e7d32; }
+        .id-back { background: linear-gradient(135deg, #f0f8e8 0%, #ffffff 100%); border: 2px solid #1b5e20; }
+        .student-photo { 
+            width: 70px; 
+            height: 70px; 
+            object-fit: cover; 
+            border: 2px solid #2e7d32;
+            margin-bottom: 8px;
+        }
+        .student-name { 
+            font-weight: bold; 
+            font-size: 13px; 
+            margin-bottom: 3px;
+            color: #1b5e20;
+        }
+        .student-course { 
+            font-size: 9px; 
+            color: #555;
+            margin-bottom: 3px;
+        }
+        .student-id { 
+            font-weight: bold; 
+            font-size: 11px; 
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+        .student-signature { 
+            width: 80px; 
+            margin: 5px auto;
+        }
+        .emergency-info { 
+            font-size: 10px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .emergency-name { 
+            font-weight: bold;
+            color: #1b5e20;
+        }
+        .qr-code { 
+            width: 65px; 
+            height: 65px;
+            margin: 0 auto;
+        }
+        .container { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="id-card id-front">
+            ' . ($photoUri ? '<img src="'.$photoUri.'" class="student-photo" alt="Photo">' : '') . '
+            <div class="student-name">' . htmlspecialchars($studentData['first_name'] . ' ' . $studentData['last_name']) . '</div>
+            <div class="student-course">' . htmlspecialchars($studentData['course']) . '</div>
+            <div class="student-course">' . htmlspecialchars($studentData['year_level']) . '</div>
+            <div class="student-id">ID: ' . htmlspecialchars($idNumber) . '</div>
+            ' . ($signatureUri ? '<img src="'.$signatureUri.'" class="student-signature" alt="Signature">' : '') . '
+        </div>
+        
+        <div class="id-card id-back">
+            <div style="margin-bottom: 8px;">
+                <strong style="color: #1b5e20; font-size: 12px;">Emergency Contact</strong>
+            </div>
+            <div class="emergency-info">
+                <div class="emergency-name">' . htmlspecialchars($studentData['emergency_contact_name'] ?? 'N/A') . '</div>
+                <div style="font-size: 10px;">' . htmlspecialchars($studentData['emergency_contact'] ?? 'N/A') . '</div>
+            </div>
+            ' . ($qrUri ? '<img src="'.$qrUri.'" class="qr-code" alt="QR Code">' : '') . '
+        </div>
+    </div>
+</body>
+</html>';
 
         $dompdf->loadHtml($html);
         $dompdf->setPaper('CR80', 'landscape');
@@ -847,6 +929,7 @@ $updateStmt->execute([$requestId]);
         ];
 
     } catch (Exception $e) {
+        error_log("PDF Generation Error: " . $e->getMessage());
         return [
             'success' => false,
             'message' => $e->getMessage()
@@ -899,148 +982,129 @@ $updateStmt->execute([$requestId]);
 {
     try {
         $options = new Options();
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', false);
         $options->set('isHtml5ParserEnabled', true);
         $dompdf = new Dompdf($options);
 
-        $html = '
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 20px;
-                }
-                .page {
-                    width: 100%;
-                }
-                .id-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 30px;
-                }
-                .id-cell {
-                    width: 50%;
-                    vertical-align: top;
-                    padding: 10px;
-                }
-                .id-card {
-                    width: 340px;
-                    height: 300px;
-                    background: url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;
-                    padding: 20px 15px;
-                    box-sizing: border-box;
-                    text-align: center;
-                    margin-bottom: 15px;
-                }
-                .id-card.back {
-                    background: url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;
-                }
-                .student-photo {
-                    width: 75px;
-                    height: 75px;
-                    object-fit: cover;
-                    border: 1px solid #ccc;
-                    margin-top: 70px;
-                    margin-bottom: 10px;
-                }
-                .student-name {
-                    font-size: 12px;
-                    font-weight: bold;
-                    margin: 5px 0;
-                }
-                .student-details {
-                    font-size: 10px;
-                    margin: 2px 0;
-                }
-                .student-signature {
-                    width: 100px;
-                    margin-top: 50px;
-                }
-                .emergency-contact {
-                    font-size: 13px;
-                    margin-top: 95px;
-                    display: block;
-                }
-                .emergency-number {
-                    font-size: 13px;
-                    margin-top: 5px;
-                    display: block;
-                }
-                .qr-code {
-                    width: 70px;
-                    margin-top: 40px;
-                    margin-left: 95px;
-                }
-                .page-break {
-                    page-break-after: always;
-                }
-            </style>
-        </head>
-        <body>';
+        $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 10mm; }
+        .id-card { 
+            width: 340px; 
+            height: 215px; 
+            border: 1px solid #ccc;
+            padding: 12px;
+            margin: 10px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            display: inline-block;
+            vertical-align: top;
+            page-break-inside: avoid;
+        }
+        .id-front { background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%); border: 2px solid #2e7d32; }
+        .id-back { background: linear-gradient(135deg, #f0f8e8 0%, #ffffff 100%); border: 2px solid #1b5e20; }
+        .student-photo { 
+            width: 60px; 
+            height: 60px; 
+            object-fit: cover; 
+            border: 2px solid #2e7d32;
+            margin-bottom: 6px;
+        }
+        .student-name { 
+            font-weight: bold; 
+            font-size: 12px; 
+            margin-bottom: 2px;
+            color: #1b5e20;
+        }
+        .student-course { 
+            font-size: 8px; 
+            color: #555;
+            margin-bottom: 2px;
+        }
+        .student-id { 
+            font-weight: bold; 
+            font-size: 10px; 
+            color: #2e7d32;
+            margin-bottom: 6px;
+        }
+        .student-signature { 
+            width: 70px; 
+            margin: 3px auto;
+        }
+        .emergency-info { 
+            font-size: 9px;
+            margin-bottom: 6px;
+        }
+        .emergency-name { 
+            font-weight: bold;
+            color: #1b5e20;
+        }
+        .qr-code { 
+            width: 60px; 
+            height: 60px;
+        }
+        .page { page-break-after: always; }
+    </style>
+</head>
+<body>';
         
         $count = 0;
         $processedIds = [];
         $totalIds = count($idNumbers);
         
-        for ($i = 0; $i < $totalIds; $i += 2) {
-            $html .= '<div class="page">';
-            $html .= '<table class="id-table"><tr>';
+        for ($i = 0; $i < $totalIds; $i++) {
+            $idNumber = $idNumbers[$i];
+            $idData = $this->getIssuedIdDataByNumber($idNumber);
             
-            // Process 2 IDs per page
-            for ($j = 0; $j < 2; $j++) {
-                $index = $i + $j;
-                if ($index >= $totalIds) {
-                    // Empty cell if no more IDs
-                    $html .= '<td class="id-cell"></td>';
-                    continue;
-                }
-                
-                $idNumber = $idNumbers[$index];
-                $idData = $this->getIssuedIdDataByNumber($idNumber);
-                if (!$idData) {
-                    error_log("ID data not found for: " . $idNumber);
-                    $html .= '<td class="id-cell"></td>';
-                    continue;
-                }
-                
-                $processedIds[] = $idNumber;
-                $count++;
-                
-                $html .= '<td class="id-cell">';
-                $html .= '
-                    <!-- Front Card -->
-                    <div class="id-card">
-                        <img src="'.APP_URL.'/uploads/student_photos/'.$idData['photo'].'" class="student-photo">
-                        <div class="student-name">'.$idData['first_name'].' '.$idData['last_name'].'</div>
-                        <div class="student-details">'.$idData['course'].' - '.$idData['year_level'].'</div>
-                        <div class="student-details">ID: '.$idData['student_id'].'</div>
-                        <img src="'.APP_URL.'/uploads/student_signatures/'.$idData['signature'].'" class="student-signature">
-                    </div>
-                    
-                    <!-- Back Card -->
-                    <div class="id-card back">
-                        <span class="emergency-contact">'.$idData['emergency_contact_name'].'</span>
-                        <span class="emergency-number">'.$idData['emergency_contact'].'</span>
-                        <img src="'.APP_URL.'/uploads/qr/'.$idNumber.'.png" class="qr-code">
-                    </div>
-                </td>';
+            if (!$idData) {
+                error_log("ID data not found for: " . $idNumber);
+                continue;
             }
             
-            $html .= '</tr></table>';
-            $html .= '</div>'; // Close page
+            $processedIds[] = $idNumber;
+            $count++;
             
-            // Add page break if there are more IDs to process
-            if ($i + 2 < $totalIds) {
-                $html .= '<div class="page-break"></div>';
+            // Build image URIs from local files
+            $photoPath = __DIR__ . '/../../uploads/student_photos/' . $idData['photo'];
+            $signaturePath = __DIR__ . '/../../uploads/student_signatures/' . $idData['signature'];
+            $qrPath = __DIR__ . '/../../uploads/qr/' . $idNumber . '.png';
+            
+            $photoUri = (file_exists($photoPath)) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photoPath)) : '';
+            $signatureUri = (file_exists($signaturePath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath)) : '';
+            $qrUri = (file_exists($qrPath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($qrPath)) : '';
+            
+            $html .= '
+            <div class="id-card id-front">
+                ' . ($photoUri ? '<img src="'.$photoUri.'" class="student-photo" alt="Photo">' : '') . '
+                <div class="student-name">' . htmlspecialchars($idData['first_name'] . ' ' . $idData['last_name']) . '</div>
+                <div class="student-course">' . htmlspecialchars($idData['course']) . '</div>
+                <div class="student-course">' . htmlspecialchars($idData['year_level']) . '</div>
+                <div class="student-id">ID: ' . htmlspecialchars($idNumber) . '</div>
+                ' . ($signatureUri ? '<img src="'.$signatureUri.'" class="student-signature" alt="Signature">' : '') . '
+            </div>
+            
+            <div class="id-card id-back">
+                <strong style="color: #1b5e20; font-size: 10px;">Emergency</strong>
+                <div class="emergency-info">
+                    <div class="emergency-name">' . htmlspecialchars($idData['emergency_contact_name'] ?? 'N/A') . '</div>
+                    <div style="font-size: 9px;">' . htmlspecialchars($idData['emergency_contact'] ?? 'N/A') . '</div>
+                </div>
+                ' . ($qrUri ? '<img src="'.$qrUri.'" class="qr-code" alt="QR">' : '') . '
+            </div>';
+            
+            // Page break every 4 cards
+            if (($i + 1) % 4 == 0 && ($i + 1) < $totalIds) {
+                $html .= '<div class="page"></div>';
             }
         }
         
-        $html .= '
-        </body>
-        </html>';
+        $html .= '</body></html>';
 
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
