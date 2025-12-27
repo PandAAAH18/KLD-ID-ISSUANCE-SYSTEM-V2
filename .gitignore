@@ -1,0 +1,62 @@
+# Environment configuration
+.env
+.env.local
+.env.*.local
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Dependencies
+vendor/
+composer.lock
+
+# Logs
+logs/
+*.log
+
+# Uploaded files (can contain sensitive data)
+uploads/
+uploads/*
+!uploads/.gitkeep
+
+# Database backups
+*.sql
+!school_id_system.sql
+!SECURITY_DATABASE_FIXES.sql
+*.dump
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Node modules (if using any frontend build tools)
+node_modules/
+package-lock.json
+
+# Build artifacts
+dist/
+build/
+
+# Configuration files with secrets
+config.local.php
+secrets.php
+
+# Session files
+session/
+
+# Test files
+test_gd.php
+debug_verification.php
+
+# IDE workspace
+workspace.xml
