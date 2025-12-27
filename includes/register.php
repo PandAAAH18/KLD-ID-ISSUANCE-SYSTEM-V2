@@ -47,15 +47,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $token = $emailVerifier->createVerificationToken($userId, $email);
 
                     if ($token && SEND_VERIFICATION_EMAIL) {
-                        if ($emailVerifier->sendVerificationEmail($email, $token, $fullName)) {
+                        $emailSent = $emailVerifier->sendVerificationEmail($email, $token, $fullName);
+                        error_log("Email verification for $email - Token created: " . ($token ? 'YES' : 'NO') . ", Email sent: " . ($emailSent ? 'YES' : 'NO'));
+                        
+                        if ($emailSent) {
                             $_SESSION['message'] = "Account created successfully! Check your email to verify your account.";
                             $_SESSION['pending_verification_email'] = $email;
                             $success = 'Account created! A verification email has been sent to ' . esc_html($email);
                         } else {
-                            $error = 'Account created, but verification email could not be sent. Please try again later.';
+                            $error = 'Account created, but verification email could not be sent. Please check your email settings or contact support.';
+                            error_log("CRITICAL: Email verification could not be sent to $email");
                         }
                     } else {
-                        $success = 'Account created successfully! You can now log in.';
+                        error_log("Registration warning: Token created: " . ($token ? 'YES' : 'NO') . ", SEND_VERIFICATION_EMAIL: " . (SEND_VERIFICATION_EMAIL ? 'YES' : 'NO'));
+                        $error = 'Account created but verification is required. Contact administrator.';
                     }
                 } else {
                     $error = 'Account created but could not retrieve user information. Please try logging in.';

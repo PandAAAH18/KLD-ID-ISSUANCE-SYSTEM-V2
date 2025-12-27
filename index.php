@@ -17,10 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $userObj->findByEmail($email);
 
             if ($user && password_verify($password, $user['password_hash'])) {
-                // Check if email is verified (skip in dev mode if REQUIRE_EMAIL_VERIFICATION is false)
-                $requireVerification = defined('REQUIRE_EMAIL_VERIFICATION') ? REQUIRE_EMAIL_VERIFICATION : true;
-
-                if ($requireVerification && !$user['is_verified']) {
+                // Check if email is verified - ALWAYS REQUIRE (not optional)
+                if (!$user['is_verified']) {
+                    // Log unverified login attempt
+                    error_log("Unverified login attempt for email: " . $email . " | is_verified: " . $user['is_verified']);
                     $error = 'Please verify your email address first. Check your inbox at ' . htmlspecialchars($email) . ' for the verification link.';
                     $_SESSION['pending_verification_email'] = $email;
                 } else {
