@@ -361,36 +361,46 @@ public function getIssuedByStatus(string $filter): array
     $updateStudent->execute([$qrName, $idNumber, $studentId]);
 
     $options = new Options();
-    $options->set('isRemoteEnabled', true);
+    $options->set('isRemoteEnabled', false);
     $dompdf = new Dompdf($options);
+
+    // Convert images to Base64 data URIs (Dompdf can't fetch localhost URLs)
+    $idFrontPath = __DIR__ . '/../../assets/images/id_front.png';
+    $idBackPath = __DIR__ . '/../../assets/images/id_back.png';
+    $photoPath = __DIR__ . '/../../uploads/student_photos/' . $row['photo'];
+    $signaturePath = __DIR__ . '/../../uploads/student_signatures/' . $row['signature'];
+    $qrImagePath = __DIR__ . '/../../uploads/qr/' . $qrName;
+
+    $idFrontUri = file_exists($idFrontPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idFrontPath)) : '';
+    $idBackUri = file_exists($idBackPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idBackPath)) : '';
+    $photoUri = file_exists($photoPath) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photoPath)) : '';
+    $signatureUri = file_exists($signaturePath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath)) : '';
+    $qrUri = file_exists($qrImagePath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($qrImagePath)) : '';
 
     $cardHeight = '300px';
 
     $front = '
-    <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
-        <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+    <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idFrontUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+        <img src="'.$photoUri.'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
         <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
         <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
         <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
-        <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
+        <img src="'.$signatureUri.'" style="width:100px;margin-top:50px;">
     </div>';
 
     $back = '
-    <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+    <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idBackUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
         <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
         <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
-        <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+        <img src="'.$qrUri.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
     </div>';
 
     $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
-    error_log("DEBUG generateId: HTML length=" . strlen($html) . ", sample_front=" . substr($front, 0, 200));
-    error_log("DEBUG generateId: front_img_src=" . APP_URL.'/uploads/student_photos/'.$row['photo']);
-    error_log("DEBUG generateId: bg_front=" . APP_URL.'/assets/images/id_front.png');
+    error_log("DEBUG generateId: HTML length=" . strlen($html));
 
     $dompdf->loadHtml($html);
     $dompdf->setPaper('CR80', 'landscape');
     $dompdf->render();
-    error_log("DEBUG generateId: Dompdf render COMPLETE, QR in PDF: " . APP_URL.'/uploads/qr/'.$qrName);
 
     /* 5.  save PDF */
     $fileName = $row['email'].'_'.date('YmdHis').'.pdf';
@@ -502,36 +512,46 @@ public function getIssuedByStatus(string $filter): array
         $updateStudent->execute([$qrName, $idNumber, $studentId]);
 
         $options = new Options();
-        $options->set('isRemoteEnabled', true);
+        $options->set('isRemoteEnabled', false);
         $dompdf = new Dompdf($options);
+
+        // Convert images to Base64 data URIs (Dompdf can't fetch localhost URLs)
+        $idFrontPath = __DIR__ . '/../../assets/images/id_front.png';
+        $idBackPath = __DIR__ . '/../../assets/images/id_back.png';
+        $photoPath = __DIR__ . '/../../uploads/student_photos/' . $row['photo'];
+        $signaturePath = __DIR__ . '/../../uploads/student_signatures/' . $row['signature'];
+        $qrImagePath = __DIR__ . '/../../uploads/qr/' . $qrName;
+
+        $idFrontUri = file_exists($idFrontPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idFrontPath)) : '';
+        $idBackUri = file_exists($idBackPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idBackPath)) : '';
+        $photoUri = file_exists($photoPath) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photoPath)) : '';
+        $signatureUri = file_exists($signaturePath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath)) : '';
+        $qrUri = file_exists($qrImagePath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($qrImagePath)) : '';
 
         $cardHeight = '300px';
 
         $front = '
-        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_front.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
-            <img src="'.APP_URL.'/uploads/student_photos/'.$row['photo'].'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idFrontUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;font-family:Arial,sans-serif;display:inline-block;vertical-align:top;text-align:center;margin-top:20px;">
+            <img src="'.$photoUri.'" style="width:75px;height:75px;object-fit:cover;border:1px solid #ccc;margin-top:70px;"><br>
             <b style="font-size:12px;">'.$row['first_name'].' '.$row['last_name'].'</b><br>
             <span style="font-size:10px;">'.$row['course'].' - '.$row['year_level'].'</span><br>
             <span style="font-size:10px;">ID: '.$row['student_id'].'</span><br>
-            <img src="'.APP_URL.'/uploads/student_signatures/'.$row['signature'].'" style="width:100px;margin-top:50px;">
+            <img src="'.$signatureUri.'" style="width:100px;margin-top:50px;">
         </div>';
 
         $back = '
-        <div style="width:340px;height:'.$cardHeight.';background:url(\''.APP_URL.'/assets/images/id_back.png\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
+        <div style="width:340px;height:'.$cardHeight.';background:url(\''.$idBackUri.'\') no-repeat center/contain;padding:20px 15px;box-sizing:border-box;position:relative;display:inline-block;vertical-align:top;margin-left:20px;text-align:center;margin-top:20px;">
             <span style="font-size:13px;margin-top:95px;display:inline-block;">'.$row['emergency_contact_name'].'</span><br>
             <span style="font-size:13px;display:inline-block;">'.$row['emergency_contact'].'</span><br>
-            <img src="'.APP_URL.'/uploads/qr/'.$qrName.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
+            <img src="'.$qrUri.'" style="width:70px;margin-top:40px;margin-left:95px; "><br>
         </div>';
 
         $html = '<div style="width:100%;text-align:center;">' . $front . $back . '</div>';
-        error_log("DEBUG regenerateId: HTML length=" . strlen($html) . ", sample_front=" . substr($front, 0, 200));
-        error_log("DEBUG regenerateId: front_img_src=" . APP_URL.'/uploads/student_photos/'.$row['photo']);
-        error_log("DEBUG regenerateId: bg_front=" . APP_URL.'/assets/images/id_front.png');
+        error_log("DEBUG regenerateId: HTML length=" . strlen($html));
 
         $dompdf->loadHtml($html);
         $dompdf->setPaper('CR80', 'landscape');
         $dompdf->render();
-        error_log("DEBUG regenerateId: Dompdf render COMPLETE, QR in PDF: " . APP_URL.'/uploads/qr/'.$qrName);
 
         // 5. Save new PDF
         $newFileName = $row['email'] . '_' . date('YmdHis') . '.pdf';
