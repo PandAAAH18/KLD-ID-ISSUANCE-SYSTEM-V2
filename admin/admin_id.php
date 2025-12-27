@@ -70,7 +70,11 @@ if (isset($_POST['bulk_print']) && isset($_POST['selected_issued_ids'])) {
             $_SESSION['show_print_modal'] = true;
             
             // Store download URL for JavaScript to open in new tab
-            $_SESSION['bulk_print_download_url'] = APP_URL . '/uploads/bulk_print/' . $result['filename'];
+            $downloadUrl = APP_URL . '/uploads/bulk_print/' . $result['filename'];
+            $_SESSION['bulk_print_download_url'] = $downloadUrl;
+            
+            // Debug log
+            error_log("BULK PRINT DEBUG: APP_URL=" . APP_URL . ", filename=" . $result['filename'] . ", full_url=" . $downloadUrl);
             
             header('Location: admin_id.php?filter=generated');
             exit();
@@ -962,7 +966,7 @@ $printedCount = $adm->countIssuedByStatus('printed');
         
         // Open PDF in new tab
         <?php if (isset($_SESSION['bulk_print_download_url'])): ?>
-            window.open('<?= $_SESSION['bulk_print_download_url'] ?>', '_blank');
+            window.open('<?= htmlspecialchars($_SESSION['bulk_print_download_url'], ENT_QUOTES, 'UTF-8') ?>', '_blank');
             <?php unset($_SESSION['bulk_print_download_url']); ?>
         <?php endif; ?>
         

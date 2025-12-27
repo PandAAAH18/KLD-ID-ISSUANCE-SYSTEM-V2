@@ -16,8 +16,8 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 // ==================== ENVIRONMENT CONFIGURATION ====================
 // Load from .env file if exists, otherwise use defaults
-if (!function_exists('getEnv')) {
-    function getEnv(string $key, mixed $default = null): mixed
+if (!function_exists('env')) {
+    function env(string $key, mixed $default = null): mixed
     {
         if (isset($_ENV[$key])) {
             return $_ENV[$key];
@@ -45,46 +45,46 @@ if (file_exists(__DIR__ . '/../.env')) {
 }
 
 // ==================== APPLICATION SETTINGS ====================
-define('APP_URL', getEnv('APP_URL', 'http://localhost/KLD-ID-ISSUANCE-SYSTEM-V2'));
-define('APP_DEBUG', getEnv('APP_DEBUG', 'false') === 'true');
+define('APP_URL', env('APP_URL', 'http://localhost/KLD-ID-ISSUANCE-SYSTEM-V2'));
+define('APP_DEBUG', env('APP_DEBUG', 'false') === 'true');
 
 // ==================== EMAIL CONFIGURATION ====================
-define('MAIL_HOST', getEnv('MAIL_HOST', 'smtp.gmail.com'));
-define('MAIL_PORT', (int)getEnv('MAIL_PORT', 587));
-define('MAIL_USERNAME', getEnv('MAIL_USERNAME', ''));
-define('MAIL_PASSWORD', getEnv('MAIL_PASSWORD', ''));
-define('MAIL_FROM_ADDRESS', getEnv('MAIL_FROM_ADDRESS', ''));
-define('MAIL_FROM_NAME', getEnv('MAIL_FROM_NAME', 'KLD School Portal'));
-define('MAIL_ENCRYPTION', getEnv('MAIL_ENCRYPTION', 'tls'));
+define('MAIL_HOST', env('MAIL_HOST', 'smtp.gmail.com'));
+define('MAIL_PORT', (int)env('MAIL_PORT', 587));
+define('MAIL_USERNAME', env('MAIL_USERNAME', ''));
+define('MAIL_PASSWORD', env('MAIL_PASSWORD', ''));
+define('MAIL_FROM_ADDRESS', env('MAIL_FROM_ADDRESS', ''));
+define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'KLD School Portal'));
+define('MAIL_ENCRYPTION', env('MAIL_ENCRYPTION', 'tls'));
 
 // ==================== EMAIL VERIFICATION SETTINGS ====================
-define('VERIFICATION_TOKEN_EXPIRY', (int)getEnv('VERIFICATION_TOKEN_EXPIRY', 24));
-define('SEND_VERIFICATION_EMAIL', getEnv('SEND_VERIFICATION_EMAIL', 'true') === 'true');
-define('REQUIRE_EMAIL_VERIFICATION', getEnv('REQUIRE_EMAIL_VERIFICATION', 'true') === 'true');
+define('VERIFICATION_TOKEN_EXPIRY', (int)env('VERIFICATION_TOKEN_EXPIRY', 24));
+define('SEND_VERIFICATION_EMAIL', env('SEND_VERIFICATION_EMAIL', 'true') === 'true');
+define('REQUIRE_EMAIL_VERIFICATION', env('REQUIRE_EMAIL_VERIFICATION', 'true') === 'true');
 
 // ==================== DATABASE CONFIGURATION ====================
-define('DB_HOST', getEnv('DB_HOST', '127.0.0.1'));
-define('DB_PORT', (int)getEnv('DB_PORT', 3306));
-define('DB_NAME', getEnv('DB_NAME', 'school_id_system'));
-define('DB_USER', getEnv('DB_USER', 'root'));
-define('DB_PASSWORD', getEnv('DB_PASSWORD', ''));
+define('DB_HOST', env('DB_HOST', '127.0.0.1'));
+define('DB_PORT', (int)env('DB_PORT', 3306));
+define('DB_NAME', env('DB_NAME', 'school_id_system'));
+define('DB_USER', env('DB_USER', 'root'));
+define('DB_PASSWORD', env('DB_PASSWORD', ''));
 
 // ==================== SESSION SETTINGS ====================
-define('SESSION_TIMEOUT', (int)getEnv('SESSION_TIMEOUT', 1800)); // 30 minutes
-define('SESSION_SECURE_COOKIE', getEnv('SESSION_SECURE_COOKIE', 'false') === 'true');
-define('SESSION_HTTPONLY', getEnv('SESSION_HTTPONLY', 'true') === 'true');
+define('SESSION_TIMEOUT', (int)env('SESSION_TIMEOUT', 1800)); // 30 minutes
+define('SESSION_SECURE_COOKIE', env('SESSION_SECURE_COOKIE', 'false') === 'true');
+define('SESSION_HTTPONLY', env('SESSION_HTTPONLY', 'true') === 'true');
 
 // ==================== SECURITY SETTINGS ====================
-define('CSRF_TOKEN_TIMEOUT', (int)getEnv('CSRF_TOKEN_TIMEOUT', 3600));
-define('ENABLE_RATE_LIMITING', getEnv('ENABLE_RATE_LIMITING', 'true') === 'true');
-define('MAX_LOGIN_ATTEMPTS', (int)getEnv('MAX_LOGIN_ATTEMPTS', 5));
-define('LOGIN_ATTEMPT_WINDOW', (int)getEnv('LOGIN_ATTEMPT_WINDOW', 300));
+define('CSRF_TOKEN_TIMEOUT', (int)env('CSRF_TOKEN_TIMEOUT', 3600));
+define('ENABLE_RATE_LIMITING', env('ENABLE_RATE_LIMITING', 'true') === 'true');
+define('MAX_LOGIN_ATTEMPTS', (int)env('MAX_LOGIN_ATTEMPTS', 5));
+define('LOGIN_ATTEMPT_WINDOW', (int)env('LOGIN_ATTEMPT_WINDOW', 300));
 
 // ==================== FILE UPLOAD SETTINGS ====================
-define('MAX_FILE_SIZE', (int)getEnv('MAX_FILE_SIZE', 5242880)); // 5MB
-define('ALLOWED_IMAGE_TYPES', array_map('trim', explode(',', getEnv('ALLOWED_IMAGE_TYPES', 'image/jpeg,image/png,image/gif'))));
-define('ALLOWED_DOCUMENT_TYPES', array_map('trim', explode(',', getEnv('ALLOWED_DOCUMENT_TYPES', 'application/pdf,image/png'))));
-define('UPLOAD_VIRUS_SCAN', getEnv('UPLOAD_VIRUS_SCAN', 'false') === 'true');
+define('MAX_FILE_SIZE', (int)env('MAX_FILE_SIZE', 5242880)); // 5MB
+define('ALLOWED_IMAGE_TYPES', array_map('trim', explode(',', env('ALLOWED_IMAGE_TYPES', 'image/jpeg,image/png,image/gif'))));
+define('ALLOWED_DOCUMENT_TYPES', array_map('trim', explode(',', env('ALLOWED_DOCUMENT_TYPES', 'application/pdf,image/png'))));
+define('UPLOAD_VIRUS_SCAN', env('UPLOAD_VIRUS_SCAN', 'false') === 'true');
 
 // ==================== CONFIGURE SESSION COOKIES ====================
 ini_set('session.cookie_httponly', SESSION_HTTPONLY ? '1' : '0');
