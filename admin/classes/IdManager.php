@@ -823,14 +823,20 @@ $updateStmt->execute([$requestId]);
         $dompdf = new \Dompdf\Dompdf($options);
 
         // Build file paths (use local filesystem paths, not URLs)
+        $idFrontPath = __DIR__ . '/../../assets/images/id_front.png';
+        $idBackPath = __DIR__ . '/../../assets/images/id_back.png';
         $photoPath = __DIR__ . '/../../uploads/student_photos/' . $studentData['photo'];
         $signaturePath = __DIR__ . '/../../uploads/student_signatures/' . $studentData['signature'];
         $qrPath = __DIR__ . '/../../uploads/qr/' . $qrFilename;
 
         // Create safe image data URIs if files exist
+        $idFrontUri = (file_exists($idFrontPath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idFrontPath)) : '';
+        $idBackUri = (file_exists($idBackPath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idBackPath)) : '';
         $photoUri = (file_exists($photoPath)) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($photoPath)) : '';
         $signatureUri = (file_exists($signaturePath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($signaturePath)) : '';
         $qrUri = (file_exists($qrPath)) ? 'data:image/png;base64,' . base64_encode(file_get_contents($qrPath)) : '';
+
+        $cardHeight = '300px';
 
         $html = '
 <!DOCTYPE html>
@@ -842,60 +848,57 @@ $updateStmt->execute([$requestId]);
         body { font-family: Arial, sans-serif; }
         .id-card { 
             width: 340px; 
-            height: 215px; 
-            border: 1px solid #ccc;
+            height: '.$cardHeight.'; 
             display: inline-block;
             vertical-align: top;
-            padding: 15px;
+            padding: 20px 15px;
             margin: 10px;
-            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             text-align: center;
             position: relative;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
         }
-        .id-front { background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%); border: 2px solid #2e7d32; }
-        .id-back { background: linear-gradient(135deg, #f0f8e8 0%, #ffffff 100%); border: 2px solid #1b5e20; }
+        .id-front { background-image: url('.$idFrontUri.'); }
+        .id-back { background-image: url('.$idBackUri.'); }
         .student-photo { 
-            width: 70px; 
-            height: 70px; 
+            width: 75px; 
+            height: 75px; 
             object-fit: cover; 
-            border: 2px solid #2e7d32;
-            margin-bottom: 8px;
+            border: 1px solid #ccc;
+            margin-top: 70px;
+            margin-bottom: 6px;
         }
         .student-name { 
             font-weight: bold; 
-            font-size: 13px; 
-            margin-bottom: 3px;
-            color: #1b5e20;
+            font-size: 12px; 
+            margin-bottom: 2px;
         }
         .student-course { 
-            font-size: 9px; 
-            color: #555;
-            margin-bottom: 3px;
+            font-size: 10px; 
+            margin-bottom: 2px;
         }
         .student-id { 
             font-weight: bold; 
-            font-size: 11px; 
-            color: #2e7d32;
-            margin-bottom: 8px;
+            font-size: 10px; 
+            margin-bottom: 6px;
         }
         .student-signature { 
-            width: 80px; 
-            margin: 5px auto;
+            width: 100px; 
+            margin-top: 50px;
         }
         .emergency-info { 
-            font-size: 10px;
-            text-align: center;
-            margin-bottom: 8px;
+            font-size: 13px;
+            margin-top: 95px;
         }
         .emergency-name { 
-            font-weight: bold;
-            color: #1b5e20;
+            font-size: 13px;
         }
         .qr-code { 
-            width: 65px; 
-            height: 65px;
-            margin: 0 auto;
+            width: 70px; 
+            height: 70px;
+            margin-top: 40px;
+            margin-left: 95px;
         }
         .container { text-align: center; }
     </style>
@@ -903,21 +906,17 @@ $updateStmt->execute([$requestId]);
 <body>
     <div class="container">
         <div class="id-card id-front">
-            ' . ($photoUri ? '<img src="'.$photoUri.'" class="student-photo" alt="Photo">' : '') . '
-            <div class="student-name">' . htmlspecialchars($studentData['first_name'] . ' ' . $studentData['last_name']) . '</div>
-            <div class="student-course">' . htmlspecialchars($studentData['course']) . '</div>
-            <div class="student-course">' . htmlspecialchars($studentData['year_level']) . '</div>
-            <div class="student-id">ID: ' . htmlspecialchars($idNumber) . '</div>
+            ' . ($photoUri ? '<img src="'.$photoUri.'" class="student-photo" alt="Photo">' : '') . '<br>
+            <b class="student-name">' . htmlspecialchars($studentData['first_name'] . ' ' . $studentData['last_name']) . '</b><br>
+            <span class="student-course">' . htmlspecialchars($studentData['course']) . ' - ' . htmlspecialchars($studentData['year_level']) . '</span><br>
+            <span class="student-id">ID: ' . htmlspecialchars($studentData['student_id'] ?? $idNumber) . '</span><br>
             ' . ($signatureUri ? '<img src="'.$signatureUri.'" class="student-signature" alt="Signature">' : '') . '
         </div>
         
         <div class="id-card id-back">
-            <div style="margin-bottom: 8px;">
-                <strong style="color: #1b5e20; font-size: 12px;">Emergency Contact</strong>
-            </div>
             <div class="emergency-info">
-                <div class="emergency-name">' . htmlspecialchars($studentData['emergency_contact_name'] ?? 'N/A') . '</div>
-                <div style="font-size: 10px;">' . htmlspecialchars($studentData['emergency_contact'] ?? 'N/A') . '</div>
+                <span class="emergency-name">' . htmlspecialchars($studentData['emergency_contact_name'] ?? 'N/A') . '</span><br>
+                <span>' . htmlspecialchars($studentData['emergency_contact'] ?? 'N/A') . '</span>
             </div>
             ' . ($qrUri ? '<img src="'.$qrUri.'" class="qr-code" alt="QR Code">' : '') . '
         </div>
@@ -1003,6 +1002,12 @@ $updateStmt->execute([$requestId]);
         $options->set('isHtml5ParserEnabled', true);
         $dompdf = new Dompdf($options);
 
+        // Convert background images to Base64 data URIs (same approach as generateId)
+        $idFrontPath = __DIR__ . '/../../assets/images/id_front.png';
+        $idBackPath = __DIR__ . '/../../assets/images/id_back.png';
+        $idFrontUri = file_exists($idFrontPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idFrontPath)) : '';
+        $idBackUri = file_exists($idBackPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($idBackPath)) : '';
+
         $html = '<!DOCTYPE html>
 <html>
 <head>
@@ -1012,59 +1017,58 @@ $updateStmt->execute([$requestId]);
         body { font-family: Arial, sans-serif; padding: 10mm; }
         .id-card { 
             width: 340px; 
-            height: 215px; 
-            border: 1px solid #ccc;
-            padding: 12px;
+            height: 300px; 
+            padding: 20px 15px;
             margin: 10px;
-            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             text-align: center;
             position: relative;
             display: inline-block;
             vertical-align: top;
             page-break-inside: avoid;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
         }
-        .id-front { background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%); border: 2px solid #2e7d32; }
-        .id-back { background: linear-gradient(135deg, #f0f8e8 0%, #ffffff 100%); border: 2px solid #1b5e20; }
+        .id-front { background-image: url('.$idFrontUri.'); }
+        .id-back { background-image: url('.$idBackUri.'); }
         .student-photo { 
-            width: 60px; 
-            height: 60px; 
+            width: 75px; 
+            height: 75px; 
             object-fit: cover; 
-            border: 2px solid #2e7d32;
+            border: 1px solid #ccc;
+            margin-top: 70px;
             margin-bottom: 6px;
         }
         .student-name { 
             font-weight: bold; 
             font-size: 12px; 
             margin-bottom: 2px;
-            color: #1b5e20;
         }
         .student-course { 
-            font-size: 8px; 
-            color: #555;
+            font-size: 10px; 
             margin-bottom: 2px;
         }
         .student-id { 
             font-weight: bold; 
             font-size: 10px; 
-            color: #2e7d32;
             margin-bottom: 6px;
         }
         .student-signature { 
-            width: 70px; 
-            margin: 3px auto;
+            width: 100px; 
+            margin-top: 50px;
         }
         .emergency-info { 
-            font-size: 9px;
-            margin-bottom: 6px;
+            font-size: 13px;
+            margin-top: 95px;
         }
         .emergency-name { 
-            font-weight: bold;
-            color: #1b5e20;
+            font-size: 13px;
         }
         .qr-code { 
-            width: 60px; 
-            height: 60px;
+            width: 70px; 
+            height: 70px;
+            margin-top: 40px;
+            margin-left: 95px;
         }
         .page { page-break-after: always; }
     </style>
@@ -1098,19 +1102,17 @@ $updateStmt->execute([$requestId]);
             
             $html .= '
             <div class="id-card id-front">
-                ' . ($photoUri ? '<img src="'.$photoUri.'" class="student-photo" alt="Photo">' : '') . '
-                <div class="student-name">' . htmlspecialchars($idData['first_name'] . ' ' . $idData['last_name']) . '</div>
-                <div class="student-course">' . htmlspecialchars($idData['course']) . '</div>
-                <div class="student-course">' . htmlspecialchars($idData['year_level']) . '</div>
-                <div class="student-id">ID: ' . htmlspecialchars($idNumber) . '</div>
+                ' . ($photoUri ? '<img src="'.$photoUri.'" class="student-photo" alt="Photo">' : '') . '<br>
+                <b class="student-name">' . htmlspecialchars($idData['first_name'] . ' ' . $idData['last_name']) . '</b><br>
+                <span class="student-course">' . htmlspecialchars($idData['course']) . ' - ' . htmlspecialchars($idData['year_level']) . '</span><br>
+                <span class="student-id">ID: ' . htmlspecialchars($idData['student_id'] ?? $idNumber) . '</span><br>
                 ' . ($signatureUri ? '<img src="'.$signatureUri.'" class="student-signature" alt="Signature">' : '') . '
             </div>
             
             <div class="id-card id-back">
-                <strong style="color: #1b5e20; font-size: 10px;">Emergency</strong>
                 <div class="emergency-info">
-                    <div class="emergency-name">' . htmlspecialchars($idData['emergency_contact_name'] ?? 'N/A') . '</div>
-                    <div style="font-size: 9px;">' . htmlspecialchars($idData['emergency_contact'] ?? 'N/A') . '</div>
+                    <span class="emergency-name">' . htmlspecialchars($idData['emergency_contact_name'] ?? 'N/A') . '</span><br>
+                    <span>' . htmlspecialchars($idData['emergency_contact'] ?? 'N/A') . '</span>
                 </div>
                 ' . ($qrUri ? '<img src="'.$qrUri.'" class="qr-code" alt="QR">' : '') . '
             </div>';
